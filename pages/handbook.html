@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Course Handbook — DNT Fluoride Varnish Certificate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo">
+        <span class="nav-logo-dnt">DNT</span>
+        <span class="nav-logo-sub">Dental Nurse Training</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="course.html">Course</a></li>
+        <li><a href="handbook.html" class="active">Handbook</a></li>
+        <li><a href="portfolio.html">Portfolio</a></li>
+        <li><a href="documents.html">Documents</a></li>
+        <li><a href="enrol.html" class="nav-cta">Enquire</a></li>
+      </ul>
+      <button class="nav-burger" aria-label="Open menu"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <div class="handbook-layout">
+
+    <!-- Sidebar -->
+    <aside class="handbook-sidebar" id="hbSidebar">
+      <div class="sidebar-title">Course Handbook</div>
+
+      <div class="sidebar-mod">
+        <div class="sidebar-mod-label" data-mod="0" onclick="jumpToSlide(0)">
+          <span class="sidebar-mod-num">✦</span> Introduction
+        </div>
+      </div>
+
+      <div class="sidebar-mod">
+        <div class="sidebar-mod-label" data-mod="1" onclick="toggleMod(1)">
+          <span class="sidebar-mod-num">1</span> Legislation & Professionalism
+        </div>
+        <div class="sidebar-sections" id="mod1-sections">
+          <button onclick="jumpToSlide(2)">1.1 Consent & Confidentiality</button>
+          <button onclick="jumpToSlide(3)">1.2 Valid Consent & Children</button>
+          <button onclick="jumpToSlide(4)">1.3 GDPR & Data Protection</button>
+          <button onclick="jumpToSlide(5)">1.4 GDC Responsibilities</button>
+          <button onclick="jumpToSlide(6)">1.5 Record Keeping</button>
+          <button onclick="jumpToSlide(7)">1.6 BLS & Anaphylaxis</button>
+          <button onclick="jumpToSlide(8)">1.7 Fluoride Toxicity</button>
+        </div>
+      </div>
+
+      <div class="sidebar-mod">
+        <div class="sidebar-mod-label" data-mod="2" onclick="toggleMod(2)">
+          <span class="sidebar-mod-num">2</span> Health, Safety & Materials
+        </div>
+        <div class="sidebar-sections" id="mod2-sections">
+          <button onclick="jumpToSlide(10)">2.1 Health & Safety Law</button>
+          <button onclick="jumpToSlide(11)">2.2 Cross Infection Control</button>
+          <button onclick="jumpToSlide(12)">2.3 PPE & Hand Hygiene</button>
+          <button onclick="jumpToSlide(13)">2.4 Decontamination</button>
+          <button onclick="jumpToSlide(14)">2.5 How Fluoride Works</button>
+          <button onclick="jumpToSlide(15)">2.6 Products & Evidence</button>
+          <button onclick="jumpToSlide(16)">2.7 Patient Groups</button>
+        </div>
+      </div>
+
+      <div class="sidebar-mod">
+        <div class="sidebar-mod-label" data-mod="3" onclick="toggleMod(3)">
+          <span class="sidebar-mod-num">3</span> Clinical Application
+        </div>
+        <div class="sidebar-sections" id="mod3-sections">
+          <button onclick="jumpToSlide(18)">3.1 Oral Anatomy</button>
+          <button onclick="jumpToSlide(19)">3.2 When to Defer & Refer</button>
+          <button onclick="jumpToSlide(20)">3.3 Treatments & Prescription</button>
+          <button onclick="jumpToSlide(21)">3.4 Equipment</button>
+          <button onclick="jumpToSlide(22)">3.5 Application Technique</button>
+          <button onclick="jumpToSlide(23)">3.6 Aftercare Advice</button>
+          <button onclick="jumpToSlide(24)">3.7 Communication</button>
+          <button onclick="jumpToSlide(25)">3.8 Patients Who Decline</button>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Main content -->
+    <div class="handbook-content">
+      <div class="slide-viewport" id="slideViewport">
+
+        <!-- ── 0: Cover ────────────────────────────────────────────────── -->
+        <div class="slide slide-cover active" id="slide-0">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">DNT — Dental Nurse Training</div>
+            <h1>Course<br/><em>Handbook</em></h1>
+            <p>Certificate in Fluoride Varnish Application</p>
+            <p style="margin-top:1.5rem;font-size:0.9rem;color:rgba(255,255,255,0.5);">Use the sidebar or navigation buttons to move through all three modules.</p>
+          </div>
+        </div>
+
+        <!-- ── 1: Mod 1 intro ─────────────────────────────────────────── -->
+        <div class="slide slide-mod-intro" id="slide-1">
+          <div class="slide-inner">
+            <div class="mod-intro-num">01</div>
+            <div class="slide-mod-tag">Module 1</div>
+            <h1>Legislation, Professionalism<br/>&amp; Emergencies</h1>
+            <div class="outcomes-grid" style="margin-top:1.5rem">
+              <div class="outcome-col will">
+                <div class="outcome-col-header">The candidate will understand</div>
+                <ul>
+                  <li>The legal aspects surrounding patient consent and data protection</li>
+                  <li>The importance of managing adverse incidents quickly</li>
+                  <li>Their responsibility as a GDC registrant</li>
+                </ul>
+              </div>
+              <div class="outcome-col can">
+                <div class="outcome-col-header">The candidate can</div>
+                <ul>
+                  <li>Keep accurate dental records</li>
+                  <li>Maintain confidentiality and data protection policies</li>
+                  <li>Maintain efficient health and safety procedures</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 2: 1.1 Consent ─────────────────────────────────────────── -->
+        <div class="slide" id="slide-2">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 1 · 1.1</div>
+            <h2>Consent &amp; Confidentiality</h2>
+            <h3>What is valid consent?</h3>
+            <p>Before any dental treatment — including fluoride varnish application — you must obtain valid consent. Consent is only valid when it is:</p>
+            <ul>
+              <li><strong>Voluntary</strong> — the patient must not be pressured or coerced in any way</li>
+              <li><strong>Informed</strong> — the patient must understand what the procedure involves, why it is recommended, what the alternatives are, and what happens if they decline</li>
+              <li><strong>Given by a person with capacity</strong> — they must be able to understand, retain and weigh up the information and communicate a decision</li>
+            </ul>
+            <div class="callout callout-teal">
+              <div class="callout-label">Legal basis</div>
+              <p>The Montgomery v Lanarkshire Health Board [2015] UKSC 11 ruling confirmed that patients must be informed of all material risks — those a reasonable patient would want to know about. This applies to extended duties procedures.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 3: 1.2 Children & Capacity ────────────────────────────── -->
+        <div class="slide" id="slide-3">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 1 · 1.2</div>
+            <h2>Consent: Children &amp; Capacity</h2>
+            <h3>Children under 16</h3>
+            <p>Consent is normally given by a parent or guardian. However, a child may consent independently if assessed as <strong>Gillick competent</strong> — meaning they can demonstrate sufficient understanding and maturity for the specific treatment (established in Gillick v West Norfolk AHA [1985]).</p>
+            <p>In practice, always seek both parental consent and the child's assent wherever possible.</p>
+            <h3>Adults who lack capacity</h3>
+            <p>The <strong>Mental Capacity Act 2005</strong> governs decisions made on behalf of adults who lack capacity. Its five key principles:</p>
+            <ol>
+              <li>A person must be assumed to have capacity unless established otherwise</li>
+              <li>All practicable steps must be taken to support decision-making before concluding someone lacks capacity</li>
+              <li>Making an unwise decision does not mean a person lacks capacity</li>
+              <li>Any act or decision must be done in the person's best interests</li>
+              <li>The least restrictive option must always be considered</li>
+            </ol>
+            <div class="callout callout-teal">
+              <div class="callout-label">In practice</div>
+              <p>Always re-obtain consent at each visit — consent from a previous appointment does not carry forward. Check for changes in health, medication or allergies before every application.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 4: 1.3 GDPR ─────────────────────────────────────────────── -->
+        <div class="slide" id="slide-4">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 1 · 1.3</div>
+            <h2>GDPR &amp; Patient Confidentiality</h2>
+            <p>The <strong>UK GDPR</strong> and <strong>Data Protection Act 2018</strong> govern how patient information is handled. Patient data must be:</p>
+            <ul>
+              <li>Collected only for specified, explicit and legitimate purposes</li>
+              <li>Limited to what is necessary — minimum necessary data only</li>
+              <li>Accurate and kept up to date</li>
+              <li>Stored securely and protected from unauthorised access</li>
+              <li>Retained only as long as necessary</li>
+            </ul>
+            <h3>Retention periods</h3>
+            <ul>
+              <li><strong>Adults:</strong> minimum 11 years from the last entry</li>
+              <li><strong>Children:</strong> until age 25 or 11 years from last entry, whichever is longer</li>
+            </ul>
+            <div class="callout callout-warn">
+              <div class="callout-label">Important</div>
+              <p>Discussing patient details outside the clinical team — including on social media — is a serious breach of confidentiality and may constitute a GDC fitness to practise concern.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 5: 1.4 GDC responsibilities ───────────────────────────── -->
+        <div class="slide" id="slide-5">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 1 · 1.4</div>
+            <h2>GDC Registrant Responsibilities</h2>
+            <h3>Standards for the Dental Team (2013) — Nine Principles</h3>
+            <ol>
+              <li>Put patients' interests first</li>
+              <li>Communicate effectively with patients</li>
+              <li>Obtain valid consent</li>
+              <li>Maintain and protect patients' information</li>
+              <li>Have a clear and effective complaints procedure</li>
+              <li>Work with colleagues in patients' best interests</li>
+              <li>Maintain, develop and work within your professional knowledge and skills</li>
+              <li>Raise concerns if patients are at risk</li>
+              <li>Ensure personal behaviour maintains confidence in you and the profession</li>
+            </ol>
+            <h3>Scope of practice &amp; 2026 reforms</h3>
+            <p>GDC Scope of Practice (November 2025) confirms dental nurses may apply fluoride varnish if trained, competent and indemnified. The NHS Amendment Regulations 2026 (in force 1 April 2026) formally recognise standalone fluoride varnish by a dental nurse as an NHS course of treatment at 0.5 UDAs.</p>
+          </div>
+        </div>
+
+        <!-- ── 6: 1.5 Record keeping ──────────────────────────────────── -->
+        <div class="slide" id="slide-6">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 1 · 1.5</div>
+            <h2>Record Keeping</h2>
+            <p>Good record keeping is both a professional and legal requirement under the Health and Social Care Act 2008. Your records must be:</p>
+            <ul>
+              <li><strong>Contemporaneous</strong> — written at the time of treatment, not retrospectively</li>
+              <li><strong>Accurate and factual</strong> — record only what you observed and did</li>
+              <li><strong>Clear and legible</strong></li>
+              <li><strong>Retained</strong> for the required statutory period</li>
+            </ul>
+            <h3>For each fluoride varnish application, record:</h3>
+            <ul>
+              <li>Date of treatment</li>
+              <li>Product name and concentration (ppm)</li>
+              <li>Surfaces treated</li>
+              <li>Confirmation that consent was obtained</li>
+              <li>Pre-treatment assessment findings</li>
+              <li>Aftercare advice given</li>
+              <li>Supervisor details (during training period)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ── 7: 1.6 BLS & Anaphylaxis ───────────────────────────────── -->
+        <div class="slide" id="slide-7">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 1 · 1.6</div>
+            <h2>BLS &amp; Anaphylaxis</h2>
+            <h3>Basic life support sequence (adult)</h3>
+            <ol>
+              <li>Check for danger, then check for response</li>
+              <li>Shout for help — call 999 and send for the AED</li>
+              <li>Open airway (head tilt, chin lift), check for normal breathing ≤10 seconds</li>
+              <li>30 chest compressions (100–120/min, 5–6 cm depth, full recoil)</li>
+              <li>2 rescue breaths — continue 30:2 until help arrives</li>
+            </ol>
+            <h3>Anaphylaxis management</h3>
+            <div class="callout callout-warn">
+              <div class="callout-label">Emergency — act immediately</div>
+              <p>Recognise → Call 999 → Adrenaline 0.5mg IM (1:1000) outer thigh without delay → Lie flat, legs raised → BLS ready → Repeat adrenaline after 5 min if no improvement.</p>
+            </div>
+            <p>Colophony — a resin constituent of many fluoride varnishes — is a recognised allergen. <strong>Always check for allergy before every application.</strong></p>
+          </div>
+        </div>
+
+        <!-- ── 8: 1.7 Fluoride toxicity ───────────────────────────────── -->
+        <div class="slide" id="slide-8">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 1 · 1.7</div>
+            <h2>Fluoride Toxicity</h2>
+            <p>The estimated toxic dose is <strong>5mg per kg of body weight</strong>. A standard application (0.25–0.5ml of 22,600ppm varnish) contains approximately 5–11mg — well below the toxic threshold for an adult, but relevant for very small children.</p>
+            <h3>Signs of acute toxicity</h3>
+            <ul>
+              <li>Nausea, vomiting and abdominal pain</li>
+              <li>Excessive salivation and headache</li>
+              <li>Dizziness — in severe cases: convulsions, hypotension, cardiac arrhythmia</li>
+            </ul>
+            <h3>Management</h3>
+            <ol>
+              <li>Do <strong>not</strong> induce vomiting</li>
+              <li>Give milk or water if patient is conscious and able to swallow</li>
+              <li>Call 999 and alert the rest of the dental team</li>
+              <li>Monitor vital signs and perform BLS if required</li>
+              <li>Document the incident fully</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- ── 9: Mod 2 intro ──────────────────────────────────────────── -->
+        <div class="slide slide-mod-intro" id="slide-9">
+          <div class="slide-inner">
+            <div class="mod-intro-num">02</div>
+            <div class="slide-mod-tag">Module 2</div>
+            <h1>Health, Safety, Cross Infection Control<br/>&amp; Fluoride Materials</h1>
+            <div class="outcomes-grid" style="margin-top:1.5rem">
+              <div class="outcome-col will">
+                <div class="outcome-col-header">The candidate will understand</div>
+                <ul>
+                  <li>Health and safety awareness during fluoride appointments</li>
+                  <li>The importance of cross infection control</li>
+                  <li>Differences between available fluoride materials</li>
+                  <li>Patient management across different patient groups</li>
+                </ul>
+              </div>
+              <div class="outcome-col can">
+                <div class="outcome-col-header">The candidate can</div>
+                <ul>
+                  <li>Demonstrate safe working practice</li>
+                  <li>Demonstrate good cross infection control throughout</li>
+                  <li>Handle fluoride materials safely and correctly</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 10: 2.1 H&S ─────────────────────────────────────────────── -->
+        <div class="slide" id="slide-10">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 2 · 2.1</div>
+            <h2>Health &amp; Safety — Legal Framework</h2>
+            <ul>
+              <li><strong>Health and Safety at Work Act 1974</strong> — duty on all employees to take reasonable care of their own and others' safety</li>
+              <li><strong>Management of Health and Safety at Work Regulations 1999</strong> — employers must carry out suitable risk assessments</li>
+              <li><strong>COSHH 2002</strong> — fluoride varnish is a chemical substance; your practice must hold a COSHH assessment for fluoride products</li>
+            </ul>
+            <h3>COSHH in practice</h3>
+            <ul>
+              <li>Read the material safety data sheet (MSDS/SDS) for each product</li>
+              <li>Store fluoride varnish as per manufacturer instructions — typically cool, dry, away from patients</li>
+              <li>Never use a product after its expiry date</li>
+              <li>Dispose of unused varnish and single-use applicators as clinical waste</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ── 11: 2.2 IPC ─────────────────────────────────────────────── -->
+        <div class="slide" id="slide-11">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 2 · 2.2</div>
+            <h2>Cross Infection Control</h2>
+            <h3>Standard precautions</h3>
+            <p>Standard precautions must be applied to <strong>every patient, every time</strong>, regardless of their known infection status. Treat all blood and bodily fluids as potentially infectious.</p>
+            <p>The legal and professional framework for IPC in dentistry is set out in <strong>Health Technical Memorandum 01-05 (HTM 01-05)</strong>, which applies to all registered dental settings in England. Equivalent guidance: SDCEP (Scotland), Wales and Northern Ireland.</p>
+            <div class="callout callout-teal">
+              <div class="callout-label">Key principle</div>
+              <p>You cannot tell whether a patient carries a bloodborne virus from their appearance, history or behaviour. Standard precautions protect both patients and you from cross-contamination at every appointment.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 12: 2.3 PPE & Hand hygiene ────────────────────────────── -->
+        <div class="slide" id="slide-12">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 2 · 2.3</div>
+            <h2>PPE &amp; Hand Hygiene</h2>
+            <h3>PPE for fluoride varnish application</h3>
+            <ul>
+              <li><strong>Operator:</strong> non-sterile examination gloves, fluid-resistant surgical mask (FRSM), protective eyewear</li>
+              <li><strong>Patient:</strong> bib and protective eyewear</li>
+            </ul>
+            <p>Don PPE before patient contact. Remove and dispose of correctly after each patient. Change gloves if they tear during the procedure.</p>
+            <h3>Hand hygiene — WHO 6-step technique</h3>
+            <ol>
+              <li>Palm to palm</li>
+              <li>Back of each hand</li>
+              <li>Palm to palm, fingers interlaced</li>
+              <li>Backs of fingers interlocked</li>
+              <li>Each thumb in a rotating grip</li>
+              <li>Circular motion of fingertips on palm</li>
+            </ol>
+            <p>Perform hand hygiene before donning and after removing gloves, and between patients.</p>
+          </div>
+        </div>
+
+        <!-- ── 13: 2.4 Decontamination ────────────────────────────────── -->
+        <div class="slide" id="slide-13">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 2 · 2.4</div>
+            <h2>Decontamination &amp; Sterilisation</h2>
+            <h3>The three-stage cycle</h3>
+            <ol>
+              <li><strong>Cleaning</strong> — removal of visible contamination by manual or ultrasonic cleaning, followed by rinsing</li>
+              <li><strong>Disinfection</strong> — reduction of microbial load to a safe level</li>
+              <li><strong>Sterilisation</strong> — validated autoclave per HTM 01-05. Class B autoclaves required for wrapped instruments; Class N for unwrapped only</li>
+            </ol>
+            <h3>Between each patient</h3>
+            <ul>
+              <li>Application brushes and pledgets are <strong>single-use only</strong> — never reuse</li>
+              <li>Decontaminate all clinical contact surfaces with a compatible surface disinfectant</li>
+              <li>Remove and replace protective barriers</li>
+              <li>Dispose of all single-use items as clinical waste</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ── 14: 2.5 How fluoride works ────────────────────────────── -->
+        <div class="slide" id="slide-14">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 2 · 2.5</div>
+            <h2>How Fluoride Prevents Caries</h2>
+            <p>Fluoride exerts its caries-preventive effects through three mechanisms:</p>
+            <ul>
+              <li><strong>Remineralisation</strong> — promotes deposition of fluorapatite into demineralised enamel, producing a surface more resistant to acid attack than the original hydroxyapatite</li>
+              <li><strong>Inhibition of demineralisation</strong> — fluorapatite is less soluble in the weak organic acids produced by cariogenic bacteria</li>
+              <li><strong>Antibacterial action</strong> — inhibits enzyme systems of <em>Streptococcus mutans</em>, reducing acid production from fermentable sugars</li>
+            </ul>
+            <div class="callout callout-teal">
+              <div class="callout-label">Evidence</div>
+              <p>Systematic reviews have demonstrated caries reduction rates of up to <strong>37%</strong> in the primary dentition and <strong>43%</strong> in the permanent dentition with regular fluoride varnish application.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 15: 2.6 Products & evidence ───────────────────────────── -->
+        <div class="slide" id="slide-15">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 2 · 2.6</div>
+            <h2>Products, Evidence &amp; Storage</h2>
+            <h3>Delivering Better Oral Health (DBOH)</h3>
+            <p>The primary UK evidence base for topical fluoride. Current recommendations:</p>
+            <ul>
+              <li>Children aged 3+ and adults at moderate/high caries risk: <strong>22,600ppm</strong> fluoride varnish, at least <strong>twice a year</strong></li>
+              <li>Children under 3 with particular caries risk: at the clinical judgement of the prescribing dentist</li>
+            </ul>
+            <h3>Products</h3>
+            <ul>
+              <li>Most common: 22,600ppm (5%) sodium fluoride — Duraphat, Colmar and others</li>
+              <li>Standard dose: <strong>0.25–0.5ml per patient</strong></li>
+              <li>Follow the prescribing dentist's instructions and manufacturer's guidance</li>
+            </ul>
+            <h3>Storage</h3>
+            <ul>
+              <li>Cool, dry place — protected from direct sunlight</li>
+              <li>Check expiry date before each use; never use expired product</li>
+              <li>Store out of reach of patients — some formulations are prescription-only medicines</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ── 16: 2.7 Patient groups ─────────────────────────────────── -->
+        <div class="slide" id="slide-16">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 2 · 2.7</div>
+            <h2>Patient Groups</h2>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.5rem">
+              <div class="callout callout-teal" style="margin:0">
+                <div class="callout-label">Pre-school (under 5)</div>
+                <p style="font-size:0.88rem">Parental consent essential. Tell-show-do technique. Short, calm, positive appointments. Knee-to-knee positioning if needed.</p>
+              </div>
+              <div class="callout callout-teal" style="margin:0">
+                <div class="callout-label">Children 5–12</div>
+                <p style="font-size:0.88rem">Parental consent + child's assent. Simple positive language. Praise throughout. Distraction for anxious children.</p>
+              </div>
+              <div class="callout callout-teal" style="margin:0">
+                <div class="callout-label">Teenagers</div>
+                <p style="font-size:0.88rem">May be Gillick competent. Respect autonomy. Avoid patronising language. Oral hygiene motivation especially important.</p>
+              </div>
+              <div class="callout callout-teal" style="margin:0">
+                <div class="callout-label">Adults</div>
+                <p style="font-size:0.88rem">Full medical/drug history. Check contraindications. Clear communication. Allow time for questions.</p>
+              </div>
+              <div class="callout callout-teal" style="margin:0;grid-column:1/-1">
+                <div class="callout-label">Elderly patients</div>
+                <p style="font-size:0.88rem">Complex medical histories and polypharmacy. Xerostomia common — fluoride especially beneficial. Target exposed root surfaces. May need adapted positioning, communication and longer appointments.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 17: Mod 3 intro ────────────────────────────────────────── -->
+        <div class="slide slide-mod-intro" id="slide-17">
+          <div class="slide-inner">
+            <div class="mod-intro-num">03</div>
+            <div class="slide-mod-tag">Module 3</div>
+            <h1>Clinical Application<br/>&amp; Patient Care</h1>
+            <div class="outcomes-grid" style="margin-top:1.5rem">
+              <div class="outcome-col will">
+                <div class="outcome-col-header">The candidate will understand</div>
+                <ul>
+                  <li>The importance of good patient instruction and management</li>
+                  <li>The importance of good communication</li>
+                  <li>Fluoride as part of a variety of dental treatments</li>
+                </ul>
+              </div>
+              <div class="outcome-col can">
+                <div class="outcome-col-header">The candidate can</div>
+                <ul>
+                  <li>Apply fluoride on prescription from a dental professional</li>
+                  <li>Describe impacts of poor patient management</li>
+                  <li>Act appropriately if a patient needs further care</li>
+                  <li>Give examples of good and bad patient management</li>
+                  <li>Describe different communication methods</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 18: 3.1 Oral anatomy ───────────────────────────────────── -->
+        <div class="slide" id="slide-18">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 3 · 3.1</div>
+            <h2>Anatomy of the Oral Cavity</h2>
+            <p>Before applying fluoride varnish, carry out a brief intra-oral assessment. You must recognise normal and abnormal appearances of oral tissues.</p>
+            <h3>Structures to assess</h3>
+            <ul>
+              <li><strong>Lips and labial mucosa</strong> — ulceration, vesicles, swelling, lesions</li>
+              <li><strong>Buccal mucosa</strong> — white/red patches, ulceration, linea alba, cheek biting</li>
+              <li><strong>Hard and soft palate</strong> — lesions, swelling, palatine tori</li>
+              <li><strong>Tongue</strong> — coating, ulceration, geographic tongue, fissuring</li>
+              <li><strong>Floor of mouth</strong> — swelling, cysts, unusual vascularity</li>
+              <li><strong>Gingivae</strong> — inflammation, recession, bleeding</li>
+              <li><strong>Teeth</strong> — caries, fractures, erosion, staining, hypoplasia</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ── 19: 3.2 Defer & Refer ──────────────────────────────────── -->
+        <div class="slide" id="slide-19">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 3 · 3.2</div>
+            <h2>When to Defer &amp; Refer</h2>
+            <p>Do <strong>not</strong> apply fluoride varnish if you observe any of the following. Defer treatment and refer to the supervising dentist:</p>
+            <ul>
+              <li>Active ulceration or inflammatory lesions in the area to be treated</li>
+              <li>Visible cavitation or caries requiring operative assessment</li>
+              <li>Active gingival bleeding</li>
+              <li>Unexplained swelling, lumps or soft tissue abnormality</li>
+              <li>Patient declines consent</li>
+            </ul>
+            <div class="callout callout-teal">
+              <div class="callout-label">Scope of practice reminder</div>
+              <p>You are not expected to diagnose pathology. Your role is to recognise that something needs further assessment and refer appropriately. When in doubt — defer and refer.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 20: 3.3 Treatments & prescription ─────────────────────── -->
+        <div class="slide" id="slide-20">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 3 · 3.3</div>
+            <h2>Treatments Requiring Fluoride &amp; Prescription</h2>
+            <p>Fluoride varnish is recommended as part of a preventive plan for patients with:</p>
+            <ul>
+              <li>Moderate or high caries risk per DBOH</li>
+              <li>Early/active carious lesions managed by prevention-first approach</li>
+              <li>Fixed orthodontic treatment (increased risk around brackets)</li>
+              <li>Xerostomia (medication, radiotherapy, Sjögren's syndrome)</li>
+              <li>Exposed root surfaces and root caries risk</li>
+              <li>Involvement in community oral health programmes</li>
+            </ul>
+            <div class="callout callout-warn">
+              <div class="callout-label">Important</div>
+              <p>Fluoride varnish is <strong>always applied on the prescription of a GDC-registered dentist</strong>. You do not make the clinical decision — you carry out the application competently, safely and in line with the prescription.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 21: 3.4 Equipment ───────────────────────────────────────── -->
+        <div class="slide" id="slide-21">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 3 · 3.4</div>
+            <h2>Equipment Required</h2>
+            <ul>
+              <li>Fluoride varnish — correct product, in date, per the prescription</li>
+              <li>Application brush or pledget — single-use</li>
+              <li>Dental mirror and cheek retractors or lip retractor</li>
+              <li>Cotton wool rolls and dry guards</li>
+              <li>Saliva ejector and aspirator</li>
+              <li>Three-in-one syringe (for drying)</li>
+              <li><strong>Operator PPE:</strong> gloves, fluid-resistant surgical mask, eye protection</li>
+              <li><strong>Patient PPE:</strong> bib and protective eyewear</li>
+            </ul>
+            <div class="callout callout-teal">
+              <div class="callout-label">Checklist tip</div>
+              <p>Set up and check all equipment before seating the patient. Confirm the product expiry date and verify the prescription is in place before beginning the appointment.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 22: 3.5 Application technique ─────────────────────────── -->
+        <div class="slide" id="slide-22">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 3 · 3.5</div>
+            <h2>Application Technique</h2>
+            <ol>
+              <li>Confirm prescription is in place. Review patient records and medical history.</li>
+              <li>Wash hands and don full PPE. Seat patient, apply bib and protective eyewear.</li>
+              <li>Carry out intra-oral assessment. Document findings.</li>
+              <li>Obtain (or re-confirm) consent. Document.</li>
+              <li>Isolate: retract cheek, place cotton wool rolls, position saliva ejector.</li>
+              <li>Dry tooth surfaces with three-in-one syringe or cotton wool.</li>
+              <li>Load application brush — total dose 0.25–0.5ml per patient.</li>
+              <li>Apply varnish systematically from posterior to anterior. Prioritise: occlusal pits and fissures, approximal margins, exposed root surfaces.</li>
+              <li>Treat each quadrant in turn; replace cotton wool rolls as needed.</li>
+              <li>Remove isolation materials. Allow patient to close naturally — varnish sets on contact with saliva.</li>
+              <li>Provide aftercare advice — verbal and written where possible.</li>
+              <li>Complete full contemporaneous clinical records.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- ── 23: 3.6 Aftercare ───────────────────────────────────────── -->
+        <div class="slide" id="slide-23">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 3 · 3.6</div>
+            <h2>Aftercare Advice</h2>
+            <p>Instruct the patient (and parent/carer where applicable) to:</p>
+            <ul>
+              <li><strong>No rinsing, drinking or eating for 30 minutes</strong> after application</li>
+              <li>Avoid hard or sticky foods for <strong>4 hours</strong></li>
+              <li>Do not brush teeth until <strong>the following morning</strong></li>
+              <li>A thin coating on teeth is normal and will gradually wear off over 24–48 hours</li>
+            </ul>
+            <div class="callout callout-teal">
+              <div class="callout-label">Take the opportunity</div>
+              <p>Reinforce oral hygiene advice and dietary guidance at every appointment as part of a holistic preventive approach. Fluoride varnish works best alongside twice-daily brushing with fluoride toothpaste, reduced sugar intake and regular recalls.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 24: 3.7 Communication ──────────────────────────────────── -->
+        <div class="slide" id="slide-24">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 3 · 3.7</div>
+            <h2>Communication</h2>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.5rem">
+              <div>
+                <h3 style="color:var(--teal-dark);margin-top:0">✓ Good patient management</h3>
+                <ul>
+                  <li>Welcome the patient by name and introduce yourself</li>
+                  <li>Explain each step before you carry it out</li>
+                  <li>Check understanding and invite questions</li>
+                  <li>Adapt your communication to the patient's age and ability</li>
+                  <li>Respond calmly if the patient becomes anxious</li>
+                  <li>Give clear and consistent aftercare advice</li>
+                </ul>
+              </div>
+              <div>
+                <h3 style="color:var(--warn);margin-top:0">✗ Poor patient management</h3>
+                <ul>
+                  <li>Beginning treatment without explanation</li>
+                  <li>Using clinical jargon the patient cannot understand</li>
+                  <li>Dismissing or ignoring the patient's concerns</li>
+                  <li>Failing to adapt for anxious or vulnerable patients</li>
+                  <li>Providing inconsistent aftercare advice</li>
+                  <li>Proceeding without valid consent</li>
+                </ul>
+              </div>
+            </div>
+            <h3>Communication methods</h3>
+            <ul>
+              <li><strong>Verbal</strong> — clear, jargon-free, adapted to patient's age and understanding</li>
+              <li><strong>Written</strong> — information leaflets and printed aftercare instructions</li>
+              <li><strong>Visual aids</strong> — models and diagrams for children or patients with learning disabilities</li>
+              <li><strong>Interpreter services</strong> — professional interpreter where a language barrier exists; avoid relying on family members</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ── 25: 3.8 Patients who decline ──────────────────────────── -->
+        <div class="slide" id="slide-25">
+          <div class="slide-inner">
+            <div class="slide-mod-tag">Module 3 · 3.8</div>
+            <h2>Managing Patients Who Decline Fluoride</h2>
+            <h3>Common reasons for refusal</h3>
+            <ul>
+              <li>Online misinformation about fluoride toxicity or systemic harm</li>
+              <li>Opposition to water fluoridation extending to all fluoride products</li>
+              <li>Concerns about fluorosis risk in children</li>
+              <li>Previous negative experience, cultural values or personal preference</li>
+            </ul>
+            <h3>How to respond</h3>
+            <ol>
+              <li><strong>Listen without judgment</strong> — allow the patient to explain their concern fully</li>
+              <li><strong>Acknowledge their concern</strong> — do not dismiss or immediately counter it</li>
+              <li><strong>Provide accurate information</strong> — fluoride is naturally occurring; varnish has been used safely in the UK since the 1980s; the dose is very small; there is no credible evidence of systemic harm from correctly applied topical fluoride</li>
+              <li><strong>Respect autonomy</strong> — if fully informed and still declining, that is their right; you must not proceed without consent</li>
+              <li><strong>Document the discussion</strong> — record that refusal was informed and that information was provided</li>
+              <li><strong>Inform the supervising dentist</strong></li>
+            </ol>
+            <div class="callout callout-teal">
+              <div class="callout-label">Key principle</div>
+              <p>Your role is to inform, not to debate. A patient who feels genuinely listened to is far more likely to reconsider at a future appointment than one who feels lectured.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 26: End / well done ────────────────────────────────────── -->
+        <div class="slide slide-cover" id="slide-26">
+          <div class="slide-inner">
+            <div class="slide-mod-tag" style="margin-bottom:2rem">Handbook complete</div>
+            <h1>Well done for<br/><em>completing</em> the handbook</h1>
+            <p>You've covered all three modules. Now apply this knowledge in your portfolio — through your witnessed applications, written tasks, case study, and reflective log.</p>
+            <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem">
+              <a href="portfolio.html" class="btn btn-white">View Portfolio →</a>
+              <a href="course.html" class="btn" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25)">Course Overview</a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end slide-viewport -->
+
+      <!-- Nav bar -->
+      <div class="slide-nav" id="slideNav">
+        <div class="slide-progress" id="slideProgress"></div>
+        <div class="slide-nav-info">
+          Slide <strong id="slideCurrentLabel">1</strong> of <strong id="slideTotalLabel">27</strong>
+        </div>
+        <div class="slide-nav-btns">
+          <button class="slide-btn" id="btnPrev" onclick="prevSlide()">← Previous</button>
+          <button class="slide-btn primary" id="btnNext" onclick="nextSlide()">Next →</button>
+        </div>
+      </div>
+    </div><!-- end handbook-content -->
+
+  </div><!-- end handbook-layout -->
+
+  <!-- Mobile sidebar toggle -->
+  <button id="sidebarToggle" onclick="document.getElementById('hbSidebar').classList.toggle('open')" style="display:none;position:fixed;bottom:5.5rem;left:1rem;z-index:60;background:var(--teal-dark);color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:1.2rem;cursor:pointer;box-shadow:0 4px 16px rgba(0,95,107,0.3)">☰</button>
+
+  <script>
+    const TOTAL = 27;
+    let current = 0;
+
+    // Module ranges for sidebar highlight
+    const modRanges = { 1: [1,8], 2: [9,16], 3: [17,26] };
+
+    function showSlide(n, direction) {
+      const slides = document.querySelectorAll('.slide');
+      const prev = document.getElementById('slide-' + current);
+      if (prev) {
+        prev.classList.remove('active');
+        if (direction === 'next') prev.classList.add('exit-left');
+        setTimeout(() => prev.classList.remove('exit-left'), 400);
+      }
+      current = Math.max(0, Math.min(n, TOTAL - 1));
+      const next = document.getElementById('slide-' + current);
+      if (next) {
+        if (direction === 'prev') {
+          next.style.transform = 'translateX(-40px)';
+          setTimeout(() => { next.style.transform = ''; }, 10);
+        }
+        next.classList.add('active');
+        next.scrollTop = 0;
+      }
+      document.getElementById('slideCurrentLabel').textContent = current + 1;
+      document.getElementById('slideTotalLabel').textContent = TOTAL;
+      document.getElementById('slideProgress').style.width = ((current + 1) / TOTAL * 100) + '%';
+      document.getElementById('btnPrev').disabled = current === 0;
+      document.getElementById('btnNext').disabled = current === TOTAL - 1;
+      updateSidebar();
+    }
+
+    function nextSlide() { showSlide(current + 1, 'next'); }
+    function prevSlide() { showSlide(current - 1, 'prev'); }
+    function jumpToSlide(n) { showSlide(n); }
+
+    function updateSidebar() {
+      // Module labels
+      document.querySelectorAll('.sidebar-mod-label').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.sidebar-sections button').forEach(el => el.classList.remove('active'));
+      for (const [mod, [start, end]] of Object.entries(modRanges)) {
+        if (current >= start && current <= end) {
+          const label = document.querySelector(`.sidebar-mod-label[data-mod="${mod}"]`);
+          if (label) { label.classList.add('active'); }
+          const sections = document.getElementById('mod' + mod + '-sections');
+          if (sections) sections.classList.add('open');
+        }
+      }
+      // Button highlights
+      document.querySelectorAll('.sidebar-sections button').forEach(btn => {
+        const onclick = btn.getAttribute('onclick');
+        const match = onclick && onclick.match(/jumpToSlide\((\d+)\)/);
+        if (match && parseInt(match[1]) === current) btn.classList.add('active');
+      });
+    }
+
+    function toggleMod(mod) {
+      const el = document.getElementById('mod' + mod + '-sections');
+      if (el) el.classList.toggle('open');
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   prevSlide();
+    });
+
+    // Check for ?mod= param on load
+    const params = new URLSearchParams(window.location.search);
+    const startMod = params.get('mod');
+    if (startMod === '2') showSlide(9);
+    else if (startMod === '3') showSlide(17);
+    else showSlide(0);
+
+    // Show mobile sidebar toggle on small screens
+    function checkMobile() {
+      document.getElementById('sidebarToggle').style.display = window.innerWidth <= 900 ? 'flex' : 'none';
+    }
+    window.addEventListener('resize', checkMobile);
+    checkMobile();
+  </script>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>
