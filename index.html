@@ -3,228 +3,377 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Certificate in Fluoride Varnish Application — DNT</title>
+  <title>Admin — DNT Fluoride Varnish Certificate</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="css/style.css"/>
-  <style>
-    .logo-img { height: 44px; width: auto; }
-    .stripe-section { text-align:center; padding: 3rem 0; background: var(--off-white); border-top: 1px solid var(--border); }
-    .stripe-section p { max-width: 480px; margin: 0 auto 1.5rem; }
-    .pricing-box { display:inline-flex; align-items:center; gap:2rem; background:var(--white); border:2px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem 2.5rem; margin-bottom:2rem; }
-    .price-amount { font-size: 3rem; font-weight: 800; color: var(--teal-dark); line-height:1; }
-    .price-label  { font-size: 0.85rem; color: var(--ink-light); }
-    .price-detail { font-size: 0.8rem; color: var(--ink-light); margin-top: 0.25rem; }
-    .what-included { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; margin: 1.5rem 0; }
-    .wi-item { display:flex; align-items:center; gap:0.6rem; font-size:0.88rem; color:var(--ink-mid); }
-    .wi-item span:first-child { color: var(--success); font-size: 1rem; }
-    .section-intro { max-width: 620px; margin-bottom: 2.5rem; }
-  </style>
+  <link rel="stylesheet" href="../css/style.css"/>
 </head>
 <body>
 
-  <nav class="nav">
-    <div class="nav-inner">
-      <a href="index.html" class="nav-logo">
+  <!-- Admin login screen (shown before auth) -->
+  <div id="adminLogin" class="auth-wrap">
+    <div class="auth-card" style="max-width:400px">
+      <div class="auth-logo">
         <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
-             alt="DNT Dental Nurse Training" class="logo-img"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
-        <span class="nav-logo-text" style="display:none">DNT</span>
-      </a>
-      <div class="nav-right">
-        <a href="login.html" class="btn btn-outline btn-sm">Log in</a>
-        <a href="login.html#register" class="btn btn-primary btn-sm">Enrol</a>
+             alt="DNT" style="height:44px;margin:0 auto 1rem" onerror="this.style.display='none'"/>
+        <h2>Admin Access</h2>
+        <p style="font-size:0.85rem;color:var(--ink-light);margin-top:0.25rem">Fluoride Varnish Certificate Platform</p>
       </div>
+      <div class="form-group">
+        <label>Admin email</label>
+        <input type="email" id="adminEmail" value="emily@dentalnurse.training"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="adminPass" placeholder="••••••••"/>
+      </div>
+      <div id="adminLoginErr" class="form-error" style="display:none"></div>
+      <button class="btn btn-primary form-submit" onclick="adminLogin()">Log in to admin</button>
     </div>
-  </nav>
+  </div>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="container hero-inner">
+  <!-- Admin panel (shown after auth) -->
+  <div id="adminPanel" style="display:none">
+    <div class="admin-header">
       <div>
-        <div class="hero-badge">Extended Duties Qualification</div>
-        <h1>Certificate in Fluoride<br/>Varnish Application</h1>
-        <p>A GDC-compliant, blended-learning qualification for registered dental nurses. Five theory modules, 15-question MCQs, written tasks, a clinical logbook and case studies — all in one place.</p>
-        <div class="hero-actions">
-          <a href="#enrol" class="btn btn-white btn-lg">Enrol now</a>
-          <a href="#overview" class="btn btn-outline btn-lg" style="border-color:rgba(255,255,255,0.4);color:rgba(255,255,255,0.9)">Find out more</a>
-        </div>
+        <h1>DNT — Admin Dashboard</h1>
+        <span style="font-size:0.8rem;opacity:0.6">Fluoride Varnish Application Certificate</span>
       </div>
-      <div class="hero-card">
-        <h3>Course at a glance</h3>
-        <div class="hero-stat"><span class="hero-stat-icon">📚</span> 5 theory modules</div>
-        <div class="hero-stat"><span class="hero-stat-icon">✅</span> 15 MCQs per module</div>
-        <div class="hero-stat"><span class="hero-stat-icon">✍️</span> 3 written tasks</div>
-        <div class="hero-stat"><span class="hero-stat-icon">🦷</span> 10-entry clinical logbook</div>
-        <div class="hero-stat"><span class="hero-stat-icon">📋</span> 2 case studies</div>
-        <div class="hero-stat"><span class="hero-stat-icon">🪞</span> End-of-course reflection</div>
-        <div class="hero-stat"><span class="hero-stat-icon">📅</span> 3–6 month duration</div>
+      <div style="display:flex;align-items:center;gap:1rem">
+        <span style="font-size:0.85rem;color:rgba(255,255,255,0.6)">emily@dentalnurse.training</span>
+        <button class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.8)" onclick="adminLogout()">Log out</button>
       </div>
     </div>
-  </section>
 
-  <!-- Overview -->
-  <section class="section" id="overview">
-    <div class="container">
-      <span class="section-label">About the course</span>
-      <div class="section-intro">
-        <h2>Everything in one structured platform</h2>
-        <p>Work through theory at your own pace, pass each module's MCQ, then move on to written tasks and your practical logbook. Your assessor is notified when you submit work and will provide feedback at each stage.</p>
+    <div class="admin-panel">
+      <!-- Stats row -->
+      <div class="admin-stat-row" id="statsRow">
+        <div class="admin-stat"><div class="as-n" id="statTotal">—</div><div class="as-lbl">Total learners</div></div>
+        <div class="admin-stat"><div class="as-n" id="statPending">—</div><div class="as-lbl">Awaiting approval</div></div>
+        <div class="admin-stat"><div class="as-n" id="statActive">—</div><div class="as-lbl">Active learners</div></div>
+        <div class="admin-stat"><div class="as-n" id="statSubmissions">—</div><div class="as-lbl">New submissions</div></div>
       </div>
-      <div class="card-grid-3">
-        <div class="card card-teal">
-          <div style="font-size:1.8rem;margin-bottom:0.75rem">📚</div>
-          <h3>Theory first</h3>
-          <p style="font-size:0.9rem">Five modules covering fluoride science, patient assessment, clinical application, professional law, and managing fluoride refusal. Read the content, then sit the 15-question MCQ to unlock the next module.</p>
-        </div>
-        <div class="card card-teal">
-          <div style="font-size:1.8rem;margin-bottom:0.75rem">✍️</div>
-          <h3>Written assessment</h3>
-          <p style="font-size:0.9rem">Three written tasks unlocked after completing all modules. Download the task document, complete offline, and upload your answers directly in the platform.</p>
-        </div>
-        <div class="card card-teal">
-          <div style="font-size:1.8rem;margin-bottom:0.75rem">🦷</div>
-          <h3>Practical portfolio</h3>
-          <p style="font-size:0.9rem">A 10-entry clinical logbook covering all required patient groups, two case studies, and an end-of-course reflective account — all submitted through the platform.</p>
-        </div>
+
+      <!-- Tabs -->
+      <div class="admin-tabs">
+        <div class="admin-tab active" onclick="switchAdminTab('pending')">⏳ Awaiting Approval</div>
+        <div class="admin-tab" onclick="switchAdminTab('all')">👥 All Learners</div>
+        <div class="admin-tab" onclick="switchAdminTab('submissions')">📬 Submissions</div>
+      </div>
+
+      <!-- Tab content -->
+      <div id="tabContent">
+        <div style="text-align:center;padding:3rem;color:var(--ink-light)">Loading learners…</div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Modules -->
-  <section class="section section-alt" id="modules">
-    <div class="container">
-      <span class="section-label">Course structure</span>
-      <h2 style="margin-bottom:0.5rem">Five theory modules</h2>
-      <p style="margin-bottom:2rem;max-width:520px">Each module must be completed and its MCQ passed before the next unlocks. Written and practical work unlock once all five theory modules are complete.</p>
-      <div class="module-row">
-        <div class="module-pill">
-          <div class="mp-icon">🔬</div>
-          <div class="mp-num">Module 1</div>
-          <div class="mp-title">Fluoride Science and Caries Prevention</div>
-        </div>
-        <div class="module-pill">
-          <div class="mp-icon">🗣️</div>
-          <div class="mp-num">Module 2</div>
-          <div class="mp-title">Patient Assessment and Communication</div>
-        </div>
-        <div class="module-pill">
-          <div class="mp-icon">🦷</div>
-          <div class="mp-num">Module 3</div>
-          <div class="mp-title">Clinical Application and Safety</div>
-        </div>
-        <div class="module-pill">
-          <div class="mp-icon">⚖️</div>
-          <div class="mp-num">Module 4</div>
-          <div class="mp-title">Professional Responsibilities and Law</div>
-        </div>
-        <div class="module-pill">
-          <div class="mp-icon">💬</div>
-          <div class="mp-num">Module 5</div>
-          <div class="mp-title">Reluctance to Fluoride — Managing Refusal</div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- Learner detail modal -->
+  <div class="modal-overlay hidden" id="learnerModal">
+    <div class="modal" id="learnerModalContent"></div>
+  </div>
 
-  <!-- Assessment -->
-  <section class="section">
-    <div class="container">
-      <span class="section-label">Assessment</span>
-      <h2 style="margin-bottom:0.5rem">How you are assessed</h2>
-      <p style="margin-bottom:2.5rem;max-width:520px">No exams. Assessment is through MCQs, written tasks, your clinical logbook, and a final reflective account. All submitted and reviewed online.</p>
-      <div class="card-grid-2">
-        <div class="card">
-          <h3>📝 MCQ — 15 questions per module</h3>
-          <p style="font-size:0.9rem;margin-top:0.5rem">A 15-question multiple choice quiz at the end of each module. You must pass before moving to the next module. You can retake if needed.</p>
-        </div>
-        <div class="card">
-          <h3>✍️ Written tasks (x3)</h3>
-          <p style="font-size:0.9rem;margin-top:0.5rem">Three written tasks on consent, GDC registrant responsibilities, and fluoride science. Download the task sheet, complete it, and upload your answers.</p>
-        </div>
-        <div class="card">
-          <h3>🦷 Clinical logbook (10 entries)</h3>
-          <p style="font-size:0.9rem;margin-top:0.5rem">Log each supervised fluoride varnish application, including patient group, caries risk, product used, prescription confirmation, medical considerations and reflection. Upload completed logbook pages.</p>
-        </div>
-        <div class="card">
-          <h3>📋 Case studies (x2)</h3>
-          <p style="font-size:0.9rem;margin-top:0.5rem">Two extended case studies covering full patient assessment, consent, application technique, challenges and reflection. Upload as part of your practical portfolio.</p>
-        </div>
-        <div class="card" style="grid-column:1/-1">
-          <h3>🪞 End-of-course reflective account (300–500 words)</h3>
-          <p style="font-size:0.9rem;margin-top:0.5rem">A final reflective account drawing on your learning and clinical experience across the course. Written directly in the platform or uploaded as a document.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
 
-  <!-- GDC compliance note -->
-  <section class="section section-teal">
-    <div class="container" style="max-width:700px;text-align:center">
-      <span class="section-label">GDC compliance</span>
-      <h2>Aligned with GDC Scope of Practice (November 2025)</h2>
-      <p>The GDC confirms that dental nurses may apply fluoride varnish under the prescription of a dentist, or as part of a structured dental health programme, provided they are appropriately trained, competent and indemnified. This qualification supports all three requirements.</p>
-      <p style="margin-top:0.75rem;font-size:0.85rem;opacity:0.6">The NHS Amendment Regulations 2026 (in force 1 April 2026) formally recognise standalone fluoride varnish delivery by a dental nurse as an NHS course of treatment. This qualification positions you to take on that role.</p>
-    </div>
-  </section>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+                                from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc, serverTimestamp }
+                                from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  <!-- Enrol / Payment -->
-  <section class="section stripe-section" id="enrol">
-    <div class="container" style="max-width:580px">
-      <span class="section-label">Enrol today</span>
-      <h2 style="margin-bottom:0.75rem">Ready to get started?</h2>
-      <p>Complete your payment below, then create your account. Your course will be unlocked by your assessor within 1 working day of payment.</p>
-      <div class="pricing-box">
-        <div>
-          <div class="price-amount" id="coursePrice">TBC</div>
-          <div class="price-label">Course fee</div>
-        </div>
-        <div style="text-align:left">
-          <div class="what-included">
-            <div class="wi-item"><span>✓</span><span>5 theory modules</span></div>
-            <div class="wi-item"><span>✓</span><span>75 MCQ questions</span></div>
-            <div class="wi-item"><span>✓</span><span>Written task sheet</span></div>
-            <div class="wi-item"><span>✓</span><span>Logbook templates</span></div>
-            <div class="wi-item"><span>✓</span><span>Case study template</span></div>
-            <div class="wi-item"><span>✓</span><span>DNT Certificate</span></div>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:1rem">
-        <a href="STRIPE_PAYMENT_URL_PLACEHOLDER" id="stripeBtn" class="stripe-btn" target="_blank">
-          <span class="sb-icon">💳</span>
-          Pay securely with Stripe
-        </a>
-        <p style="font-size:0.8rem;color:var(--ink-light)">After payment, <a href="login.html#register" style="color:var(--teal);font-weight:600">create your account here</a>. Your assessor will unlock your course within 1 working day.</p>
-      </div>
-    </div>
-  </section>
+    const app  = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
 
-  <footer style="background:var(--teal-dark);color:rgba(255,255,255,0.7);padding:2.5rem 0 1.5rem">
-    <div class="container">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:2rem;margin-bottom:1.5rem">
-        <div>
-          <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:36px;margin-bottom:0.5rem;filter:brightness(0) invert(1);opacity:0.8" onerror="this.style.display='none'"/>
-          <p style="font-size:0.82rem;color:rgba(255,255,255,0.45)">dentalnurse.training</p>
-          <p style="font-size:0.78rem;color:rgba(255,255,255,0.35);margin-top:0.25rem">Dental Nurse Training Ltd<br/>Registered in England No. 12257723<br/>21 Angel Hill, Tiverton, Devon EX16 6PE</p>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:0.5rem">
-          <a href="login.html" style="color:rgba(255,255,255,0.6);font-size:0.88rem">Log in</a>
-          <a href="login.html#register" style="color:rgba(255,255,255,0.6);font-size:0.88rem">Register</a>
-          <a href="mailto:emily@dentalnurse.training" style="color:rgba(255,255,255,0.6);font-size:0.88rem">Contact</a>
-        </div>
-      </div>
-      <p style="font-size:0.76rem;color:rgba(255,255,255,0.3);border-top:1px solid rgba(255,255,255,0.08);padding-top:1.25rem">
-        © 2025 Dental Nurse Training Ltd. This is a DNT certificate and is not awarded by NEBDN. Learners remain responsible for ensuring they are trained, competent and appropriately indemnified before applying fluoride varnish independently.
-      </p>
-    </div>
-  </footer>
+    let learners   = [];
+    let currentTab = 'pending';
 
-  <script src="js/config.js"></script>
-  <script>
-    // Update price display and Stripe URL from config
-    document.getElementById('coursePrice').textContent = COURSE_PRICE;
-    document.getElementById('stripeBtn').href = STRIPE_PAYMENT_URL;
+    // ── Auth ───────────────────────────────────────────────────────────────
+    onAuthStateChanged(auth, (user) => {
+      if (user && user.email === ADMIN_EMAIL) {
+        document.getElementById('adminLogin').style.display  = 'none';
+        document.getElementById('adminPanel').style.display  = '';
+        loadLearners();
+      }
+    });
+
+    window.adminLogin = async () => {
+      const email = document.getElementById('adminEmail').value.trim();
+      const pass  = document.getElementById('adminPass').value;
+      const err   = document.getElementById('adminLoginErr');
+      if (email !== ADMIN_EMAIL) {
+        err.textContent = 'Invalid admin credentials.'; err.style.display = 'block'; return;
+      }
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch(e) {
+        err.textContent = 'Login failed. Please check your password.'; err.style.display = 'block';
+      }
+    };
+
+    window.adminLogout = async () => {
+      await signOut(auth);
+      document.getElementById('adminLogin').style.display  = '';
+      document.getElementById('adminPanel').style.display  = 'none';
+    };
+
+    // ── Load learners ──────────────────────────────────────────────────────
+    async function loadLearners() {
+      const snap = await getDocs(collection(db, 'learners'));
+      learners = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      updateStats();
+      renderTab(currentTab);
+    }
+
+    function updateStats() {
+      const pending     = learners.filter(l => !l.unlocked).length;
+      const active      = learners.filter(l => l.unlocked).length;
+      const submissions = learners.filter(l =>
+        l.writtenSubmitted || l.practicalSubmitted || l.reflectionSubmitted
+      ).length;
+      document.getElementById('statTotal').textContent       = learners.length;
+      document.getElementById('statPending').textContent     = pending;
+      document.getElementById('statActive').textContent      = active;
+      document.getElementById('statSubmissions').textContent = submissions;
+    }
+
+    // ── Tabs ──────────────────────────────────────────────────────────────
+    window.switchAdminTab = (tab) => {
+      currentTab = tab;
+      document.querySelectorAll('.admin-tab').forEach((t, i) => {
+        t.classList.toggle('active', ['pending','all','submissions'][i] === tab);
+      });
+      renderTab(tab);
+    };
+
+    function renderTab(tab) {
+      const el = document.getElementById('tabContent');
+      if (tab === 'pending')     { renderPendingTab(el); return; }
+      if (tab === 'all')         { renderAllTab(el); return; }
+      if (tab === 'submissions') { renderSubmissionsTab(el); return; }
+    }
+
+    // ── Pending tab ────────────────────────────────────────────────────────
+    function renderPendingTab(el) {
+      const pending = learners.filter(l => !l.unlocked);
+      if (!pending.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">✅ No accounts awaiting approval</div>';
+        return;
+      }
+      el.innerHTML = `
+        <p style="margin-bottom:1rem;color:var(--ink-light);font-size:0.9rem">${pending.length} account${pending.length>1?'s':''} awaiting approval. Once you have confirmed payment, click Approve to unlock access.</p>
+        <table class="admin-table">
+          <thead><tr>
+            <th>Name</th><th>Email / GDC</th><th>Registered</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${pending.map(l => `<tr>
+              <td><div class="td-name">${l.name}</div></td>
+              <td><div>${l.email}</div><div class="td-email">GDC: ${l.gdc}</div></td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '—'}</td>
+              <td>
+                <div class="admin-actions">
+                  <button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${l.name}')">✓ Approve</button>
+                  <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">View</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    // ── All learners tab ──────────────────────────────────────────────────
+    function renderAllTab(el) {
+      if (!learners.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No learners yet.</div>';
+        return;
+      }
+      el.innerHTML = `
+        <div style="margin-bottom:1rem">
+          <input type="text" id="learnerSearch" placeholder="Search by name or email..." style="padding:0.6rem 1rem;border:1.5px solid var(--border);border-radius:var(--radius);font-family:var(--font);font-size:0.9rem;width:280px;outline:none" oninput="filterLearners(this.value)"/>
+        </div>
+        <table class="admin-table" id="allLearnersTable">
+          <thead><tr>
+            <th>Name</th><th>Email / GDC</th><th>Status</th><th>Theory</th><th>Written</th><th>Practical</th><th>Reflection</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="allLearnersBody">
+            ${renderAllRows(learners)}
+          </tbody>
+        </table>`;
+    }
+
+    function renderAllRows(list) {
+      return list.map(l => {
+        const mp = l.moduleProgress || {};
+        const passed = [1,2,3,4,5].filter(i => mp[i]===2).length;
+        return `<tr>
+          <td><div class="td-name">${l.name}</div></td>
+          <td><div style="font-size:0.82rem">${l.email}</div><div class="td-email">GDC: ${l.gdc}</div></td>
+          <td>${l.unlocked ? '<span class="pill pill-green">Active</span>' : '<span class="pill pill-orange">Pending</span>'}</td>
+          <td><span class="pill ${passed===5?'pill-green':passed>0?'pill-teal':'pill-grey'}">${passed}/5</span></td>
+          <td>${l.writtenSubmitted    ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">—</span>'}</td>
+          <td>${l.practicalSubmitted  ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">—</span>'}</td>
+          <td>${l.reflectionSubmitted ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">—</span>'}</td>
+          <td>
+            <div class="admin-actions">
+              <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">Manage</button>
+              ${!l.unlocked ? `<button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${l.name}')">Approve</button>` : ''}
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    window.filterLearners = (q) => {
+      const filtered = learners.filter(l =>
+        l.name?.toLowerCase().includes(q.toLowerCase()) ||
+        l.email?.toLowerCase().includes(q.toLowerCase())
+      );
+      const body = document.getElementById('allLearnersBody');
+      if (body) body.innerHTML = renderAllRows(filtered);
+    };
+
+    // ── Submissions tab ──────────────────────────────────────────────────
+    function renderSubmissionsTab(el) {
+      const withSubs = learners.filter(l => l.writtenSubmitted || l.practicalSubmitted || l.reflectionSubmitted);
+      if (!withSubs.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No submissions yet.</div>';
+        return;
+      }
+      el.innerHTML = `
+        <table class="admin-table">
+          <thead><tr>
+            <th>Learner</th><th>Submission</th><th>Submitted</th><th>File</th><th>Feedback</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${withSubs.flatMap(l => {
+              const rows = [];
+              if (l.writtenSubmitted)    rows.push({ l, type:'written',    label:'Written Tasks',      url:l.writtenFileUrl,    feedback:l.writtenFeedback,    at:l.writtenSubmittedAt });
+              if (l.practicalSubmitted)  rows.push({ l, type:'practical',  label:'Practical Portfolio', url:l.practicalFileUrl,  feedback:l.practicalFeedback,  at:l.practicalSubmittedAt });
+              if (l.reflectionSubmitted) rows.push({ l, type:'reflection', label:'Final Reflection',    url:l.reflectionFileUrl, feedback:l.reflectionFeedback, at:l.reflectionSubmittedAt });
+              return rows;
+            }).map(({ l, type, label, url, feedback, at }) => `<tr>
+              <td><div class="td-name">${l.name}</div><div class="td-email">${l.email}</div></td>
+              <td><span class="pill pill-teal">${label}</span></td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${at?.toDate ? at.toDate().toLocaleDateString('en-GB') : '—'}</td>
+              <td>${url ? `<a href="${url}" target="_blank" class="submission-link">📥 Download</a>` : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'}</td>
+              <td style="font-size:0.82rem">${feedback ? `<span style="color:var(--success)">✓ Given</span>` : '<span style="color:var(--ink-light)">Pending</span>'}</td>
+              <td>
+                <button class="btn btn-primary btn-sm" onclick="openFeedbackModal('${l.id}','${type}','${l.name}')">
+                  ${feedback ? 'Edit feedback' : 'Add feedback'}
+                </button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    // ── Approve learner ──────────────────────────────────────────────────
+    window.approveLearner = async (id, name) => {
+      if (!confirm(`Approve ${name} and unlock their course access?`)) return;
+      await updateDoc(doc(db, 'learners', id), { unlocked: true, approvedAt: serverTimestamp() });
+      const l = learners.find(x => x.id === id);
+      if (l) l.unlocked = true;
+      updateStats();
+      renderTab(currentTab);
+      showToast(`${name} approved ✅`, 'success');
+    };
+
+    // ── Learner detail modal ──────────────────────────────────────────────
+    window.openLearnerModal = (id) => {
+      const l  = learners.find(x => x.id === id);
+      if (!l) return;
+      const mp = l.moduleProgress || {};
+      document.getElementById('learnerModalContent').innerHTML = `
+        <div class="modal-header">
+          <h3>${l.name}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <table style="width:100%;font-size:0.9rem;border-collapse:collapse">
+          ${[['Email', l.email],['GDC', l.gdc],['Status', l.unlocked?'Active':'Pending approval'],
+             ['Enrolled', l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '—'],
+             ['Module 1', mp[1]===2?'✅ Passed':mp[1]===1?'In progress':'Not started'],
+             ['Module 2', mp[2]===2?'✅ Passed':mp[2]===1?'In progress':'Not started'],
+             ['Module 3', mp[3]===2?'✅ Passed':mp[3]===1?'In progress':'Not started'],
+             ['Module 4', mp[4]===2?'✅ Passed':mp[4]===1?'In progress':'Not started'],
+             ['Module 5', mp[5]===2?'✅ Passed':mp[5]===1?'In progress':'Not started'],
+             ['Written',    l.writtenSubmitted?'✅ Submitted':'Not submitted'],
+             ['Practical',  l.practicalSubmitted?'✅ Submitted':'Not submitted'],
+             ['Reflection', l.reflectionSubmitted?'✅ Submitted':'Not submitted'],
+           ].map(([k,v]) => `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:0.55rem 0.75rem;color:var(--ink-light);font-weight:600;width:140px">${k}</td>
+            <td style="padding:0.55rem 0.75rem">${v}</td>
+           </tr>`).join('')}
+        </table>
+        <div class="form-group" style="margin-top:1.25rem">
+          <label>Internal notes (not visible to learner)</label>
+          <textarea id="adminNotes" style="min-height:80px">${l.notes||''}</textarea>
+        </div>
+        <div class="modal-footer">
+          ${!l.unlocked ? `<button class="btn btn-success" onclick="approveLearner('${l.id}','${l.name}');closeModal()">✓ Approve learner</button>` : ''}
+          <button class="btn btn-outline" onclick="saveNotes('${l.id}')">Save notes</button>
+          <button class="btn btn-primary" onclick="closeModal()">Close</button>
+        </div>`;
+      document.getElementById('learnerModal').classList.remove('hidden');
+    };
+
+    window.closeModal = () => document.getElementById('learnerModal').classList.add('hidden');
+
+    window.saveNotes = async (id) => {
+      const notes = document.getElementById('adminNotes').value;
+      await updateDoc(doc(db, 'learners', id), { notes });
+      const l = learners.find(x => x.id === id);
+      if (l) l.notes = notes;
+      showToast('Notes saved ✓');
+    };
+
+    // ── Feedback modal ────────────────────────────────────────────────────
+    window.openFeedbackModal = (id, type, name) => {
+      const l = learners.find(x => x.id === id);
+      const existing = l?.[`${type}Feedback`] || '';
+      document.getElementById('learnerModalContent').innerHTML = `
+        <div class="modal-header">
+          <h3>Feedback — ${name}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <p style="font-size:0.9rem;color:var(--ink-light);margin-bottom:1rem">This feedback will be visible to the learner in their dashboard.</p>
+        <div class="form-group">
+          <label>Your feedback</label>
+          <textarea id="feedbackText" style="min-height:160px">${existing}</textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveFeedback('${id}','${type}')">Save feedback</button>
+        </div>`;
+      document.getElementById('learnerModal').classList.remove('hidden');
+    };
+
+    window.saveFeedback = async (id, type) => {
+      const text = document.getElementById('feedbackText').value;
+      await updateDoc(doc(db, 'learners', id), { [`${type}Feedback`]: text });
+      const l = learners.find(x => x.id === id);
+      if (l) l[`${type}Feedback`] = text;
+      closeModal();
+      showToast('Feedback saved and visible to learner ✅', 'success');
+    };
+
+    // ── Keyboard shortcut for login ────────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && document.getElementById('adminLogin').style.display !== 'none') {
+        window.adminLogin();
+      }
+    });
+
+    // ── Toast ─────────────────────────────────────────────────────────────
+    window.showToast = (msg, type='') => {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = `toast show ${type}`;
+      setTimeout(() => t.classList.remove('show'), 4000);
+    };
   </script>
+  <script src="../js/config.js"></script>
 </body>
 </html>
