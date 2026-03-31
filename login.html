@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Log in — DNT Fluoride Varnish Certificate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
+             alt="DNT" style="height:48px;margin:0 auto 0.75rem"
+             onerror="this.style.display='none'"/>
+        <h2>Fluoride Varnish Application<br/>Certificate</h2>
+      </div>
+
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Log in</div>
+        <div class="auth-tab" id="tabRegister" onclick="switchTab('register')">Register</div>
+      </div>
+
+      <!-- Login form -->
+      <div id="loginForm">
+        <div class="form-group">
+          <label for="loginEmail">Email address</label>
+          <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <div id="loginError" class="form-error" style="display:none"></div>
+        <button class="btn btn-primary form-submit" onclick="handleLogin()">Log in</button>
+        <div class="auth-switch">
+          <a href="#" onclick="switchTab('register')">Create an account</a> &nbsp;·&nbsp;
+          <a href="#" onclick="handleForgotPassword()">Forgot password?</a>
+        </div>
+      </div>
+
+      <!-- Register form -->
+      <div id="registerForm" style="display:none">
+        <div class="form-group">
+          <label for="regName">Full name</label>
+          <input type="text" id="regName" placeholder="Your full name"/>
+        </div>
+        <div class="form-group">
+          <label for="regEmail">Email address</label>
+          <input type="email" id="regEmail" placeholder="your@email.com"/>
+        </div>
+        <div class="form-group">
+          <label for="regGDC">GDC registration number</label>
+          <input type="text" id="regGDC" placeholder="e.g. 123456"/>
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Password</label>
+          <input type="password" id="regPassword" placeholder="At least 8 characters"/>
+        </div>
+        <div class="form-group">
+          <label for="regPassword2">Confirm password</label>
+          <input type="password" id="regPassword2" placeholder="Repeat password"/>
+        </div>
+        <div id="registerError" class="form-error" style="display:none"></div>
+        <div style="font-size:0.8rem;color:var(--ink-light);margin-bottom:1rem;line-height:1.5">
+          By registering you confirm you have paid the course fee. Your account will be unlocked within 1 working day.
+        </div>
+        <button class="btn btn-primary form-submit" onclick="handleRegister()">Create account</button>
+        <div class="auth-switch">
+          Already have an account? <a href="#" onclick="switchTab('login')">Log in</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp }         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail }
+                                     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, serverTimestamp }
+                                     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Load config
+    const cfg = await import('./js/config.js').catch(() => null);
+
+    const app  = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    // ── Tab switching ──────────────────────────────────────────────────────
+    window.switchTab = (tab) => {
+      document.getElementById('loginForm').style.display    = tab === 'login'    ? '' : 'none';
+      document.getElementById('registerForm').style.display = tab === 'register' ? '' : 'none';
+      document.getElementById('tabLogin').classList.toggle('active',    tab === 'login');
+      document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+    };
+    // Check URL hash for direct register link
+    if (window.location.hash === '#register') window.switchTab('register');
+
+    // ── Login ───────────────────────────────────────────────────────────────
+    window.handleLogin = async () => {
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass  = document.getElementById('loginPassword').value;
+      const errEl = document.getElementById('loginError');
+      errEl.style.display = 'none';
+      if (!email || !pass) { errEl.textContent = 'Please enter your email and password.'; errEl.style.display = 'block'; return; }
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        // Check if admin
+        if (email === ADMIN_EMAIL) { window.location.href = 'admin/index.html'; return; }
+        window.location.href = 'dashboard.html';
+      } catch(e) {
+        errEl.textContent = e.code === 'auth/invalid-credential' ? 'Incorrect email or password.' : 'Login failed. Please try again.';
+        errEl.style.display = 'block';
+      }
+    };
+
+    // ── Register ────────────────────────────────────────────────────────────
+    window.handleRegister = async () => {
+      const name  = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const gdc   = document.getElementById('regGDC').value.trim();
+      const pass  = document.getElementById('regPassword').value;
+      const pass2 = document.getElementById('regPassword2').value;
+      const errEl = document.getElementById('registerError');
+      errEl.style.display = 'none';
+      if (!name || !email || !gdc || !pass) { errEl.textContent = 'Please complete all fields.'; errEl.style.display = 'block'; return; }
+      if (pass.length < 8) { errEl.textContent = 'Password must be at least 8 characters.'; errEl.style.display = 'block'; return; }
+      if (pass !== pass2)  { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        // Create learner document
+        await setDoc(doc(db, 'learners', cred.user.uid), {
+          name, email, gdc,
+          unlocked: false,       // Admin must unlock after payment confirmed
+          enrolledAt: serverTimestamp(),
+          moduleProgress: { 1:0, 2:0, 3:0, 4:0, 5:0 }, // 0=not started, 1=in progress, 2=passed
+          writtenSubmitted: false,
+          practicalSubmitted: false,
+          reflectionSubmitted: false,
+          logbookEntries: [],
+          casestudyCount: 0,
+          notes: ''
+        });
+        window.location.href = 'pending.html';
+      } catch(e) {
+        errEl.textContent = e.code === 'auth/email-already-in-use' ? 'An account with this email already exists.' : 'Registration failed. Please try again.';
+        errEl.style.display = 'block';
+      }
+    };
+
+    // ── Forgot password ─────────────────────────────────────────────────────
+    window.handleForgotPassword = async () => {
+      const email = document.getElementById('loginEmail').value.trim();
+      if (!email) { alert('Please enter your email address first.'); return; }
+      try {
+        await sendPasswordResetEmail(auth, email);
+        alert('Password reset email sent. Check your inbox.');
+      } catch(e) {
+        alert('Could not send reset email. Please check the address and try again.');
+      }
+    };
+
+    // ── Keyboard submit ──────────────────────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const active = document.getElementById('loginForm').style.display !== 'none' ? 'login' : 'register';
+        active === 'login' ? window.handleLogin() : window.handleRegister();
+      }
+    });
+  </script>
+  <script src="js/config.js"></script>
+</body>
+</html>
