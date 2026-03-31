@@ -18,12 +18,6 @@
         <h2>Fluoride Varnish Application<br/>Certificate</h2>
       </div>
 
-      <div class="auth-tabs">
-        <div class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Log in</div>
-        <div class="auth-tab" id="tabRegister" onclick="switchTab('register')">Register</div>
-      </div>
-
-      <!-- Login form -->
       <div id="loginForm">
         <div class="form-group">
           <label for="loginEmail">Email address</label>
@@ -36,72 +30,30 @@
         <div id="loginError" class="form-error" style="display:none"></div>
         <button class="btn btn-primary form-submit" onclick="handleLogin()">Log in</button>
         <div class="auth-switch">
-          <a href="#" onclick="switchTab('register')">Create an account</a> &nbsp;·&nbsp;
           <a href="#" onclick="handleForgotPassword()">Forgot password?</a>
         </div>
       </div>
 
-      <!-- Register form -->
-      <div id="registerForm" style="display:none">
-        <div class="form-group">
-          <label for="regName">Full name</label>
-          <input type="text" id="regName" placeholder="Your full name"/>
-        </div>
-        <div class="form-group">
-          <label for="regEmail">Email address</label>
-          <input type="email" id="regEmail" placeholder="your@email.com"/>
-        </div>
-        <div class="form-group">
-          <label for="regGDC">GDC registration number</label>
-          <input type="text" id="regGDC" placeholder="e.g. 123456"/>
-        </div>
-        <div class="form-group">
-          <label for="regPassword">Password</label>
-          <input type="password" id="regPassword" placeholder="At least 8 characters"/>
-        </div>
-        <div class="form-group">
-          <label for="regPassword2">Confirm password</label>
-          <input type="password" id="regPassword2" placeholder="Repeat password"/>
-        </div>
-        <div id="registerError" class="form-error" style="display:none"></div>
-        <div style="font-size:0.8rem;color:var(--ink-light);margin-bottom:1rem;line-height:1.5">
-          By registering you confirm you have paid the course fee. Your account will be unlocked within 1 working day.
-        </div>
-        <button class="btn btn-primary form-submit" onclick="handleRegister()">Create account</button>
-        <div class="auth-switch">
-          Already have an account? <a href="#" onclick="switchTab('login')">Log in</a>
-        </div>
+      <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);text-align:center">
+        <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:0.75rem">Don't have an account yet?</p>
+        <p style="font-size:0.88rem;color:var(--ink-mid);line-height:1.6">
+          To enrol, please contact DNT at<br/>
+          <a href="mailto:emily@dentalnurse.training" style="color:var(--teal);font-weight:600">emily@dentalnurse.training</a><br/>
+          Your login details will be sent to you once your enrolment is confirmed.
+        </p>
       </div>
 
     </div>
   </div>
 
-  <!-- Firebase SDKs -->
   <script type="module">
-    import { initializeApp }         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail }
-                                     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, serverTimestamp }
-                                     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    // Load config
-    const cfg = await import('./js/config.js').catch(() => null);
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail }
+                             from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const app  = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
-    const db   = getFirestore(app);
 
-    // ── Tab switching ──────────────────────────────────────────────────────
-    window.switchTab = (tab) => {
-      document.getElementById('loginForm').style.display    = tab === 'login'    ? '' : 'none';
-      document.getElementById('registerForm').style.display = tab === 'register' ? '' : 'none';
-      document.getElementById('tabLogin').classList.toggle('active',    tab === 'login');
-      document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
-    };
-    // Check URL hash for direct register link
-    if (window.location.hash === '#register') window.switchTab('register');
-
-    // ── Login ───────────────────────────────────────────────────────────────
     window.handleLogin = async () => {
       const email = document.getElementById('loginEmail').value.trim();
       const pass  = document.getElementById('loginPassword').value;
@@ -110,7 +62,6 @@
       if (!email || !pass) { errEl.textContent = 'Please enter your email and password.'; errEl.style.display = 'block'; return; }
       try {
         await signInWithEmailAndPassword(auth, email, pass);
-        // Check if admin
         if (email === ADMIN_EMAIL) { window.location.href = 'admin/index.html'; return; }
         window.location.href = 'dashboard.html';
       } catch(e) {
@@ -119,41 +70,6 @@
       }
     };
 
-    // ── Register ────────────────────────────────────────────────────────────
-    window.handleRegister = async () => {
-      const name  = document.getElementById('regName').value.trim();
-      const email = document.getElementById('regEmail').value.trim();
-      const gdc   = document.getElementById('regGDC').value.trim();
-      const pass  = document.getElementById('regPassword').value;
-      const pass2 = document.getElementById('regPassword2').value;
-      const errEl = document.getElementById('registerError');
-      errEl.style.display = 'none';
-      if (!name || !email || !gdc || !pass) { errEl.textContent = 'Please complete all fields.'; errEl.style.display = 'block'; return; }
-      if (pass.length < 8) { errEl.textContent = 'Password must be at least 8 characters.'; errEl.style.display = 'block'; return; }
-      if (pass !== pass2)  { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
-      try {
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-        // Create learner document
-        await setDoc(doc(db, 'learners', cred.user.uid), {
-          name, email, gdc,
-          unlocked: false,       // Admin must unlock after payment confirmed
-          enrolledAt: serverTimestamp(),
-          moduleProgress: { 1:0, 2:0, 3:0, 4:0, 5:0 }, // 0=not started, 1=in progress, 2=passed
-          writtenSubmitted: false,
-          practicalSubmitted: false,
-          reflectionSubmitted: false,
-          logbookEntries: [],
-          casestudyCount: 0,
-          notes: ''
-        });
-        window.location.href = 'pending.html';
-      } catch(e) {
-        errEl.textContent = e.code === 'auth/email-already-in-use' ? 'An account with this email already exists.' : 'Registration failed. Please try again.';
-        errEl.style.display = 'block';
-      }
-    };
-
-    // ── Forgot password ─────────────────────────────────────────────────────
     window.handleForgotPassword = async () => {
       const email = document.getElementById('loginEmail').value.trim();
       if (!email) { alert('Please enter your email address first.'); return; }
@@ -165,13 +81,7 @@
       }
     };
 
-    // ── Keyboard submit ──────────────────────────────────────────────────────
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const active = document.getElementById('loginForm').style.display !== 'none' ? 'login' : 'register';
-        active === 'login' ? window.handleLogin() : window.handleRegister();
-      }
-    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Enter') window.handleLogin(); });
   </script>
   <script src="js/config.js"></script>
 </body>
