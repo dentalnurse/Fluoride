@@ -113,6 +113,526 @@
     onAuthStateChanged(auth, async (user) => {
       if (!user) { window.location.href = 'login.html'; return; }
       uid = user.uid;
+      const snap = await getDoc(doc(db, 'learners', uid));
+      if (!snap.exists()) { window.location.href = 'login.html'; return; }
+      learner = snap.data();
+      if (!learner.unlocked) { window.location.href = 'pending.html'; return; }
+      document.getElementById('navName').textContent = learner.name.split(' ')[0];
+      renderSidebar();
+      showSection('home');
+    });
+
+    window.handleLogout = async () => {
+      await signOut(auth);
+      window.location.href = 'login.html';
+    };
+
+    // ── Sidebar state ─────────────────────────────────────────────────────
+    function renderSidebar() {
+      const mp = learner.moduleProgress || {};
+      const allPassed = [1,2,3,4,5].every(i => mp[i] === 2);
+
+      [1,2,3,4,5].forEach(i => {
+        const btn = document.getElementById(`sb-m${i}`);
+        const badge = document.getElementById(`badge-m${i}`);
+        // Module i is accessible if all previous are passed
+        const accessible = i === 1 || mp[i-1] === 2;
+        if (!accessible) { btn.classList.add('locked'); badge.textContent='🔒'; badge.className='si-badge badge-lock'; return; }
+        btn.classList.remove('locked');
+        if (mp[i] === 2)      { badge.textContent='✓'; badge.className='si-badge badge-done'; }
+        else if (mp[i] === 1) { badge.textContent='…'; badge.className='si-badge badge-pend'; }
+        else                  { badge.textContent='→'; badge.className='si-badge badge-new'; }
+      });
+
+      // Written / practical / reflection unlock only when all modules passed
+      ['written','practical','reflection'].forEach(s => {
+        const btn   = document.getElementById(`sb-${s}`);
+        const badge = document.getElementById(`badge-${s}`);
+        if (!allPassed) { btn.classList.add('locked'); badge.textContent='🔒'; return; }
+        btn.classList.remove('locked');
+        const submitted = learner[`${s}Submitted`];
+        badge.textContent = submitted ? '✓' : '→';
+        badge.className   = submitted ? 'si-badge badge-done' : 'si-badge badge-new';
+      });
+    }
+
+    // ── Section routing ────────────────────────────────────────────────────
+    window.showSection = (id) => {
+      document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+      const sb = document.getElementById(`sb-${id === 'home' ? 'home' : id}`);
+      if (sb) sb.classList.add('active');
+
+      const main = document.getElementById('dashMain');
+      const mp   = learner.moduleProgress || {};
+      const allPassed = [1,2,3,4,5].every(i => mp[i] === 2);
+
+      if (id === 'home')        { renderHome(main, mp, allPassed); return; }
+      if (id.startsWith('m'))   {
+        const modNum = parseInt(id[1]);
+        const accessible = modNum === 1 || mp[modNum-1] === 2;
+        if (!accessible) { renderLocked(main, 'Complete the previous module first'); return; }
+        renderModule(main, modNum, mp[modNum]);
+        return;
+      }
+      if (!allPassed) { renderLocked(main, 'Complete all five theory modules to unlock this section'); return; }
+      if (id === 'written')    { renderWritten(main); return; }
+      if (id === 'practical')  { renderPractical(main); return; }
+      if (id === 'reflection') { renderReflection(main); return; }
+    };
+
+    // ── HOME ──────────────────────────────────────────────────────────────
+    function renderHome(el, mp, allPassed) {
+      const passed = [1,2,3,4,5].filter(i => mp[i] === 2).length;
+      const pct    = Math.round(passed / 5 * 100);
+      el.innerHTML = `
+        <div class="dash-header">
+          <h1>Welcome back, ${learner.name.split(' ')[0]} 👋</h1>
+          <p>GDC: ${learner.gdc} &nbsp;·&nbsp; Enrolled: ${learner.enrolledAt?.toDate ? learner.enrolledAt.toDate().toLocaleDateString('en-GB') : '—'}</p>
+        </div>
+        <div class="content-card" style="margin-bottom:1.25rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+            <strong>Theory progress</strong>
+            <span style="font-size:0.85rem;color:var(--teal-dark);font-weight:700">${passed}/5 modules complete</span>
+          </div>
+          <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.85rem;margin-bottom:1.5rem">
+          ${[1,2,3,4,5].map(i => {
+            const icons = ['🔬','🗣️','🦷','⚖️','💬'];
+            const s = mp[i] === 2 ? 'done' : mp[i] === 1 ? 'pend' : 'lock';
+            const colours = { done: 'var(--success)', pend: 'var(--teal)', lock: 'var(--locked)' };
+            const accessible = i === 1 || mp[i-1] === 2;
+            return `<div class="module-card ${accessible ? '' : 'locked'}" style="cursor:${accessible?'pointer':'default'}" onclick="${accessible?`showSection('m${i}')`:''}">
+              <div class="mc-header">
+                <div class="mc-icon">${icons[i-1]}</div>
+                <div><div class="mc-mod">Module ${i}</div><div class="mc-title" style="font-size:0.82rem">${MODULES[i-1].title}</div></div>
+              </div>
+              <div class="mc-status">
+                <div class="status-dot dot-${s}"></div>
+                <span style="font-size:0.8rem;color:${colours[s]}">${mp[i]===2?'Passed':mp[i]===1?'In progress':accessible?'Not started':'Locked'}</span>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+          ${['written','practical','reflection'].map(s => {
+            const labels = {written:'Written Tasks',practical:'Practical Portfolio',reflection:'Final Reflection'};
+            const icons  = {written:'✍️',practical:'🦷',reflection:'🪞'};
+            const submitted = learner[`${s}Submitted`];
+            return `<div class="content-card" style="cursor:${allPassed?'pointer':'default'}" onclick="${allPassed?`showSection('${s}')`:''}">
+              <div style="font-size:1.75rem;margin-bottom:0.5rem">${icons[s]}</div>
+              <strong style="font-size:0.95rem">${labels[s]}</strong>
+              <div class="mc-status" style="margin-top:0.6rem">
+                <div class="status-dot ${allPassed?(submitted?'dot-done':'dot-pend'):'dot-lock'}"></div>
+                <span style="font-size:0.82rem;color:${allPassed?(submitted?'var(--success)':'var(--teal)'):'var(--locked)'}">${!allPassed?'Locked — complete theory first':submitted?'Submitted':'Ready to submit'}</span>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+    }
+
+    // ── MODULE ────────────────────────────────────────────────────────────
+    function renderModule(el, modNum, status) {
+      const content = MODULE_CONTENT[modNum];
+      el.innerHTML = `
+        <div class="dash-header">
+          <h1>Module ${modNum}: ${MODULES[modNum-1].title}</h1>
+          <p>${status===2?'✅ MCQ passed — module complete':'Read through the content below, then take the 15-question quiz to complete this module.'}</p>
+        </div>
+        <div class="content-card" id="moduleContent">${content}</div>
+        <div id="quizArea"></div>`;
+      if (status !== 2) renderQuiz(document.getElementById('quizArea'), modNum);
+      else document.getElementById('quizArea').innerHTML = `<div class="content-card" style="text-align:center;padding:2rem">
+          <div style="font-size:2.5rem;margin-bottom:0.75rem">✅</div>
+          <h3 style="color:var(--success)">Module ${modNum} complete</h3>
+          <p>You passed the MCQ for this module. ${modNum < 5 ? `<a href="#" onclick="showSection('m${modNum+1}')" style="color:var(--teal);font-weight:600">Continue to Module ${modNum+1} →</a>` : '<a href="#" onclick="showSection(\'written\')" style="color:var(--teal);font-weight:600">Proceed to Written Tasks →</a>'}</p>
+        </div>`;
+    }
+
+    // ── QUIZ ──────────────────────────────────────────────────────────────
+    function renderQuiz(el, modNum) {
+      const quiz = QUIZ_DATA[modNum];
+      let current = 0, score = 0, answered = false;
+      const questions = quiz.questions;
+
+      function draw() {
+        if (current >= questions.length) { showResult(); return; }
+        const q = questions[current];
+        el.innerHTML = `
+          <div class="content-card quiz-wrap">
+            <div class="quiz-progress">
+              <span>Question ${current+1} of ${questions.length}</span>
+              <span>Score: ${score}/${current}</span>
+            </div>
+            <div class="progress-bar-wrap" style="margin-bottom:1.25rem">
+              <div class="progress-bar-fill" style="width:${(current/questions.length*100)}%"></div>
+            </div>
+            <div class="quiz-q">${q.q}</div>
+            <div class="quiz-options" id="qopts">
+              ${q.options.map((opt,i) => `<div class="quiz-option" id="opt-${i}" onclick="selectOpt(${i})">
+                <div class="quiz-option-key">${String.fromCharCode(65+i)}</div>
+                <span>${opt}</span>
+              </div>`).join('')}
+            </div>
+            <div id="qfeedback"></div>
+            <button class="btn btn-primary" id="qnext" onclick="nextQ()" disabled>
+              ${current === questions.length-1 ? 'See results' : 'Next question →'}
+            </button>
+          </div>`;
+        answered = false;
+      }
+
+      window.selectOpt = (i) => {
+        if (answered) return;
+        answered = true;
+        const q     = questions[current];
+        const isRight = i === q.correct;
+        if (isRight) score++;
+        document.querySelectorAll('.quiz-option').forEach((el, idx) => {
+          el.classList.add('disabled');
+          if (idx === q.correct) el.classList.add('correct');
+          else if (idx === i)    el.classList.add('wrong');
+        });
+        const fb = document.getElementById('qfeedback');
+        fb.className = `quiz-feedback ${isRight ? 'correct' : 'wrong'}`;
+        fb.textContent = isRight ? '✓ Correct!' : `✗ The correct answer was: ${q.options[q.correct]}`;
+        document.getElementById('qnext').removeAttribute('disabled');
+      };
+
+      window.nextQ = () => { current++; draw(); };
+
+      async function showResult() {
+        const passed = score >= Math.ceil(questions.length * 0.75); // 75% pass mark
+        el.innerHTML = `<div class="content-card quiz-result">
+          <div class="quiz-score ${passed?'quiz-pass':'quiz-fail'}">${score}/${questions.length}</div>
+          <div class="quiz-score-sub">${passed ? '🎉 You passed!' : '😕 Not quite — you need 75% to pass'}</div>
+          <p style="margin-bottom:1.5rem">${passed ? `Well done — Module ${modNum} is now complete.` : 'Review the module content and try again when you\'re ready.'}</p>
+          ${passed
+            ? `<button class="btn btn-success" onclick="markModulePassed(${modNum})">Continue →</button>`
+            : `<button class="btn btn-primary" onclick="showSection('m${modNum}')">Retake quiz</button>`}
+        </div>`;
+        if (passed) {
+          // Save progress
+          const mp = learner.moduleProgress || {};
+          mp[modNum] = 2;
+          learner.moduleProgress = mp;
+          await updateDoc(doc(db, 'learners', uid), { [`moduleProgress.${modNum}`]: 2 });
+        }
+      }
+
+      window.markModulePassed = (n) => {
+        renderSidebar();
+        showSection(n < 5 ? `m${n+1}` : 'written');
+        showToast(`Module ${n} complete! ✅`, 'success');
+      };
+
+      draw();
+    }
+
+    // ── WRITTEN TASKS ─────────────────────────────────────────────────────
+    function renderWritten(el) {
+      el.innerHTML = `
+        <div class="dash-header">
+          <h1>Written Tasks</h1>
+          <p>Complete all three written tasks and upload your answers as a single document.</p>
+        </div>
+        ${learner.writtenSubmitted ? `
+          <div class="submission-status status-submitted">
+            <span>✅</span> Written tasks submitted — your assessor will review and provide feedback.
+          </div>` : ''}
+        <div class="content-card">
+          <h2>Three written tasks</h2>
+          <p>Download the written tasks document, complete all three tasks offline, save as a PDF or Word document, and upload below.</p>
+          <div style="display:grid;gap:1rem;margin:1.25rem 0">
+            <div style="padding:1rem;background:var(--teal-pale);border-radius:var(--radius);border-left:4px solid var(--teal)">
+              <strong>Task 1:</strong> Explain the consent process as it applies to fluoride varnish application (400–600 words)
+            </div>
+            <div style="padding:1rem;background:var(--teal-pale);border-radius:var(--radius);border-left:4px solid var(--teal)">
+              <strong>Task 2:</strong> Explain your responsibilities as a GDC registrant and the professional and legal requirements when applying fluoride varnish (400–600 words)
+            </div>
+            <div style="padding:1rem;background:var(--teal-pale);border-radius:var(--radius);border-left:4px solid var(--teal)">
+              <strong>Task 3:</strong> Explain the science of fluoride and how it prevents dental caries (400–600 words)
+            </div>
+          </div>
+          <a href="assets/DNT_FVA_WrittenTasks.pdf" download class="btn btn-outline" style="margin-bottom:1.5rem">📥 Download written tasks sheet</a>
+          ${!learner.writtenSubmitted ? `
+            <div class="upload-zone" id="writtenUpload" onclick="document.getElementById('writtenFile').click()">
+              <div class="uz-icon">📎</div>
+              <h4>Upload your completed tasks</h4>
+              <p>PDF or Word document · Max 20MB</p>
+            </div>
+            <input type="file" id="writtenFile" accept=".pdf,.doc,.docx" style="display:none" onchange="uploadSubmission('written', this)"/>
+            <div id="writtenFileList" class="upload-file-list"></div>
+            <button class="btn btn-primary" id="writtenSubmitBtn" style="margin-top:1rem;display:none" onclick="submitWork('written')">Submit written tasks</button>
+          ` : ''}
+          ${learner.writtenFeedback ? `
+            <div class="callout" style="margin-top:1.5rem">
+              <div class="callout-label">Assessor feedback</div>
+              <p>${learner.writtenFeedback}</p>
+            </div>` : ''}
+        </div>`;
+      setupUploadZone('writtenUpload', 'writtenFile');
+    }
+
+    // ── PRACTICAL ─────────────────────────────────────────────────────────
+    function renderPractical(el) {
+      const entries = learner.logbookEntries || [];
+      el.innerHTML = `
+        <div class="dash-header">
+          <h1>Practical Portfolio</h1>
+          <p>Complete your 10-entry logbook and two case studies, then upload for assessment.</p>
+        </div>
+        ${learner.practicalSubmitted ? `
+          <div class="submission-status status-submitted">
+            <span>✅</span> Practical portfolio submitted — your assessor will review and provide feedback.
+          </div>` : ''}
+        <div class="content-card" style="margin-bottom:1.25rem">
+          <h2>Clinical Logbook — ${entries.length}/10 entries</h2>
+          <p style="margin-bottom:1rem">Record each supervised fluoride varnish application. You must complete all 10 entries before submitting. Download the logbook template to complete with your supervisor.</p>
+          <div class="logbook-grid">
+            ${Array.from({length:10}, (_,i) => {
+              const filled = i < entries.length;
+              return `<div class="log-chip ${filled?'filled':'empty'}">
+                <span class="lc-n">${i+1}</span>
+                <span class="lc-lbl">${filled ? entries[i].patientGroup || 'Entry '+(i+1) : 'Empty'}</span>
+                ${filled ? '<span class="lc-tick">✓</span>' : ''}
+              </div>`;
+            }).join('')}
+          </div>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1rem">
+            <a href="assets/DNT_FVA_Logbook.pdf" download class="btn btn-outline btn-sm">📥 Download logbook template</a>
+          </div>
+        </div>
+        <div class="content-card" style="margin-bottom:1.25rem">
+          <h2>Case Studies — ${learner.casestudyCount||0}/2 submitted</h2>
+          <p style="margin-bottom:1rem">Complete two extended case studies using the template. Each should cover: patient assessment, why fluoride was indicated, consent process, step-by-step application, challenges, and reflection.</p>
+          <a href="assets/DNT_FVA_CaseStudy.pdf" download class="btn btn-outline btn-sm">📥 Download case study template</a>
+        </div>
+        ${!learner.practicalSubmitted ? `
+        <div class="content-card">
+          <h2>Upload your practical portfolio</h2>
+          <p style="margin-bottom:1rem">Upload your completed logbook (all 10 entries, supervisor-signed) and both case studies as a single document or zip file.</p>
+          <div class="upload-zone" id="practicalUpload" onclick="document.getElementById('practicalFile').click()">
+            <div class="uz-icon">📎</div>
+            <h4>Upload logbook and case studies</h4>
+            <p>PDF, Word or ZIP · Max 50MB</p>
+          </div>
+          <input type="file" id="practicalFile" accept=".pdf,.doc,.docx,.zip" style="display:none" onchange="uploadSubmission('practical', this)"/>
+          <div id="practicalFileList" class="upload-file-list"></div>
+          <button class="btn btn-primary" id="practicalSubmitBtn" style="margin-top:1rem;display:none" onclick="submitWork('practical')">Submit practical portfolio</button>
+        </div>` : ''}
+        ${learner.practicalFeedback ? `
+          <div class="callout" style="margin-top:1rem">
+            <div class="callout-label">Assessor feedback</div>
+            <p>${learner.practicalFeedback}</p>
+          </div>` : ''}`;
+      setupUploadZone('practicalUpload', 'practicalFile');
+    }
+
+    // ── REFLECTION ────────────────────────────────────────────────────────
+    function renderReflection(el) {
+      el.innerHTML = `
+        <div class="dash-header">
+          <h1>End-of-Course Reflective Account</h1>
+          <p>300–500 words. Write your final reflection on your learning and development throughout this course.</p>
+        </div>
+        ${learner.reflectionSubmitted ? `
+          <div class="submission-status status-submitted">
+            <span>✅</span> Reflective account submitted.
+          </div>` : ''}
+        <div class="content-card">
+          <h2>Reflective account</h2>
+          <p style="margin-bottom:1rem">Your reflection should draw on your overall learning journey — what you knew before, what you know now, how your clinical practice has changed, and what you would continue to develop.</p>
+          <div class="callout" style="margin-bottom:1.5rem">
+            <div class="callout-label">Example structure</div>
+            <p>What I knew before starting · What the course taught me · How my practice has changed · Challenges I encountered · What I would do differently · My development goals going forward</p>
+          </div>
+          ${!learner.reflectionSubmitted ? `
+            <div class="form-group">
+              <label for="reflectionText">Your reflective account (300–500 words)</label>
+              <textarea id="reflectionText" style="min-height:280px" placeholder="Write your reflective account here, or upload a document below...">${learner.reflectionDraft||''}</textarea>
+            </div>
+            <div style="display:flex;align-items:center;gap:1rem;margin:0.75rem 0">
+              <span style="color:var(--ink-light);font-size:0.85rem">— or —</span>
+            </div>
+            <div class="upload-zone" id="reflectionUpload" onclick="document.getElementById('reflectionFile').click()">
+              <div class="uz-icon">📎</div>
+              <h4>Upload as a document</h4>
+              <p>PDF or Word · Max 10MB</p>
+            </div>
+            <input type="file" id="reflectionFile" accept=".pdf,.doc,.docx" style="display:none" onchange="uploadSubmission('reflection', this)"/>
+            <div id="reflectionFileList" class="upload-file-list"></div>
+            <div style="display:flex;gap:0.75rem;margin-top:1rem;flex-wrap:wrap">
+              <button class="btn btn-outline btn-sm" onclick="saveReflectionDraft()">Save draft</button>
+              <button class="btn btn-primary" id="reflectionSubmitBtn" onclick="submitWork('reflection')">Submit reflective account</button>
+            </div>
+          ` : `<div style="background:var(--off-white);border-radius:var(--radius);padding:1.25rem;font-size:0.92rem;color:var(--ink-mid)">${learner.reflectionText || 'Submitted via document upload.'}</div>`}
+        </div>`;
+      setupUploadZone('reflectionUpload', 'reflectionFile');
+    }
+
+    // ── LOCKED OVERLAY ────────────────────────────────────────────────────
+    function renderLocked(el, msg) {
+      el.innerHTML = `<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Locked</h3><p>${msg}</p></div>`;
+    }
+
+    // ── FILE UPLOAD HELPERS ────────────────────────────────────────────────
+    const pendingFiles = {};
+
+    function setupUploadZone(zoneId, inputId) {
+      const zone = document.getElementById(zoneId);
+      if (!zone) return;
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+      zone.addEventListener('drop', e => {
+        e.preventDefault(); zone.classList.remove('drag-over');
+        const input = document.getElementById(inputId);
+        if (input) { input.files = e.dataTransfer.files; input.dispatchEvent(new Event('change')); }
+      });
+    }
+
+    window.uploadSubmission = (type, input) => {
+      const file = input.files[0]; if (!file) return;
+      pendingFiles[type] = file;
+      const listEl = document.getElementById(`${type}FileList`);
+      if (listEl) listEl.innerHTML = `<div class="upload-file-item">
+        <span class="ufi-name">📄 ${file.name}</span>
+        <span class="ufi-size">${(file.size/1024/1024).toFixed(1)} MB</span>
+        <span class="ufi-remove" onclick="pendingFiles['${type}']=null;document.getElementById('${type}FileList').innerHTML='';document.getElementById('${type}SubmitBtn').style.display='none'">✕</span>
+      </div>`;
+      const btn = document.getElementById(`${type}SubmitBtn`);
+      if (btn) btn.style.display = '';
+    };
+
+    window.submitWork = async (type) => {
+      const btn = document.getElementById(`${type}SubmitBtn`);
+      if (btn) { btn.disabled = true; btn.textContent = 'Uploading...'; }
+      try {
+        let fileUrl = null;
+        const file = pendingFiles[type];
+
+        if (file) {
+          const storageRef = ref(storage, `submissions/${uid}/${type}/${Date.now()}_${file.name}`);
+          await uploadBytes(storageRef, file);
+          fileUrl = await getDownloadURL(storageRef);
+        }
+
+        const text = type === 'reflection' ? document.getElementById('reflectionText')?.value : null;
+        const updateData = {
+          [`${type}Submitted`]: true,
+          [`${type}SubmittedAt`]: serverTimestamp(),
+        };
+        if (fileUrl) updateData[`${type}FileUrl`] = fileUrl;
+        if (text)    updateData.reflectionText = text;
+        await updateDoc(doc(db, 'learners', uid), updateData);
+        learner[`${type}Submitted`] = true;
+
+        // Send email notification via EmailJS
+        await sendNotificationEmail(type, fileUrl);
+
+        renderSidebar();
+        showSection(type);
+        showToast('Submitted successfully! Your assessor has been notified. ✅', 'success');
+      } catch(e) {
+        console.error(e);
+        showToast('Upload failed. Please try again.', 'error');
+        if (btn) { btn.disabled = false; btn.textContent = 'Try again'; }
+      }
+    };
+
+    window.saveReflectionDraft = async () => {
+      const text = document.getElementById('reflectionText')?.value;
+      await updateDoc(doc(db, 'learners', uid), { reflectionDraft: text });
+      showToast('Draft saved ✓');
+    };
+
+    async function sendNotificationEmail(type, fileUrl) {
+      if (typeof emailjs === 'undefined') return;
+      const labels = { written:'Written Tasks', practical:'Practical Portfolio', reflection:'Final Reflection' };
+      emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+        to_email:    'emily@dentalnurse.training',
+        learner_name: learner.name,
+        learner_email: learner.email,
+        learner_gdc:   learner.gdc,
+        submission_type: labels[type] || type,
+        file_url:    fileUrl || 'Text submission (no file)',
+        submitted_at: new Date().toLocaleString('en-GB'),
+      }, EMAILJS_CONFIG.publicKey);
+    }
+
+    // ── Toast ─────────────────────────────────────────────────────────────
+    window.showToast = (msg, type='') => {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast show ${type}`;
+      setTimeout(() => t.classList.remove('show'), 4000);
+    };
+  </script>
+
+  <!-- Module content and quiz data -->
+  <script src="js/config.js"></script>
+  <script src="js/quizdata.js"></script>
+  <script src="js/module-content.js"></script>
+
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    if (typeof emailjs !== 'undefined') {
+      emailjs.init(EMAILJS_CONFIG.publicKey);
+    }
+  </script>
+</body>
+</html>      <div class="sidebar-section-title">Assessment</div>
+
+      <button class="sidebar-item locked" id="sb-written" onclick="showSection('written')">
+        <span class="si-icon">✍️</span>
+        <span style="flex:1;text-align:left;font-size:0.82rem">Written Tasks</span>
+        <span class="si-badge badge-lock" id="badge-written">🔒</span>
+      </button>
+      <button class="sidebar-item locked" id="sb-practical" onclick="showSection('practical')">
+        <span class="si-icon">🦷</span>
+        <span style="flex:1;text-align:left;font-size:0.82rem">Practical Portfolio</span>
+        <span class="si-badge badge-lock" id="badge-practical">🔒</span>
+      </button>
+      <button class="sidebar-item locked" id="sb-reflection" onclick="showSection('reflection')">
+        <span class="si-icon">🪞</span>
+        <span style="flex:1;text-align:left;font-size:0.82rem">Final Reflection</span>
+        <span class="si-badge badge-lock" id="badge-reflection">🔒</span>
+      </button>
+    </aside>
+
+    <!-- Main content -->
+    <main class="dash-main" id="dashMain">
+      <!-- Sections are injected here by JS -->
+    </main>
+
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signOut, onAuthStateChanged }
+                                from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, arrayUnion, serverTimestamp }
+                                from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL }
+                                from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+    const app     = initializeApp(FIREBASE_CONFIG);
+    const auth    = getAuth(app);
+    const db      = getFirestore(app);
+    const storage = getStorage(app);
+
+    let learner = null;
+    let uid     = null;
+
+    // ── Auth guard ─────────────────────────────────────────────────────────
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = 'login.html'; return; }
+      uid = user.uid;
       try {
         const snap = await getDoc(doc(db, 'learners', uid));
         learner = snap.exists() ? snap.data() : { name: user.email, email: user.email, gdc: '', unlocked: true };
