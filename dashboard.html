@@ -137,11 +137,26 @@
         + '</div>';
     }
 
-    function renderModule(el, modNum, status) {
+   function renderModule(el, modNum, status) {
       const content = MODULE_CONTENT[modNum];
-      el.innerHTML = '<div class="dash-header"><h1>Module ' + modNum + ': ' + MODULES[modNum-1].title + '</h1><p>' + (status===2||status==='2' ? '✅ MCQ passed — module complete' : 'Read through the content below, then take the 15-question quiz.') + '</p></div><div class="content-card" id="moduleContent">' + content + '</div><div id="quizArea"></div>';
-      if (status !== 2 && status !== '2') renderQuiz(document.getElementById('quizArea'), modNum);
-      else document.getElementById('quizArea').innerHTML = '<div class="content-card" style="text-align:center;padding:2rem"><div style="font-size:2.5rem;margin-bottom:0.75rem">✅</div><h3 style="color:var(--success)">Module ' + modNum + ' complete</h3><p>' + (modNum < 5 ? '<a href="#" onclick="showSection(\'m'+(modNum+1)+'\')" style="color:var(--teal);font-weight:600">Continue to Module '+(modNum+1)+' →</a>' : '<a href="#" onclick="showSection(\'written\')" style="color:var(--teal);font-weight:600">Proceed to Written Tasks →</a>') + '</p></div>';
+      const passed = status === 2 || status === '2';
+      el.innerHTML = '<div class="dash-header"><h1>Module ' + modNum + ': ' + MODULES[modNum-1].title + '</h1>'
+        + '<p>' + (passed ? '✅ Module complete — quiz passed' : 'Read through the content below. When you are ready, click Take the Quiz to complete this module.') + '</p>'
+        + '</div>'
+        + '<div class="content-card">' + content + '</div>'
+        + '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;margin-top:1.25rem;text-align:center">'
+        + (passed
+          ? '<div style="font-size:2rem;margin-bottom:0.75rem">✅</div>'
+            + '<h3 style="color:var(--success);margin-bottom:0.5rem">Quiz passed!</h3>'
+            + '<p style="margin-bottom:1.25rem;color:var(--ink-light)">' + (modNum < 5 ? 'Continue to the next module.' : 'All modules complete — proceed to written tasks.') + '</p>'
+            + (modNum < 5
+              ? '<button class="btn btn-primary" onclick="showSection(\'m' + (modNum+1) + '\')">Continue to Module ' + (modNum+1) + ' →</button>'
+              : '<button class="btn btn-primary" onclick="showSection(\'written\')">Proceed to Written Tasks →</button>')
+          : '<div style="font-size:2rem;margin-bottom:0.75rem">📝</div>'
+            + '<h3 style="margin-bottom:0.5rem">Ready to test your knowledge?</h3>'
+            + '<p style="margin-bottom:1.25rem;color:var(--ink-light)">15 questions · 75% to pass · You can retake if needed</p>'
+            + '<a href="quiz.html?mod=' + modNum + '" class="btn btn-primary btn-lg">Take the Module ' + modNum + ' Quiz →</a>')
+        + '</div>';
     }
 
     function renderQuiz(el, modNum) {
