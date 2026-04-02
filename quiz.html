@@ -1,0 +1,194 @@
+**Paste this — Part 1 of 2:**
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Module Quiz — DNT Fluoride Varnish Certificate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="dashboard.html" class="nav-logo">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:40px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+        <span class="nav-logo-text" style="display:none">DNT</span>
+      </a>
+      <div class="nav-right">
+        <span class="nav-user">Logged in as <strong id="navName">...</strong></span>
+        <a href="dashboard.html" class="btn btn-outline btn-sm">Back to course</a>
+      </div>
+    </div>
+  </nav>
+
+  <div id="quizWrap" style="max-width:760px;margin:0 auto;padding:2.5rem 1.5rem">
+    <div id="quizLoading" style="text-align:center;padding:4rem">
+      <p style="color:var(--ink-light)">Loading quiz...</p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const app  = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    let uid = null;
+    let learner = null;
+    let modNum = null;
+
+    // Get module number from URL e.g. quiz.html?mod=1
+    const params = new URLSearchParams(window.location.search);
+    modNum = parseInt(params.get('mod'));
+    if (!modNum || modNum < 1 || modNum > 5) {
+      window.location.href = 'dashboard.html';
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = 'login.html'; return; }
+      uid = user.uid;
+      try {
+        const snap = await getDoc(doc(db, 'learners', uid));
+        learner = snap.exists() ? snap.data() : { name: user.email, moduleProgress: {} };
+        if (!learner.moduleProgress) learner.moduleProgress = {};
+        if (!learner.name) learner.name = user.email;
+        document.getElementById('navName').textContent = (learner.name || user.email).split(' ')[0];
+
+        // Check if already passed
+        const mp = learner.moduleProgress;
+        if (mp[modNum] === 2 || mp[modNum] === '2') {
+          showAlreadyPassed();
+          return;
+        }
+
+        // Check module is accessible
+        const accessible = modNum === 1 || mp[modNum-1] === 2 || mp[modNum-1] === '2';
+        if (!accessible) {
+          document.getElementById('quizWrap').innerHTML = '<div style="text-align:center;padding:4rem"><div style="font-size:3rem;margin-bottom:1rem">🔒</div><h2>Module ' + modNum + ' is locked</h2><p>Please complete Module ' + (modNum-1) + ' first.</p><a href="dashboard.html" class="btn btn-primary" style="margin-top:1.5rem">Back to course</a></div>';
+          return;
+        }
+
+        startQuiz();
+      } catch(e) {
+        console.error(e);
+        document.getElementById('quizWrap').innerHTML = '<div style="text-align:center;padding:4rem"><p>Something went wrong. <a href="dashboard.html">Back to course</a></p></div>';
+      }
+    });
+
+    function showAlreadyPassed() {
+      document.getElementById('quizWrap').innerHTML = '<div style="text-align:center;padding:4rem">'
+        + '<div style="font-size:3.5rem;margin-bottom:1rem">✅</div>'
+        + '<h2 style="color:var(--success)">You already passed this quiz!</h2>'
+        + '<p style="margin:1rem 0">Module ' + modNum + ' is complete.</p>'
+        + '<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem">'
+        + (modNum < 5 ? '<a href="quiz.html?mod=' + (modNum+1) + '" class="btn btn-primary">Go to Module ' + (modNum+1) + ' quiz →</a>' : '<a href="dashboard.html" class="btn btn-success">Go to written tasks →</a>')
+        + '<a href="dashboard.html" class="btn btn-outline">Back to dashboard</a>'
+        + '</div></div>';
+    }
+
+    function startQuiz() {
+      const quiz = QUIZ_DATA[modNum];
+      const questions = quiz.questions;
+      let current = 0, score = 0, answered = false;
+
+      function draw() {
+        if (current >= questions.length) { showResult(); return; }
+        const q = questions[current];
+        const pct = Math.round(current / questions.length * 100);
+        document.getElementById('quizWrap').innerHTML =
+          '<div style="margin-bottom:2rem">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">'
+          + '<span style="font-size:0.82rem;color:var(--ink-light)">Module ' + modNum + ' — ' + MODULES[modNum-1].title + '</span>'
+          + '<span style="font-size:0.85rem;font-weight:600;color:var(--teal-dark)">Question ' + (current+1) + ' of ' + questions.length + '</span>'
+          + '</div>'
+          + '<div style="background:var(--border);border-radius:100px;height:8px">'
+          + '<div style="width:' + pct + '%;height:100%;border-radius:100px;background:linear-gradient(90deg,var(--teal),var(--teal-acc));transition:width 0.3s"></div>'
+          + '</div>'
+          + '</div>'
+          + '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem">'
+          + '<div style="font-size:1.05rem;font-weight:600;color:var(--ink);margin-bottom:1.5rem;line-height:1.5">' + q.q + '</div>'
+          + '<div id="opts" style="display:flex;flex-direction:column;gap:0.65rem;margin-bottom:1.5rem">'
+          + q.options.map((opt,i) => '<div class="quiz-option" id="opt-' + i + '" onclick="selectOpt(' + i + ')" style="cursor:pointer">'
+            + '<div class="quiz-option-key">' + String.fromCharCode(65+i) + '</div>'
+            + '<span>' + opt + '</span>'
+            + '</div>').join('')
+          + '</div>'
+          + '<div id="feedback"></div>'
+          + '<button class="btn btn-primary" id="nextBtn" onclick="nextQ()" disabled style="opacity:0.4">'
+          + (current === questions.length-1 ? 'See my results' : 'Next question →')
+          + '</button>'
+          + '</div>';
+        answered = false;
+      }
+
+      window.selectOpt = (i) => {
+        if (answered) return;
+        answered = true;
+        const isRight = i === questions[current].correct;
+        if (isRight) score++;
+        document.querySelectorAll('.quiz-option').forEach((el, idx) => {
+          el.classList.add('disabled');
+          el.style.cursor = 'default';
+          if (idx === questions[current].correct) el.classList.add('correct');
+          else if (idx === i) el.classList.add('wrong');
+        });
+        const fb = document.getElementById('feedback');
+        fb.className = 'quiz-feedback ' + (isRight ? 'correct' : 'wrong');
+        fb.textContent = isRight ? '✓ Correct!' : '✗ Correct answer: ' + questions[current].options[questions[current].correct];
+        fb.style.marginBottom = '1rem';
+        const nb = document.getElementById('nextBtn');
+        nb.removeAttribute('disabled');
+        nb.style.opacity = '1';
+      };
+
+      window.nextQ = () => { current++; draw(); };
+
+      async function showResult() {
+        const passed = score >= Math.ceil(questions.length * 0.75);
+        document.getElementById('quizWrap').innerHTML =
+          '<div style="text-align:center;padding:3rem 2rem;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg)">'
+          + '<div style="font-size:4rem;font-weight:800;color:' + (passed?'var(--success)':'var(--warn)') + ';line-height:1;margin-bottom:0.5rem">' + score + '/' + questions.length + '</div>'
+          + '<div style="font-size:1.1rem;margin-bottom:0.5rem;font-weight:600;color:' + (passed?'var(--success)':'var(--warn)') + '">' + (passed ? '🎉 You passed!' : '😕 Not quite this time') + '</div>'
+          + '<p style="color:var(--ink-light);margin-bottom:2rem">' + (passed ? 'Well done — Module ' + modNum + ' is now complete.' : 'You need 75% to pass. Review the module content and try again.') + '</p>'
+          + '<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">'
+          + (passed
+            ? (modNum < 5
+              ? '<a href="dashboard.html?next=m' + (modNum+1) + '" class="btn btn-success">Continue to Module ' + (modNum+1) + ' →</a>'
+              : '<a href="dashboard.html" class="btn btn-success">Go to written tasks →</a>')
+            : '<button class="btn btn-primary" onclick="window.location.reload()">Retake quiz</button>')
+          + '<a href="dashboard.html" class="btn btn-outline">Back to dashboard</a>'
+          + '</div></div>';
+
+        if (passed) {
+          const mp = learner.moduleProgress || {};
+          mp[modNum] = 2;
+          learner.moduleProgress = mp;
+          await updateDoc(doc(db, 'learners', uid), { ['moduleProgress.' + modNum]: 2 });
+        }
+      }
+
+      draw();
+    }
+
+    window.showToast = (msg, type='') => {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = 'toast show ' + type;
+      setTimeout(() => t.classList.remove('show'), 4000);
+    };
+  </script>
+  <script src="js/config.js"></script>
+  <script src="js/quizdata.js"></script>
+</body>
+</html>
+```
+
+That's the complete quiz page — it's only one part this time! Scroll down and **Commit changes** then let me know and we'll update the dashboard to remove the quiz from the module pages and add a "Take the quiz" button instead!
