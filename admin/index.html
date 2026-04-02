@@ -262,9 +262,8 @@
               <td>${url ? `<a href="${url}" target="_blank" class="submission-link">📥 Download</a>` : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'}</td>
               <td style="font-size:0.82rem">${feedback ? `<span style="color:var(--success)">✓ Given</span>` : '<span style="color:var(--ink-light)">Pending</span>'}</td>
               <td>
-                <button class="btn btn-primary btn-sm" onclick="openFeedbackModal('${l.id}','${type}','${l.name}')">
-                  ${feedback ? 'Edit feedback' : 'Add feedback'}
-                </button>
+                <button class="btn btn-primary btn-sm" onclick="openFeedbackModal('${l.id}','${type}','${l.name}')">${feedback ? 'Edit feedback' : 'Add feedback'}</button>
+<button class="btn btn-success btn-sm" onclick="markPassed('${l.id}','${type}','${l.name}')">✓ Mark passed</button>
               </td>
             </tr>`).join('')}
           </tbody>
@@ -375,6 +374,15 @@
       if (l) l[`${type}Feedback`] = text;
       closeModal();
       showToast('Feedback saved and visible to learner ✅', 'success');
+    };
+
+    window.markPassed = async (id, type, name) => {
+      if (!confirm('Mark ' + name + ' as passed for ' + type + '?')) return;
+      await updateDoc(doc(db, 'learners', id), { [type + 'Passed']: true });
+      const l = learners.find(x => x.id === id);
+      if (l) l[type + 'Passed'] = true;
+      showToast(name + ' marked as passed for ' + type + ' ✅', 'success');
+      renderTab(currentTab);
     };
 
     // ── Keyboard shortcut for login ────────────────────────────────────────
