@@ -112,17 +112,17 @@
     if (typeof emailjs !== 'undefined') emailjs.init(EMAILJS_CONFIG.publicKey);
 
     window.submitEnrolment = async () => {
-      const firstName  = document.getElementById('firstName').value.trim();
-      const lastName   = document.getElementById('lastName').value.trim();
-      const email      = document.getElementById('enrolEmail').value.trim();
-      const gdc        = document.getElementById('enrolGDC').value.trim();
-      const phone      = document.getElementById('enrolPhone').value.trim();
-      const workplace  = document.getElementById('enrolWorkplace').value.trim();
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const email = document.getElementById('enrolEmail').value.trim();
+      const gdc = document.getElementById('enrolGDC').value.trim();
+      const phone = document.getElementById('enrolPhone').value.trim();
+      const workplace = document.getElementById('enrolWorkplace').value.trim();
       const experience = document.getElementById('enrolExperience').value;
       const supervisor = document.getElementById('enrolSupervisor').value;
-      const indemnity  = document.getElementById('enrolIndemnity').value;
-      const notes      = document.getElementById('enrolNotes').value.trim();
-      const errEl      = document.getElementById('enrolError');
+      const indemnity = document.getElementById('enrolIndemnity').value;
+      const notes = document.getElementById('enrolNotes').value.trim();
+      const errEl = document.getElementById('enrolError');
       errEl.style.display = 'none';
 
       if (!firstName || !lastName || !email || !gdc || !experience || !supervisor || !indemnity) {
@@ -152,4 +152,12 @@
         document.getElementById('successMsg').style.display = 'block';
       } catch(e) {
         console.error(e);
-        errEl.textContent = 'Something went wrong. Please email emily@dentalnurse.training​​​​​​​​​​​​​​​​
+        errEl.textContent = 'Something went wrong. Please email emily@dentalnurse.training directly.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Submit enrolment';
+      }
+    };
+  </script>
+</body>
+</html>
