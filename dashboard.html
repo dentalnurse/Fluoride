@@ -132,7 +132,8 @@
             const labels = {written:'Written Tasks',practical:'Practical Portfolio',reflection:'Final Reflection'};
             const icons2 = {written:'✍️',practical:'🦷',reflection:'🪞'};
             const submitted = learner[s+'Submitted'];
-            return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'default') + '" onclick="' + (allPassed?'showSection(\''+s+'\')':'') + '"><div style="font-size:1.75rem;margin-bottom:0.5rem">' + icons2[s] + '</div><strong style="font-size:0.95rem">' + labels[s] + '</strong><div class="mc-status" style="margin-top:0.6rem"><div class="status-dot ' + (allPassed?(submitted?'dot-done':'dot-pend'):'dot-lock') + '"></div><span style="font-size:0.82rem">' + (!allPassed?'Locked — complete theory first':submitted?'Submitted':'Ready to submit') + '</span></div></div>';
+const passed = learner[s+'Passed'];
+return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'default') + '" onclick="' + (allPassed?'showSection(\''+s+'\')':'') + '"><div style="font-size:1.75rem;margin-bottom:0.5rem">' + icons2[s] + '</div><strong style="font-size:0.95rem">' + labels[s] + '</strong><div class="mc-status" style="margin-top:0.6rem"><div class="status-dot ' + (allPassed?(passed?'dot-done':submitted?'dot-pend':'dot-pend'):'dot-lock') + '"></div><span style="font-size:0.82rem;color:' + (passed?'var(--success)':'') + '">' + (!allPassed?'Locked — complete theory first':passed?'✅ Passed!':submitted?'Submitted — awaiting review':'Ready to submit') + '</span></div></div>';
           }).join('')
         + '</div>';
     }
@@ -223,7 +224,7 @@
         + '<p style="color:var(--ink-light);font-size:0.9rem">Download the logbook template, complete all 10 entries with your supervisor, then upload the completed logbook below.</p>'
         + '<a href="https://dentalnurse.github.io/Fluoride/DNT_FVA_Logbook.pdf" target="_blank" target="_blank" class="btn btn-outline btn-sm">📥 Open logbook template</a></div>'
         + '<div class="content-card" style="margin-bottom:1.25rem"><h2>Case Studies — ' + (learner.casestudyCount||0) + '/2</h2><p style="margin-bottom:1rem">Complete two case studies using the template.</p><a href="https://dentalnurse.github.io/Fluoride/DNT_FVA_CaseStudy.pdf" target="_blank" target="_blank" class="btn btn-outline btn-sm">📥 Open case study template</a></div>'
-        + (!learner.practicalSubmitted ? '<div class="content-card"><h2>Upload your practical portfolio</h2><p style="margin-bottom:1rem">Upload your completed logbook and both case studies as a single document or zip file.</p><div class="upload-zone" id="practicalUpload" onclick="document.getElementById(\'practicalFile\').click()"><div class="uz-icon">📎</div><h4>Upload logbook and case studies</h4><p>PDF, Word or ZIP</p></div><input type="file" id="practicalFile" accept=".pdf,.doc,.docx,.zip" style="display:none" onchange="uploadSubmission(\'practical\', this)"/><div id="practicalFileList" class="upload-file-list"></div><button class="btn btn-primary" id="practicalSubmitBtn" style="margin-top:1rem;display:none" onclick="submitWork(\'practical\')">Submit practical portfolio</button></div>' : '')
+        + (!learner.practicalSubmitted ? '<div class="content-card"><h2>Upload your practical portfolio</h2><p style="margin-bottom:1rem">Upload your completed logbook and both case studies as a single document or zip file.</p><div class="upload-zone" id="practicalUpload" onclick="document.getElementById(\'practicalFile\').click()"><div class="uz-icon">📎</div><h4>Upload logbook and case studies</h4><p>PDF, Word or ZIP</p></div><input type="file" id="practicalFile" accept=".pdf,.doc,.docx,.zip" style="display:none" multiple onchange="uploadSubmission('practical', this)"/><div id="practicalFileList" class="upload-file-list"></div><button class="btn btn-primary" id="practicalSubmitBtn" style="margin-top:1rem;display:none" onclick="submitWork(\'practical\')">Submit practical portfolio</button></div>' : '')
         + (learner.practicalFeedback ? '<div class="callout" style="margin-top:1rem"><div class="callout-label">Assessor feedback</div><p>' + learner.practicalFeedback + '</p></div>' : '');
       setupUploadZone('practicalUpload', 'practicalFile');
     }
@@ -248,10 +249,11 @@
     }
 
     window.uploadSubmission = (type, input) => {
-      const file = input.files[0]; if (!file) return;
-      pendingFiles[type] = file;
+      const files = Array.from(input.files);
+      if (!files.length) return;
+      pendingFiles[type] = files;
       const listEl = document.getElementById(type+'FileList');
-      if (listEl) listEl.innerHTML = '<div class="upload-file-item"><span class="ufi-name">📄 ' + file.name + '</span><span class="ufi-size">' + (file.size/1024/1024).toFixed(1) + ' MB</span></div>';
+      if (listEl) listEl.innerHTML = files.map(f => '<div class="upload-file-item"><span class="ufi-name">📄 ' + f.name + '</span><span class="ufi-size">' + (f.size/1024/1024).toFixed(1) + ' MB</span></div>').join('');
       const btn = document.getElementById(type+'SubmitBtn');
       if (btn) btn.style.display = '';
     };
@@ -262,11 +264,15 @@
       try {
         let fileUrl = null;
         const file = pendingFiles[type];
-        if (file) {
+       const files = Array.isArray(pendingFiles[type]) ? pendingFiles[type] : (pendingFiles[type] ? [pendingFiles[type]] : []);
+        const urls = [];
+        for (const file of files) {
           const storageRef = ref(storage, 'submissions/' + uid + '/' + type + '/' + Date.now() + '_' + file.name);
           await uploadBytes(storageRef, file);
-          fileUrl = await getDownloadURL(storageRef);
+          const url = await getDownloadURL(storageRef);
+          urls.push(url);
         }
+        fileUrl = urls.join(', ');
         const text = type === 'reflection' ? document.getElementById('reflectionText')?.value : null;
         const updateData = {};
         updateData[type+'Submitted'] = true;
