@@ -272,15 +272,32 @@
     }
 
     // ── Approve learner ──────────────────────────────────────────────────
-    window.approveLearner = async (id, name) => {
-      if (!confirm(`Approve ${name} and unlock their course access?`)) return;
+      window.approveLearner = async (id, name) => {
+      if (!confirm('Approve ' + name + ' and send them a welcome email?')) return;
       await updateDoc(doc(db, 'learners', id), { unlocked: true, approvedAt: serverTimestamp() });
       const l = learners.find(x => x.id === id);
       if (l) l.unlocked = true;
+      try {
+        if (typeof emailjs !== 'undefined' && l) {
+          await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+            to_email: l.email, to_name: l.name, learner_name: l.name,
+            learner_email: l.email, learner_gdc: l.gdc,
+            submission_type: 'Welcome', file_url: 'N/A',
+            submitted_at: new Date().toLocaleString('en-GB'),
+            message: 'Congratulations ' + l.name + '! Your DNT Fluoride Varnish Certificate course is now active. Log in at: https://dentalnurse.github.io/Fluoride/login.html using your email address and the password sent separately. Work through the 5 modules in order, pass each MCQ, then complete your written tasks, logbook and case studies. Duration: 3-6 months. Questions? Contact emily@dentalnurse.training. Good luck! DNT Dental Nurse Training'
+          }, EMAILJS_CONFIG.publicKey);
+          showToast(name + ' approved and welcome email sent!', 'success');
+        } else {
+          showToast(name + ' approved!', 'success');
+        }
+      } catch(e) {
+        console.error(e);
+        showToast(name + ' approved! Welcome email failed - send manually.', 'success');
+      }
       updateStats();
       renderTab(currentTab);
-      showToast(`${name} approved ✅`, 'success');
     };
+
 
     // ── Learner detail modal ──────────────────────────────────────────────
     window.openLearnerModal = (id) => {
