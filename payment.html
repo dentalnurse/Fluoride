@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Payment — DNT Fluoride Varnish Certificate</title>
+  <title>Payment - DNT Fluoride Varnish Certificate</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/style.css"/>
@@ -188,7 +188,7 @@
   <nav class="nav">
     <div class="nav-inner">
       <a href="index.html" class="nav-logo">
-        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:40px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:56px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
         <span class="nav-logo-text" style="display:none">DNT</span>
       </a>
       <div class="nav-right">
@@ -214,7 +214,7 @@
       <div>
         <div class="preview-banner">
           <span>🔧</span>
-          <span><strong>Preview mode:</strong> Stripe online payment is coming soon. This screen demonstrates the payment flow — no real payment is taken.</span>
+          <span><strong>Preview mode:</strong> Stripe online payment is coming soon. This screen demonstrates the payment flow - no real payment is taken.</span>
         </div>
 
         <div class="pay-card">
@@ -274,15 +274,15 @@
           </div>
           <div class="order-line">
             <span class="label">Learner</span>
-            <span class="val" id="summaryName">—</span>
+            <span class="val" id="summaryName">-</span>
           </div>
           <div class="order-line">
             <span class="label">GDC number</span>
-            <span class="val" id="summaryGDC">—</span>
+            <span class="val" id="summaryGDC">-</span>
           </div>
           <div class="order-line">
             <span class="label">Email</span>
-            <span class="val" id="summaryEmail" style="word-break:break-all">—</span>
+            <span class="val" id="summaryEmail" style="word-break:break-all">-</span>
           </div>
           <div class="order-line" style="border-bottom:none">
             <span class="label">Includes</span>
@@ -320,13 +320,13 @@
     const enrolData = JSON.parse(sessionStorage.getItem('enrolData') || '{}');
 
     if (!enrolData.firstName) {
-      // No session data — redirect back to enrol
+      // No session data - redirect back to enrol
       window.location.href = 'enrol.html';
     }
 
     document.getElementById('summaryName').textContent = (enrolData.firstName || '') + ' ' + (enrolData.lastName || '');
-    document.getElementById('summaryGDC').textContent = enrolData.gdc || '—';
-    document.getElementById('summaryEmail').textContent = enrolData.email || '—';
+    document.getElementById('summaryGDC').textContent = enrolData.gdc || '-';
+    document.getElementById('summaryEmail').textContent = enrolData.email || '-';
     document.getElementById('payAmount').textContent = COURSE_PRICE;
     document.getElementById('summaryPrice').textContent = COURSE_PRICE;
 

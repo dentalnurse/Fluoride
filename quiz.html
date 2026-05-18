@@ -4,7 +4,7 @@ html
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Module Quiz — DNT Fluoride Varnish Certificate</title>
+  <title>Module Quiz - DNT Fluoride Varnish Certificate</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/style.css"/>
@@ -13,7 +13,7 @@ html
   <nav class="nav">
     <div class="nav-inner">
       <a href="dashboard.html" class="nav-logo">
-        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:40px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:56px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
         <span class="nav-logo-text" style="display:none">DNT</span>
       </a>
       <div class="nav-right">
@@ -105,7 +105,7 @@ html
         document.getElementById('quizWrap').innerHTML =
           '<div style="margin-bottom:2rem">'
           + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">'
-          + '<span style="font-size:0.82rem;color:var(--ink-light)">Module ' + modNum + ' — ' + MODULES[modNum-1].title + '</span>'
+          + '<span style="font-size:0.82rem;color:var(--ink-light)">Module ' + modNum + ' - ' + MODULES[modNum-1].title + '</span>'
           + '<span style="font-size:0.85rem;font-weight:600;color:var(--teal-dark)">Question ' + (current+1) + ' of ' + questions.length + '</span>'
           + '</div>'
           + '<div style="background:var(--border);border-radius:100px;height:8px">'
@@ -156,7 +156,7 @@ html
           '<div style="text-align:center;padding:3rem 2rem;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg)">'
           + '<div style="font-size:4rem;font-weight:800;color:' + (passed?'var(--success)':'var(--warn)') + ';line-height:1;margin-bottom:0.5rem">' + score + '/' + questions.length + '</div>'
           + '<div style="font-size:1.1rem;margin-bottom:0.5rem;font-weight:600;color:' + (passed?'var(--success)':'var(--warn)') + '">' + (passed ? '🎉 You passed!' : '😕 Not quite this time') + '</div>'
-          + '<p style="color:var(--ink-light);margin-bottom:2rem">' + (passed ? 'Well done — Module ' + modNum + ' is now complete.' : 'You need 75% to pass. Review the module content and try again.') + '</p>'
+          + '<p style="color:var(--ink-light);margin-bottom:2rem">' + (passed ? 'Well done - Module ' + modNum + ' is now complete.' : 'You need 75% to pass. Review the module content and try again.') + '</p>'
           + '<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">'
           + (passed
             ? (modNum < 5

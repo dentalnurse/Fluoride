@@ -98,7 +98,7 @@ p  { color: var(--ink-mid); line-height: 1.75; }
   display: flex; align-items: center; justify-content: space-between;
   height: var(--nav-h); width: min(1100px, 92vw); margin: 0 auto;
 }
-.nav-logo img  { height: 44px; width: auto; }
+.nav-logo img  { height: 56px; width: auto; }
 .nav-logo-text { font-size: 1.5rem; font-weight: 800; color: var(--teal); letter-spacing: -0.02em; }
 .nav-right { display: flex; align-items: center; gap: 1rem; }
 .nav-user  { font-size: 0.85rem; color: var(--ink-light); }

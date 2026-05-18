@@ -18,14 +18,17 @@ const EMAILJS_CONFIG = {
   publicKey:  "saPEjicUFr73FNtI2"
 };
 
-// ── Admin credentials (hardcoded — change before going live) ─────────────
+// ── Admin credentials (hardcoded - change before going live) ─────────────
 const ADMIN_EMAIL    = "emily@dentalnurse.training";
 const ADMIN_PASSWORD = "wave33LIKE!";   // Change this before going live
 
 // ── Stripe payment link ──────────────────────────────────────────────────
 // Create a payment link in your Stripe dashboard and paste the URL here
-const STRIPE_PAYMENT_URL = "https://buy.stripe.com/YOUR_PAYMENT_LINK";
-const COURSE_PRICE       = "£100";
+const STRIPE_PAYMENT_URL     = "https://buy.stripe.com/YOUR_PAYMENT_LINK";
+const COURSE_PRICE           = "£120";
+const COURSE_ORIGINAL_PRICE  = "£150";
+const EXTENSION_FEE          = "£12";
+const COURSE_DURATION_MONTHS = 3;
 
 // ── Course structure ─────────────────────────────────────────────────────
 const MODULES = [
@@ -33,7 +36,7 @@ const MODULES = [
   { id: 2, title: "Patient Assessment and Communication",           icon: "🗣️" },
   { id: 3, title: "Clinical Application and Safety",               icon: "🦷" },
   { id: 4, title: "Professional Responsibilities and Law",          icon: "⚖️" },
-  { id: 5, title: "Reluctance to Fluoride — Managing Refusal",     icon: "💬" },
+  { id: 5, title: "Reluctance to Fluoride - Managing Refusal",     icon: "💬" },
 ];
 
 const STAGES = [

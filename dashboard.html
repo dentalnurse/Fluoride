@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Course — DNT Fluoride Varnish Certificate</title>
+  <title>My Course - DNT Fluoride Varnish Certificate</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/style.css"/>
@@ -12,7 +12,7 @@
   <nav class="nav">
     <div class="nav-inner">
       <a href="index.html" class="nav-logo">
-        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:40px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:56px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
         <span class="nav-logo-text" style="display:none">DNT</span>
       </a>
       <div class="nav-right">
@@ -26,11 +26,11 @@
       <div class="sidebar-section-title">My Course</div>
       <button class="sidebar-item active" id="sb-home" onclick="showSection('home')"><span class="si-icon">🏠</span> Dashboard</button>
       <div class="sidebar-section-title">Theory Modules</div>
-      <button class="sidebar-item locked" id="sb-m1" onclick="showSection('m1')"><span class="si-icon">🔬</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 1<br/><span style="opacity:0.7;font-size:0.75rem">Fluoride Science</span></span><span class="si-badge badge-lock" id="badge-m1">—</span></button>
-      <button class="sidebar-item locked" id="sb-m2" onclick="showSection('m2')"><span class="si-icon">🗣️</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 2<br/><span style="opacity:0.7;font-size:0.75rem">Patient Assessment</span></span><span class="si-badge badge-lock" id="badge-m2">—</span></button>
-      <button class="sidebar-item locked" id="sb-m3" onclick="showSection('m3')"><span class="si-icon">🦷</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 3<br/><span style="opacity:0.7;font-size:0.75rem">Clinical Application</span></span><span class="si-badge badge-lock" id="badge-m3">—</span></button>
-      <button class="sidebar-item locked" id="sb-m4" onclick="showSection('m4')"><span class="si-icon">⚖️</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 4<br/><span style="opacity:0.7;font-size:0.75rem">Professional Law</span></span><span class="si-badge badge-lock" id="badge-m4">—</span></button>
-      <button class="sidebar-item locked" id="sb-m5" onclick="showSection('m5')"><span class="si-icon">💬</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 5<br/><span style="opacity:0.7;font-size:0.75rem">Managing Refusal</span></span><span class="si-badge badge-lock" id="badge-m5">—</span></button>
+      <button class="sidebar-item locked" id="sb-m1" onclick="showSection('m1')"><span class="si-icon">🔬</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 1<br/><span style="opacity:0.7;font-size:0.75rem">Fluoride Science</span></span><span class="si-badge badge-lock" id="badge-m1">-</span></button>
+      <button class="sidebar-item locked" id="sb-m2" onclick="showSection('m2')"><span class="si-icon">🗣️</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 2<br/><span style="opacity:0.7;font-size:0.75rem">Patient Assessment</span></span><span class="si-badge badge-lock" id="badge-m2">-</span></button>
+      <button class="sidebar-item locked" id="sb-m3" onclick="showSection('m3')"><span class="si-icon">🦷</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 3<br/><span style="opacity:0.7;font-size:0.75rem">Clinical Application</span></span><span class="si-badge badge-lock" id="badge-m3">-</span></button>
+      <button class="sidebar-item locked" id="sb-m4" onclick="showSection('m4')"><span class="si-icon">⚖️</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 4<br/><span style="opacity:0.7;font-size:0.75rem">Professional Law</span></span><span class="si-badge badge-lock" id="badge-m4">-</span></button>
+      <button class="sidebar-item locked" id="sb-m5" onclick="showSection('m5')"><span class="si-icon">💬</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 5<br/><span style="opacity:0.7;font-size:0.75rem">Managing Refusal</span></span><span class="si-badge badge-lock" id="badge-m5">-</span></button>
       <div class="sidebar-section-title">Assessment</div>
       <button class="sidebar-item locked" id="sb-written" onclick="showSection('written')"><span class="si-icon">✍️</span><span style="flex:1;text-align:left;font-size:0.82rem">Written Tasks</span><span class="si-badge badge-lock" id="badge-written">🔒</span></button>
       <button class="sidebar-item locked" id="sb-practical" onclick="showSection('practical')"><span class="si-icon">🦷</span><span style="flex:1;text-align:left;font-size:0.82rem">Practical Portfolio</span><span class="si-badge badge-lock" id="badge-practical">🔒</span></button>
@@ -118,7 +118,7 @@
       const passed = [1,2,3,4,5].filter(i => mp[i] === 2 || mp[i] === '2').length;
       const pct = Math.round(passed / 5 * 100);
       const icons = ['🔬','🗣️','🦷','⚖️','💬'];
-      el.innerHTML = '<div class="dash-header"><h1>Welcome back, ' + (learner.name||'').split(' ')[0] + ' 👋</h1><p>GDC: ' + (learner.gdc||'—') + '</p></div>'
+      el.innerHTML = '<div class="dash-header"><h1>Welcome back, ' + (learner.name||'').split(' ')[0] + ' 👋</h1><p>GDC: ' + (learner.gdc||'-') + '</p></div>'
         + '<div class="content-card" style="margin-bottom:1.25rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem"><strong>Theory progress</strong><span style="font-size:0.85rem;color:var(--teal-dark);font-weight:700">' + passed + '/5 modules complete</span></div><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div></div>'
         + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.85rem;margin-bottom:1.5rem">'
         + [1,2,3,4,5].map(i => {
@@ -133,7 +133,7 @@
             const icons2 = {written:'✍️',practical:'🦷',reflection:'🪞'};
             const submitted = learner[s+'Submitted'];
 const passed = learner[s+'Passed'];
-return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'default') + '" onclick="' + (allPassed?'showSection(\''+s+'\')':'') + '"><div style="font-size:1.75rem;margin-bottom:0.5rem">' + icons2[s] + '</div><strong style="font-size:0.95rem">' + labels[s] + '</strong><div class="mc-status" style="margin-top:0.6rem"><div class="status-dot ' + (allPassed?(passed?'dot-done':submitted?'dot-pend':'dot-pend'):'dot-lock') + '"></div><span style="font-size:0.82rem;color:' + (passed?'var(--success)':'') + '">' + (!allPassed?'Locked — complete theory first':passed?'✅ Passed!':submitted?'Submitted — awaiting review':'Ready to submit') + '</span></div></div>';
+return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'default') + '" onclick="' + (allPassed?'showSection(\''+s+'\')':'') + '"><div style="font-size:1.75rem;margin-bottom:0.5rem">' + icons2[s] + '</div><strong style="font-size:0.95rem">' + labels[s] + '</strong><div class="mc-status" style="margin-top:0.6rem"><div class="status-dot ' + (allPassed?(passed?'dot-done':submitted?'dot-pend':'dot-pend'):'dot-lock') + '"></div><span style="font-size:0.82rem;color:' + (passed?'var(--success)':'') + '">' + (!allPassed?'Locked - complete theory first':passed?'✅ Passed!':submitted?'Submitted - awaiting review':'Ready to submit') + '</span></div></div>';
           }).join('')
         + '</div>';
     }
@@ -142,14 +142,14 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
       const content = MODULE_CONTENT[modNum];
       const passed = status === 2 || status === '2';
       el.innerHTML = '<div class="dash-header"><h1>Module ' + modNum + ': ' + MODULES[modNum-1].title + '</h1>'
-        + '<p>' + (passed ? '✅ Module complete — quiz passed' : 'Read through the content below. When you are ready, click Take the Quiz to complete this module.') + '</p>'
+        + '<p>' + (passed ? '✅ Module complete - quiz passed' : 'Read through the content below. When you are ready, click Take the Quiz to complete this module.') + '</p>'
         + '</div>'
         + '<div class="content-card">' + content + '</div>'
         + '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;margin-top:1.25rem;text-align:center">'
         + (passed
           ? '<div style="font-size:2rem;margin-bottom:0.75rem">✅</div>'
             + '<h3 style="color:var(--success);margin-bottom:0.5rem">Quiz passed!</h3>'
-            + '<p style="margin-bottom:1.25rem;color:var(--ink-light)">' + (modNum < 5 ? 'Continue to the next module.' : 'All modules complete — proceed to written tasks.') + '</p>'
+            + '<p style="margin-bottom:1.25rem;color:var(--ink-light)">' + (modNum < 5 ? 'Continue to the next module.' : 'All modules complete - proceed to written tasks.') + '</p>'
             + (modNum < 5
               ? '<button class="btn btn-primary" onclick="showSection(\'m' + (modNum+1) + '\')">Continue to Module ' + (modNum+1) + ' →</button>'
               : '<button class="btn btn-primary" onclick="showSection(\'written\')">Proceed to Written Tasks →</button>')
@@ -188,7 +188,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
       window.nextQ = () => { current++; draw(); };
       async function showResult() {
         const passed = score >= Math.ceil(questions.length * 0.75);
-        el.innerHTML = '<div class="content-card quiz-result"><div class="quiz-score ' + (passed?'quiz-pass':'quiz-fail') + '">' + score + '/' + questions.length + '</div><div class="quiz-score-sub">' + (passed ? '🎉 You passed!' : '😕 Not quite — you need 75% to pass') + '</div><p style="margin-bottom:1.5rem">' + (passed ? 'Well done — Module ' + modNum + ' is now complete.' : 'Review the module content and try again when ready.') + '</p>' + (passed ? '<button class="btn btn-success" onclick="markModulePassed('+modNum+')">Continue →</button>' : '<button class="btn btn-primary" onclick="showSection(\'m'+modNum+'\')">Retake quiz</button>') + '</div>';
+        el.innerHTML = '<div class="content-card quiz-result"><div class="quiz-score ' + (passed?'quiz-pass':'quiz-fail') + '">' + score + '/' + questions.length + '</div><div class="quiz-score-sub">' + (passed ? '🎉 You passed!' : '😕 Not quite - you need 75% to pass') + '</div><p style="margin-bottom:1.5rem">' + (passed ? 'Well done - Module ' + modNum + ' is now complete.' : 'Review the module content and try again when ready.') + '</p>' + (passed ? '<button class="btn btn-success" onclick="markModulePassed('+modNum+')">Continue →</button>' : '<button class="btn btn-primary" onclick="showSection(\'m'+modNum+'\')">Retake quiz</button>') + '</div>';
         if (passed) {
           const mp = learner.moduleProgress || {};
           mp[modNum] = 2;
@@ -202,7 +202,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
 
     function renderWritten(el) {
       el.innerHTML = '<div class="dash-header"><h1>Written Tasks</h1><p>Complete all three written tasks and upload your answers.</p></div>'
-        + (learner.writtenPassed ? '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Written tasks passed! Well done.</div>' : learner.writtenSubmitted ? '<div class="submission-status status-submitted"><span>📬</span> Written tasks submitted — your assessor will review and provide feedback.</div>' : '')
+        + (learner.writtenPassed ? '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Written tasks passed! Well done.</div>' : learner.writtenSubmitted ? '<div class="submission-status status-submitted"><span>📬</span> Written tasks submitted - your assessor will review and provide feedback.</div>' : '')
         + '<div class="content-card"><h2>Three written tasks</h2><p style="margin-bottom:1rem">Download the written tasks document, complete all three tasks, and upload below.</p>'
         + '<div style="display:grid;gap:1rem;margin:1.25rem 0">'
         + '<div style="padding:1rem;background:var(--teal-pale);border-radius:var(--radius);border-left:4px solid var(--teal)"><strong>Task 1:</strong> Explain the consent process as it applies to fluoride varnish application (400-600 words)</div>'
@@ -219,11 +219,11 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
     function renderPractical(el) {
       const entries = learner.logbookEntries || [];
       el.innerHTML = '<div class="dash-header"><h1>Practical Portfolio</h1><p>Complete your 10-entry logbook and two case studies.</p></div>'
-        + (learner.practicalPassed ? '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Practical portfolio passed! Well done.</div>' : learner.practicalSubmitted ? '<div class="submission-status status-submitted"><span>📬</span> Practical portfolio submitted — your assessor will review and provide feedback.</div>' : '')
-        + '<div class="content-card" style="margin-bottom:1.25rem"><h2>Clinical Logbook — ' + entries.length + '/10 entries</h2><p style="margin-bottom:1rem">Download the logbook template, complete with your supervisor, and upload below.</p>'
+        + (learner.practicalPassed ? '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Practical portfolio passed! Well done.</div>' : learner.practicalSubmitted ? '<div class="submission-status status-submitted"><span>📬</span> Practical portfolio submitted - your assessor will review and provide feedback.</div>' : '')
+        + '<div class="content-card" style="margin-bottom:1.25rem"><h2>Clinical Logbook - ' + entries.length + '/10 entries</h2><p style="margin-bottom:1rem">Download the logbook template, complete with your supervisor, and upload below.</p>'
         + '<p style="color:var(--ink-light);font-size:0.9rem">Download the logbook template, complete all 10 entries with your supervisor, then upload the completed logbook below.</p>'
         + '<a href="https://dentalnurse.github.io/Fluoride/DNT_FVA_Logbook.pdf" target="_blank" target="_blank" class="btn btn-outline btn-sm">📥 Open logbook template</a></div>'
-        + '<div class="content-card" style="margin-bottom:1.25rem"><h2>Case Studies — ' + (learner.casestudyCount||0) + '/2</h2><p style="margin-bottom:1rem">Complete two case studies using the template.</p><a href="https://dentalnurse.github.io/Fluoride/DNT_FVA_CaseStudy.pdf" target="_blank" target="_blank" class="btn btn-outline btn-sm">📥 Open case study template</a></div>'
+        + '<div class="content-card" style="margin-bottom:1.25rem"><h2>Case Studies - ' + (learner.casestudyCount||0) + '/2</h2><p style="margin-bottom:1rem">Complete two case studies using the template.</p><a href="https://dentalnurse.github.io/Fluoride/DNT_FVA_CaseStudy.pdf" target="_blank" target="_blank" class="btn btn-outline btn-sm">📥 Open case study template</a></div>'
         + (!learner.practicalSubmitted ? '<div class="content-card"><h2>Upload your practical portfolio</h2><p style="margin-bottom:1rem">Upload your completed logbook and both case studies as a single document or zip file.</p><div class="upload-zone" id="practicalUpload" onclick="document.getElementById(\'practicalFile\').click()"><div class="uz-icon">📎</div><h4>Upload logbook and case studies</h4><p>PDF, Word or ZIP</p></div><input type="file" id="practicalFile" accept=".pdf,.doc,.docx,.zip" style="display:none" multiple onchange="uploadSubmission(&quot;practical&quot;, this)"/><div id="practicalFileList" class="upload-file-list"></div><button class="btn btn-primary" id="practicalSubmitBtn" style="margin-top:1rem;display:none" onclick="submitWork(\'practical\')">Submit practical portfolio</button></div>' : '')
         + (learner.practicalFeedback ? '<div class="callout" style="margin-top:1rem"><div class="callout-label">Assessor feedback</div><p>' + learner.practicalFeedback + '</p></div>' : '');
       setupUploadZone('practicalUpload', 'practicalFile');
@@ -231,7 +231,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
 
     function renderReflection(el) {
       el.innerHTML = '<div class="dash-header"><h1>End-of-Course Reflective Account</h1><p>300-500 words reflecting on your learning throughout this course.</p></div>'
-        + (learner.reflectionPassed ? '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Reflective account passed! Well done.</div>' : learner.reflectionSubmitted ? '<div class="submission-status status-submitted"><span>📬</span> Reflective account submitted — your assessor will review and provide feedback.</div>' : '')
+        + (learner.reflectionPassed ? '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Reflective account passed! Well done.</div>' : learner.reflectionSubmitted ? '<div class="submission-status status-submitted"><span>📬</span> Reflective account submitted - your assessor will review and provide feedback.</div>' : '')
         + '<div class="content-card"><h2>Reflective account</h2>'
         + '<div class="callout" style="margin-bottom:1.5rem"><div class="callout-label">Example structure</div><p>What I knew before starting · What the course taught me · How my practice has changed · Challenges I encountered · What I would do differently</p></div>'
         + (!learner.reflectionSubmitted ? '<div class="form-group"><label for="reflectionText">Your reflective account (300-500 words)</label><textarea id="reflectionText" style="min-height:280px" placeholder="Write your reflective account here, or upload a document below...">' + (learner.reflectionDraft||'') + '</textarea></div><div class="upload-zone" id="reflectionUpload" onclick="document.getElementById(\'reflectionFile\').click()"><div class="uz-icon">📎</div><h4>Or upload as a document</h4><p>PDF or Word</p></div><input type="file" id="reflectionFile" accept=".pdf,.doc,.docx" style="display:none" onchange="uploadSubmission(\'reflection\', this)"/><div id="reflectionFileList" class="upload-file-list"></div><div style="display:flex;gap:0.75rem;margin-top:1rem;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="saveReflectionDraft()">Save draft</button><button class="btn btn-primary" id="reflectionSubmitBtn" onclick="submitWork(\'reflection\')">Submit reflective account</button></div>' : '<div style="background:var(--off-white);border-radius:var(--radius);padding:1.25rem">' + (learner.reflectionText||'Submitted via document upload.') + '</div>')

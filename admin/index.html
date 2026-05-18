@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin — DNT Fluoride Varnish Certificate</title>
+  <title>Admin - DNT Fluoride Varnish Certificate</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="../css/style.css"/>
@@ -15,7 +15,7 @@
     <div class="auth-card" style="max-width:400px">
       <div class="auth-logo">
         <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
-             alt="DNT" style="height:44px;margin:0 auto 1rem" onerror="this.style.display='none'"/>
+             alt="DNT" style="height:56px;margin:0 auto 1rem" onerror="this.style.display='none'"/>
         <h2>Admin Access</h2>
         <p style="font-size:0.85rem;color:var(--ink-light);margin-top:0.25rem">Fluoride Varnish Certificate Platform</p>
       </div>
@@ -36,7 +36,7 @@
   <div id="adminPanel" style="display:none">
     <div class="admin-header">
       <div>
-        <h1>DNT — Admin Dashboard</h1>
+        <h1>DNT - Admin Dashboard</h1>
         <span style="font-size:0.8rem;opacity:0.6">Fluoride Varnish Application Certificate</span>
       </div>
       <div style="display:flex;align-items:center;gap:1rem">
@@ -48,10 +48,10 @@
     <div class="admin-panel">
       <!-- Stats row -->
       <div class="admin-stat-row" id="statsRow">
-        <div class="admin-stat"><div class="as-n" id="statTotal">—</div><div class="as-lbl">Total learners</div></div>
-        <div class="admin-stat"><div class="as-n" id="statPending">—</div><div class="as-lbl">Awaiting approval</div></div>
-        <div class="admin-stat"><div class="as-n" id="statActive">—</div><div class="as-lbl">Active learners</div></div>
-        <div class="admin-stat"><div class="as-n" id="statSubmissions">—</div><div class="as-lbl">New submissions</div></div>
+        <div class="admin-stat"><div class="as-n" id="statTotal">-</div><div class="as-lbl">Total learners</div></div>
+        <div class="admin-stat"><div class="as-n" id="statPending">-</div><div class="as-lbl">Awaiting approval</div></div>
+        <div class="admin-stat"><div class="as-n" id="statActive">-</div><div class="as-lbl">Active learners</div></div>
+        <div class="admin-stat"><div class="as-n" id="statSubmissions">-</div><div class="as-lbl">New submissions</div></div>
       </div>
 
       <!-- Tabs -->
@@ -173,7 +173,7 @@
             ${pending.map(l => `<tr>
               <td><div class="td-name">${l.name}</div></td>
               <td><div>${l.email}</div><div class="td-email">GDC: ${l.gdc}</div></td>
-              <td style="font-size:0.82rem;color:var(--ink-light)">${l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '—'}</td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'}</td>
               <td>
                 <div class="admin-actions">
                   <button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${l.name}')">✓ Approve</button>
@@ -214,9 +214,9 @@
           <td><div style="font-size:0.82rem">${l.email}</div><div class="td-email">GDC: ${l.gdc}</div></td>
           <td>${l.unlocked ? '<span class="pill pill-green">Active</span>' : '<span class="pill pill-orange">Pending</span>'}</td>
           <td><span class="pill ${passed===5?'pill-green':passed>0?'pill-teal':'pill-grey'}">${passed}/5</span></td>
-          <td>${l.writtenSubmitted    ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">—</span>'}</td>
-          <td>${l.practicalSubmitted  ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">—</span>'}</td>
-          <td>${l.reflectionSubmitted ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">—</span>'}</td>
+          <td>${l.writtenSubmitted    ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">-</span>'}</td>
+          <td>${l.practicalSubmitted  ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">-</span>'}</td>
+          <td>${l.reflectionSubmitted ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">-</span>'}</td>
           <td>
             <div class="admin-actions">
               <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">Manage</button>
@@ -258,7 +258,7 @@
             }).map(({ l, type, label, url, feedback, at }) => `<tr>
               <td><div class="td-name">${l.name}</div><div class="td-email">${l.email}</div></td>
               <td><span class="pill pill-teal">${label}</span></td>
-              <td style="font-size:0.82rem;color:var(--ink-light)">${at?.toDate ? at.toDate().toLocaleDateString('en-GB') : '—'}</td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${at?.toDate ? at.toDate().toLocaleDateString('en-GB') : '-'}</td>
               <td>${url ? `<a href="${url}" target="_blank" class="submission-link">📥 Download</a>` : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'}</td>
               <td style="font-size:0.82rem">${feedback ? `<span style="color:var(--success)">✓ Given</span>` : '<span style="color:var(--ink-light)">Pending</span>'}</td>
               <td>
@@ -310,7 +310,7 @@
         </div>
         <table style="width:100%;font-size:0.9rem;border-collapse:collapse">
           ${[['Email', l.email],['GDC', l.gdc],['Status', l.unlocked?'Active':'Pending approval'],
-             ['Enrolled', l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '—'],
+             ['Enrolled', l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'],
              ['Module 1', mp[1]===2?'✅ Passed':mp[1]===1?'In progress':'Not started'],
              ['Module 2', mp[2]===2?'✅ Passed':mp[2]===1?'In progress':'Not started'],
              ['Module 3', mp[3]===2?'✅ Passed':mp[3]===1?'In progress':'Not started'],
@@ -352,7 +352,7 @@
       const existing = l?.[`${type}Feedback`] || '';
       document.getElementById('learnerModalContent').innerHTML = `
         <div class="modal-header">
-          <h3>Feedback — ${name}</h3>
+          <h3>Feedback - ${name}</h3>
           <button class="modal-close" onclick="closeModal()">×</button>
         </div>
         <p style="font-size:0.9rem;color:var(--ink-light);margin-bottom:1rem">This feedback will be visible to the learner in their dashboard.</p>
