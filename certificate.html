@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Certificate - DNT Fluoride Varnish Application</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; background: #F8FAFA; color: #1A1A1A; }
+    .screen-bar { background: #005A5F; color: white; padding: 0.85rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    .screen-bar a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; }
+    .screen-bar .print-btn { background: white; color: #005A5F; border: none; border-radius: 100px; padding: 0.5rem 1.25rem; font-weight: 700; font-size: 0.88rem; cursor: pointer; font-family: inherit; }
+    .screen-bar .print-btn:hover { background: #E6F4F5; }
+    .cert-page { max-width: 860px; margin: 2rem auto; background: white; padding: 3.5rem 4rem; border: 8px solid #00747A; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.12); }
+    .cert-logo { text-align: center; margin-bottom: 1.5rem; }
+    .cert-logo img { height: 64px; }
+    .cert-divider { border: none; border-top: 3px solid #00747A; margin: 1.25rem 0; }
+    .cert-title { text-align: center; font-size: 2rem; font-weight: 800; color: #005A5F; letter-spacing: -0.01em; margin-bottom: 0.5rem; }
+    .cert-subtitle { text-align: center; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6B6B6B; margin-bottom: 2rem; }
+    .cert-body { text-align: center; }
+    .cert-body .cert-to { font-size: 1rem; color: #3D3D3D; margin-bottom: 0.5rem; }
+    .cert-body .cert-name { font-size: 2.4rem; font-weight: 800; color: #005A5F; margin-bottom: 0.4rem; line-height: 1.2; }
+    .cert-body .cert-gdc { font-size: 0.9rem; color: #6B6B6B; margin-bottom: 1.5rem; }
+    .cert-body .cert-has { font-size: 1rem; color: #3D3D3D; margin-bottom: 0.5rem; }
+    .cert-body .cert-course { font-size: 1.4rem; font-weight: 700; color: #1A1A1A; margin-bottom: 1.75rem; }
+    .cert-date { font-size: 0.9rem; color: #6B6B6B; margin-bottom: 0.25rem; }
+    .cert-issuer { font-size: 0.95rem; font-weight: 700; color: #3D3D3D; margin-bottom: 2rem; }
+    .cert-sigs { display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #D8EBEC; }
+    .cert-sig { text-align: center; flex: 1; }
+    .cert-sig .sig-line { border-bottom: 1px solid #1A1A1A; width: 160px; height: 48px; margin: 0 auto 0.5rem; }
+    .cert-sig .sig-label { font-size: 0.78rem; color: #6B6B6B; }
+    .cert-sig .sig-name { font-size: 0.85rem; font-weight: 700; }
+    .cert-note { text-align: center; font-size: 0.75rem; color: #9B9B9B; margin-top: 1.5rem; border-top: 1px solid #F0F0F0; padding-top: 1rem; }
+    @media print {
+      body { background: white; }
+      .screen-bar { display: none; }
+      .cert-page { margin: 0; box-shadow: none; max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="screen-bar no-print">
+    <a href="dashboard.html">← Back to dashboard</a>
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
+
+  <div class="cert-page" id="certPage">
+    <div class="cert-logo">
+      <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT Dental Nurse Training" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div style=\'font-size:1.5rem;font-weight:800;color:#00747A\'>Dental Nurse Training</div>')"/>
+    </div>
+    <hr class="cert-divider"/>
+    <div class="cert-title">Certificate of Achievement</div>
+    <div class="cert-subtitle">Dental Nurse Training Ltd</div>
+
+    <div class="cert-body">
+      <p class="cert-to">This is to certify that</p>
+      <div class="cert-name" id="certName">Loading...</div>
+      <div class="cert-gdc" id="certGDC">GDC Registration Number: -</div>
+      <p class="cert-has">has successfully completed the</p>
+      <div class="cert-course">DNT Certificate in Fluoride Varnish Application</div>
+      <div class="cert-date">Date of completion: <span id="certDate">-</span></div>
+      <div class="cert-issuer">Issued by Dental Nurse Training Ltd</div>
+    </div>
+
+    <div class="cert-sigs">
+      <div class="cert-sig">
+        <div class="sig-line"></div>
+        <div class="sig-label">Learner signature</div>
+      </div>
+      <div class="cert-sig">
+        <div class="sig-line"></div>
+        <div class="sig-name">Emily Bowen</div>
+        <div class="sig-label">Assessor, Dental Nurse Training Ltd</div>
+      </div>
+    </div>
+
+    <div class="cert-note">
+      This certificate is issued by DNT and is not awarded by NEBDN.<br/>
+      Dental Nurse Training Ltd · Registered in England No. 12257723 · 21 Angel Hill, Tiverton, Devon EX16 6PE
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const app  = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = 'login.html'; return; }
+      try {
+        const snap = await getDoc(doc(db, 'learners', user.uid));
+        const learner = snap.exists() ? snap.data() : null;
+        if (learner) {
+          document.getElementById('certName').textContent = learner.name || user.email;
+          document.getElementById('certGDC').textContent = 'GDC Registration Number: ' + (learner.gdc || '-');
+          // Use reflection submitted date as completion date, fallback to today
+          const completedAt = learner.reflectionSubmittedAt?.toDate
+            ? learner.reflectionSubmittedAt.toDate()
+            : new Date();
+          document.getElementById('certDate').textContent = completedAt.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+      } catch(e) {
+        console.error(e);
+      }
+      // Auto-print if ?print=1
+      if (new URLSearchParams(window.location.search).get('print') === '1') {
+        setTimeout(() => window.print(), 500);
+      }
+    });
+  </script>
+  <script src="js/config.js"></script>
+</body>
+</html>

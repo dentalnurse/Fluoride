@@ -283,7 +283,7 @@
             learner_email: l.email, learner_gdc: l.gdc,
             submission_type: 'Welcome', file_url: 'N/A',
             submitted_at: new Date().toLocaleString('en-GB'),
-            message: 'Congratulations ' + l.name + '! Your DNT Fluoride Varnish Certificate course is now active. Log in at: https://dentalnurse.github.io/Fluoride/login.html using your email address and the password sent separately. Work through the 5 modules in order, pass each MCQ, then complete your written tasks, logbook and case studies. Duration: 3-6 months. Questions? Contact emily@dentalnurse.training. Good luck! DNT Dental Nurse Training'
+            message: 'Congratulations ' + l.name + '! Your DNT Fluoride Varnish Certificate course is now active. Log in at: https://dentalnurse.github.io/Fluoride/login.html using your email address and the password sent separately. Work through the 5 modules in order, pass each MCQ, then complete your written tasks, logbook and case studies. Duration: 3 months. Questions? Contact emily@dentalnurse.training. Good luck! DNT Dental Nurse Training'
           }, EMAILJS_CONFIG.publicKey);
           showToast(name + ' approved and welcome email sent!', 'success');
         } else {
@@ -374,6 +374,17 @@
       if (l) l[`${type}Feedback`] = text;
       closeModal();
       showToast('Feedback saved and visible to learner ✅', 'success');
+      // Send email notification to learner
+      if (l && typeof emailjs !== 'undefined') {
+        const typeLabels = { written: 'Written Tasks', practical: 'Practical Portfolio', reflection: 'Final Reflection' };
+        emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+          to_email: l.email, to_name: l.name,
+          learner_name: l.name, learner_email: l.email, learner_gdc: l.gdc,
+          submission_type: 'Feedback Available',
+          file_url: 'N/A', submitted_at: new Date().toLocaleString('en-GB'),
+          message: 'Hi ' + l.name + ',\n\nYour assessor has reviewed your ' + typeLabels[type] + ' and feedback is now available in your course dashboard.\n\nPlease log in to view your feedback: https://dentalnurse.github.io/Fluoride/login.html\n\nIf you have any questions, please contact emily@dentalnurse.training\n\nThe DNT Team'
+        }, EMAILJS_CONFIG.publicKey);
+      }
     };
 
     window.markPassed = async (id, type, name) => {
@@ -382,6 +393,17 @@
       const l = learners.find(x => x.id === id);
       if (l) l[type + 'Passed'] = true;
       showToast(name + ' marked as passed for ' + type + ' ✅', 'success');
+      // Send email notification to learner
+      if (l && typeof emailjs !== 'undefined') {
+        const typeLabels = { written: 'Written Tasks', practical: 'Practical Portfolio', reflection: 'Final Reflection' };
+        emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+          to_email: l.email, to_name: l.name,
+          learner_name: l.name, learner_email: l.email, learner_gdc: l.gdc,
+          submission_type: 'Assessment Passed',
+          file_url: 'N/A', submitted_at: new Date().toLocaleString('en-GB'),
+          message: 'Congratulations ' + l.name + '!\n\nYour ' + typeLabels[type] + ' has been marked as passed!\n\nPlease log in to your dashboard to see your progress: https://dentalnurse.github.io/Fluoride/login.html\n\nThe DNT Team'
+        }, EMAILJS_CONFIG.publicKey);
+      }
       renderTab(currentTab);
     };
 
