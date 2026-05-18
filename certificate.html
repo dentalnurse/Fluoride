@@ -9,77 +9,178 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; background: #F8FAFA; color: #1A1A1A; }
+
     .screen-bar { background: #005A5F; color: white; padding: 0.85rem 2rem; display: flex; align-items: center; justify-content: space-between; }
     .screen-bar a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; }
-    .screen-bar .print-btn { background: white; color: #005A5F; border: none; border-radius: 100px; padding: 0.5rem 1.25rem; font-weight: 700; font-size: 0.88rem; cursor: pointer; font-family: inherit; }
-    .screen-bar .print-btn:hover { background: #E6F4F5; }
-    .cert-page { max-width: 860px; margin: 2rem auto; background: white; padding: 3.5rem 4rem; border: 8px solid #00747A; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.12); }
-    .cert-logo { text-align: center; margin-bottom: 1.5rem; }
+    .print-btn { background: white; color: #005A5F; border: none; border-radius: 100px; padding: 0.5rem 1.25rem; font-weight: 700; font-size: 0.88rem; cursor: pointer; font-family: inherit; }
+    .print-btn:hover { background: #E6F4F5; }
+
+    .cert-page {
+      max-width: 860px;
+      margin: 2rem auto 3rem;
+      background: white;
+      padding: 3rem 3.5rem;
+      border: 6px solid #00747A;
+      border-radius: 8px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+      position: relative;
+    }
+    .cert-page::before {
+      content: '';
+      position: absolute;
+      inset: 10px;
+      border: 1.5px solid #D8EBEC;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    /* Header */
+    .cert-logo { text-align: center; margin-bottom: 1rem; }
     .cert-logo img { height: 64px; }
-    .cert-divider { border: none; border-top: 3px solid #00747A; margin: 1.25rem 0; }
-    .cert-title { text-align: center; font-size: 2rem; font-weight: 800; color: #005A5F; letter-spacing: -0.01em; margin-bottom: 0.5rem; }
-    .cert-subtitle { text-align: center; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6B6B6B; margin-bottom: 2rem; }
-    .cert-body { text-align: center; }
-    .cert-body .cert-to { font-size: 1rem; color: #3D3D3D; margin-bottom: 0.5rem; }
-    .cert-body .cert-name { font-size: 2.4rem; font-weight: 800; color: #005A5F; margin-bottom: 0.4rem; line-height: 1.2; }
-    .cert-body .cert-gdc { font-size: 0.9rem; color: #6B6B6B; margin-bottom: 1.5rem; }
-    .cert-body .cert-has { font-size: 1rem; color: #3D3D3D; margin-bottom: 0.5rem; }
-    .cert-body .cert-course { font-size: 1.4rem; font-weight: 700; color: #1A1A1A; margin-bottom: 1.75rem; }
-    .cert-date { font-size: 0.9rem; color: #6B6B6B; margin-bottom: 0.25rem; }
-    .cert-issuer { font-size: 0.95rem; font-weight: 700; color: #3D3D3D; margin-bottom: 2rem; }
-    .cert-sigs { display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #D8EBEC; }
-    .cert-sig { text-align: center; flex: 1; }
-    .cert-sig .sig-line { border-bottom: 1px solid #1A1A1A; width: 160px; height: 48px; margin: 0 auto 0.5rem; }
-    .cert-sig .sig-label { font-size: 0.78rem; color: #6B6B6B; }
-    .cert-sig .sig-name { font-size: 0.85rem; font-weight: 700; }
-    .cert-note { text-align: center; font-size: 0.75rem; color: #9B9B9B; margin-top: 1.5rem; border-top: 1px solid #F0F0F0; padding-top: 1rem; }
+    .cert-logo-fallback { font-size: 1.4rem; font-weight: 800; color: #00747A; text-align: center; display: none; }
+    .cert-divider { border: none; border-top: 3px solid #00747A; margin: 1rem 0 0.75rem; }
+    .cert-divider-thin { border: none; border-top: 1px solid #D8EBEC; margin: 1rem 0; }
+
+    .cert-type { text-align: center; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #6B6B6B; margin-bottom: 0.4rem; }
+    .cert-title { text-align: center; font-size: 1.9rem; font-weight: 800; color: #005A5F; letter-spacing: -0.01em; margin-bottom: 0.25rem; }
+    .cert-provider { text-align: center; font-size: 0.85rem; color: #6B6B6B; margin-bottom: 1.5rem; font-weight: 600; }
+
+    /* Learner section */
+    .cert-certifies { text-align: center; font-size: 0.95rem; color: #3D3D3D; margin-bottom: 0.4rem; }
+    .cert-name { text-align: center; font-size: 2.2rem; font-weight: 800; color: #005A5F; margin-bottom: 0.3rem; line-height: 1.2; }
+    .cert-gdc { text-align: center; font-size: 0.88rem; color: #6B6B6B; margin-bottom: 0.4rem; }
+    .cert-completed { text-align: center; font-size: 0.95rem; color: #3D3D3D; margin-bottom: 0.3rem; }
+    .cert-course { text-align: center; font-size: 1.3rem; font-weight: 700; color: #1A1A1A; margin-bottom: 1.5rem; }
+
+    /* CPD details table */
+    .cpd-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 1.25rem; }
+    .cpd-table th {
+      background: #005A5F; color: white;
+      padding: 0.55rem 0.9rem; text-align: left;
+      font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
+      font-weight: 700;
+    }
+    .cpd-table td { padding: 0.55rem 0.9rem; border-bottom: 1px solid #D8EBEC; vertical-align: top; line-height: 1.55; }
+    .cpd-table tr:last-child td { border-bottom: none; }
+    .cpd-table td:first-child { font-weight: 700; color: #3D3D3D; width: 200px; white-space: nowrap; }
+    .cpd-table td:last-child { color: #3D3D3D; }
+    .cpd-table tr:nth-child(even) td { background: #F8FAFA; }
+
+    /* Signature */
+    .cert-sig-section { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #D8EBEC; gap: 2rem; }
+    .cert-sig-block { flex: 1; }
+    .cert-sig-block .sig-line { border-bottom: 1.5px solid #1A1A1A; height: 44px; margin-bottom: 0.4rem; }
+    .cert-sig-block .sig-name { font-size: 0.88rem; font-weight: 700; color: #1A1A1A; }
+    .cert-sig-block .sig-role { font-size: 0.78rem; color: #6B6B6B; }
+    .cert-qa-statement { flex: 1.4; font-size: 0.78rem; color: #6B6B6B; line-height: 1.6; background: #F8FAFA; border-radius: 6px; padding: 0.75rem 1rem; border-left: 3px solid #00747A; }
+    .cert-qa-statement strong { color: #3D3D3D; display: block; margin-bottom: 0.2rem; }
+
+    /* Footer */
+    .cert-footer { text-align: center; font-size: 0.72rem; color: #9B9B9B; margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid #F0F0F0; line-height: 1.7; }
+
     @media print {
       body { background: white; }
-      .screen-bar { display: none; }
-      .cert-page { margin: 0; box-shadow: none; max-width: 100%; }
+      .screen-bar { display: none !important; }
+      .cert-page { margin: 0; box-shadow: none; max-width: 100%; border-width: 5px; }
     }
   </style>
 </head>
 <body>
+
   <div class="screen-bar no-print">
     <a href="dashboard.html">← Back to dashboard</a>
     <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
   </div>
 
   <div class="cert-page" id="certPage">
+
+    <!-- Logo -->
     <div class="cert-logo">
-      <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT Dental Nurse Training" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div style=\'font-size:1.5rem;font-weight:800;color:#00747A\'>Dental Nurse Training</div>')"/>
+      <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
+           alt="Dental Nurse Training"
+           onerror="this.style.display='none';document.querySelector('.cert-logo-fallback').style.display='block'"/>
+      <div class="cert-logo-fallback">Dental Nurse Training</div>
     </div>
+
     <hr class="cert-divider"/>
+
+    <div class="cert-type">Certificate of Completion - Verifiable Continuing Professional Development</div>
     <div class="cert-title">Certificate of Achievement</div>
-    <div class="cert-subtitle">Dental Nurse Training Ltd</div>
+    <div class="cert-provider">Dental Nurse Training</div>
 
-    <div class="cert-body">
-      <p class="cert-to">This is to certify that</p>
-      <div class="cert-name" id="certName">Loading...</div>
-      <div class="cert-gdc" id="certGDC">GDC Registration Number: -</div>
-      <p class="cert-has">has successfully completed the</p>
-      <div class="cert-course">DNT Certificate in Fluoride Varnish Application</div>
-      <div class="cert-date">Date of completion: <span id="certDate">-</span></div>
-      <div class="cert-issuer">Issued by Dental Nurse Training Ltd</div>
-    </div>
+    <hr class="cert-divider-thin"/>
 
-    <div class="cert-sigs">
-      <div class="cert-sig">
+    <!-- Learner -->
+    <p class="cert-certifies">This is to certify that</p>
+    <div class="cert-name" id="certName">Loading...</div>
+    <div class="cert-gdc" id="certGDC">GDC Registration Number: -</div>
+    <p class="cert-completed">has successfully completed</p>
+    <div class="cert-course">DNT Certificate in Fluoride Varnish Application</div>
+
+    <!-- CPD Details -->
+    <table class="cpd-table">
+      <thead>
+        <tr><th colspan="2">CPD Activity Details</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>CPD Subject</td>
+          <td>Fluoride Varnish Application</td>
+        </tr>
+        <tr>
+          <td>Learning Content</td>
+          <td>Fluoride science and caries prevention; patient assessment and communication; clinical application and safety; professional responsibilities and law; managing patient reluctance to fluoride. Assessment via MCQs, written tasks, clinical logbook (10 supervised applications), case studies, and a final reflective account.</td>
+        </tr>
+        <tr>
+          <td>Aims</td>
+          <td>
+            To develop the knowledge, understanding and clinical skills required to safely apply fluoride varnish as a dental nurse extended duty, in accordance with GDC Scope of Practice guidelines and current evidence-based practice.
+          </td>
+        </tr>
+        <tr>
+          <td>Objectives</td>
+          <td>
+            On completion, learners are able to: (1) explain the science of fluoride and mechanisms of caries prevention; (2) conduct appropriate patient assessment and obtain valid consent; (3) safely apply fluoride varnish following current clinical evidence; (4) demonstrate compliance with GDC professional and legal requirements; (5) manage patient concerns and reluctance regarding fluoride treatment.
+          </td>
+        </tr>
+        <tr>
+          <td>Anticipated GDC Development Outcomes</td>
+          <td>
+            <strong>C - Patient safety and quality of care:</strong> safe clinical application, risk assessment, consent and record-keeping.<br/>
+            <strong>D - Maintenance and development of knowledge and skills:</strong> evidence-based theory, professional responsibilities, reflective practice.
+          </td>
+        </tr>
+        <tr>
+          <td>Date of Completion</td>
+          <td id="certDate">-</td>
+        </tr>
+        <tr>
+          <td>Total CPD Hours</td>
+          <td><strong>10 hours verifiable CPD</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Signature and QA -->
+    <div class="cert-sig-section">
+      <div class="cert-sig-block">
         <div class="sig-line"></div>
-        <div class="sig-label">Learner signature</div>
+        <div class="sig-name">Emily Bremner</div>
+        <div class="sig-role">Assessor, Dental Nurse Training</div>
       </div>
-      <div class="cert-sig">
-        <div class="sig-line"></div>
-        <div class="sig-name">Emily Bowen</div>
-        <div class="sig-label">Assessor, Dental Nurse Training Ltd</div>
+      <div class="cert-qa-statement">
+        <strong>Quality Assurance Statement</strong>
+        This CPD activity has been quality assured by Dental Nurse Training. A feedback form is provided to all learners on completion. The responsible person for quality assurance is Emily Bremner, Dental Nurse Training.
+        <br/><br/>
+        I confirm that the information provided on this certificate is full and accurate.
       </div>
     </div>
 
-    <div class="cert-note">
-      This certificate is issued by DNT and is not awarded by NEBDN.<br/>
-      Dental Nurse Training Ltd · Registered in England No. 12257723 · 21 Angel Hill, Tiverton, Devon EX16 6PE
+    <!-- Footer -->
+    <div class="cert-footer">
+      Dental Nurse Training · 21 Angel Hill, Tiverton, Devon EX16 6PE · emily@dentalnurse.training
     </div>
+
   </div>
 
   <script type="module">
@@ -99,7 +200,6 @@
         if (learner) {
           document.getElementById('certName').textContent = learner.name || user.email;
           document.getElementById('certGDC').textContent = 'GDC Registration Number: ' + (learner.gdc || '-');
-          // Use reflection submitted date as completion date, fallback to today
           const completedAt = learner.reflectionSubmittedAt?.toDate
             ? learner.reflectionSubmittedAt.toDate()
             : new Date();
@@ -108,7 +208,6 @@
       } catch(e) {
         console.error(e);
       }
-      // Auto-print if ?print=1
       if (new URLSearchParams(window.location.search).get('print') === '1') {
         setTimeout(() => window.print(), 500);
       }
