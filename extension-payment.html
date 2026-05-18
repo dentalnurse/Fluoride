@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Purchase Course Extension - DNT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .pay-layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 2.5rem;
+      align-items: start;
+      padding: 3rem 0 4rem;
+    }
+    .pay-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+    }
+    .pay-card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--ink-mid); }
+    .form-group input { width: 100%; padding: 0.7rem 1rem; border: 1.5px solid var(--border); border-radius: var(--radius); font-family: var(--font); font-size: 0.95rem; color: var(--ink); transition: border-color 0.15s; background: var(--white); }
+    .form-group input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,116,122,0.08); }
+    .card-icons { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .card-icon { background: var(--off-white); border: 1px solid var(--border); border-radius: 6px; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-weight: 700; color: var(--ink-light); letter-spacing: 0.03em; }
+    .card-icon.visa { color: #1a1f71; }
+    .card-icon.mc { color: #eb001b; }
+    .lock-note { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--ink-light); margin-top: 0.75rem; }
+    .order-summary { background: var(--teal-dark); border-radius: var(--radius-lg); padding: 1.75rem; color: var(--white); position: sticky; top: calc(var(--nav-h) + 1.5rem); }
+    .order-summary h3 { color: var(--white); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.6; margin-bottom: 1.25rem; }
+    .order-line { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.65rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; }
+    .order-line:last-of-type { border-bottom: none; }
+    .order-line .label { color: rgba(255,255,255,0.6); }
+    .order-line .val { color: var(--white); font-weight: 600; text-align: right; max-width: 180px; }
+    .order-total { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 2px solid rgba(255,255,255,0.2); display: flex; justify-content: space-between; align-items: center; }
+    .order-total .label { color: rgba(255,255,255,0.8); font-weight: 700; }
+    .order-total .amount { font-size: 1.75rem; font-weight: 800; color: var(--white); }
+    .preview-banner { background: #FFF3CD; border: 1px solid #FBBF24; border-radius: var(--radius); padding: 0.75rem 1rem; font-size: 0.83rem; color: #92400E; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .pay-btn { width: 100%; padding: 1rem; background: var(--teal); color: var(--white); border: none; border-radius: var(--radius); font-family: var(--font); font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: all 0.18s; margin-top: 0.5rem; }
+    .pay-btn:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
+    .pay-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .processing-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 999; align-items: center; justify-content: center; flex-direction: column; gap: 1.25rem; }
+    .processing-overlay.active { display: flex; }
+    .spinner { width: 52px; height: 52px; border: 4px solid rgba(255,255,255,0.2); border-top-color: var(--white); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .processing-overlay p { color: var(--white); font-weight: 600; font-size: 1.05rem; }
+    @media (max-width: 700px) { .pay-layout { grid-template-columns: 1fr; } .order-summary { position: static; } }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:56px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+        <span class="nav-logo-text" style="display:none">DNT</span>
+      </a>
+      <div class="nav-right">
+        <a href="dashboard.html" class="btn btn-outline btn-sm">My course</a>
+      </div>
+    </div>
+  </nav>
+
+  <div style="background:linear-gradient(135deg,var(--teal-dark),var(--teal));padding:2.5rem 0 2rem">
+    <div class="container">
+      <h1 style="color:var(--white);margin-bottom:0.4rem">Purchase Course Extension</h1>
+      <p style="color:rgba(255,255,255,0.75);max-width:500px">Extend your course access by 1 month. Enter your card details below to confirm your extension.</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="pay-layout">
+      <div>
+        <div class="preview-banner">
+          <span>🔧</span>
+          <span><strong>Preview mode:</strong> Stripe online payment is coming soon. This screen demonstrates the payment flow - no real payment is taken.</span>
+        </div>
+
+        <div class="pay-card">
+          <h2>💳 Card details</h2>
+          <div class="card-icons">
+            <span class="card-icon visa">VISA</span>
+            <span class="card-icon mc">MC</span>
+            <span class="card-icon">AMEX</span>
+          </div>
+          <div class="form-group">
+            <label>Name on card</label>
+            <input type="text" id="cardName" placeholder="As it appears on your card" autocomplete="cc-name"/>
+          </div>
+          <div class="form-group">
+            <label>Card number</label>
+            <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" autocomplete="cc-number" inputmode="numeric"/>
+          </div>
+          <div class="field-row">
+            <div class="form-group">
+              <label>Expiry date</label>
+              <input type="text" id="cardExpiry" placeholder="MM / YY" maxlength="7" autocomplete="cc-exp"/>
+            </div>
+            <div class="form-group">
+              <label>Security code (CVV)</label>
+              <input type="text" id="cardCVV" placeholder="123" maxlength="4" autocomplete="cc-csc" inputmode="numeric"/>
+            </div>
+          </div>
+          <div id="payError" style="display:none;background:var(--warn-light);border:1px solid var(--warn);border-radius:var(--radius);padding:0.75rem 1rem;font-size:0.88rem;color:var(--warn);margin-bottom:1rem"></div>
+          <button class="pay-btn" id="payBtn" onclick="processPayment()">
+            Pay <span id="payAmount">£12</span> securely
+          </button>
+          <div class="lock-note">
+            <span>🔒</span>
+            <span>Payments are encrypted and secure. Your card details are never stored.</span>
+          </div>
+        </div>
+
+        <p style="font-size:0.8rem;color:var(--ink-light);margin-top:1.25rem;text-align:center">
+          Questions? Email <a href="mailto:emily@dentalnurse.training" style="color:var(--teal)">emily@dentalnurse.training</a>
+        </p>
+      </div>
+
+      <div>
+        <div class="order-summary">
+          <h3>Order summary</h3>
+          <div class="order-line">
+            <span class="label">Item</span>
+            <span class="val">1-month course extension</span>
+          </div>
+          <div class="order-line">
+            <span class="label">Learner</span>
+            <span class="val" id="summaryName">-</span>
+          </div>
+          <div class="order-line">
+            <span class="label">Email</span>
+            <span class="val" id="summaryEmail" style="word-break:break-all">-</span>
+          </div>
+          <div class="order-line" style="border-bottom:none">
+            <span class="label">Extends access by</span>
+            <span class="val">1 month</span>
+          </div>
+          <div class="order-total">
+            <span class="label">Total</span>
+            <span class="amount" id="summaryPrice">£12</span>
+          </div>
+        </div>
+
+        <div style="margin-top:1rem;background:var(--success-light);border-radius:var(--radius);padding:1rem 1.25rem;font-size:0.83rem;color:var(--success);line-height:1.6">
+          <strong>What happens next?</strong><br/>
+          Once payment is confirmed, your course access will be extended by 1 month immediately.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="processing-overlay" id="processingOverlay">
+    <div class="spinner"></div>
+    <p id="processingMsg">Processing your payment...</p>
+  </div>
+
+  <footer style="background:var(--teal-dark);color:rgba(255,255,255,0.7);padding:2rem 0 1.5rem;margin-top:2rem">
+    <div class="container">
+      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center">© 2025 Dental Nurse Training Ltd. This is a DNT certificate and is not awarded by NEBDN.</p>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script>
+    const expiryInfo = JSON.parse(sessionStorage.getItem('expiryInfo') || '{}');
+    const learnerName = expiryInfo.name || '';
+    const learnerEmail = expiryInfo.email || '';
+
+    document.getElementById('summaryName').textContent = learnerName || '-';
+    document.getElementById('summaryEmail').textContent = learnerEmail || '-';
+    document.getElementById('payAmount').textContent = EXTENSION_FEE;
+    document.getElementById('summaryPrice').textContent = EXTENSION_FEE;
+
+    if (learnerName) {
+      document.getElementById('cardName').value = learnerName;
+    }
+
+    document.getElementById('cardNumber').addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '').substring(0, 16);
+      this.value = v.replace(/(.{4})/g, '$1 ').trim();
+    });
+
+    document.getElementById('cardExpiry').addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '').substring(0, 4);
+      if (v.length >= 3) { this.value = v.substring(0, 2) + ' / ' + v.substring(2); }
+      else { this.value = v; }
+    });
+
+    document.getElementById('cardCVV').addEventListener('input', function() {
+      this.value = this.value.replace(/\D/g, '').substring(0, 4);
+    });
+
+    window.processPayment = function() {
+      const cardName   = document.getElementById('cardName').value.trim();
+      const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+      const cardExpiry = document.getElementById('cardExpiry').value.trim();
+      const cardCVV    = document.getElementById('cardCVV').value.trim();
+      const errEl      = document.getElementById('payError');
+      errEl.style.display = 'none';
+
+      if (!cardName) { errEl.textContent = 'Please enter the name on your card.'; errEl.style.display = 'block'; return; }
+      if (cardNumber.length < 16) { errEl.textContent = 'Please enter a valid 16-digit card number.'; errEl.style.display = 'block'; return; }
+      if (cardExpiry.replace(/\s/g, '').length < 4) { errEl.textContent = 'Please enter a valid expiry date.'; errEl.style.display = 'block'; return; }
+      if (cardCVV.length < 3) { errEl.textContent = 'Please enter your 3 or 4-digit security code.'; errEl.style.display = 'block'; return; }
+
+      const overlay = document.getElementById('processingOverlay');
+      const msgEl   = document.getElementById('processingMsg');
+      document.getElementById('payBtn').disabled = true;
+      overlay.classList.add('active');
+
+      setTimeout(() => { msgEl.textContent = 'Verifying card details...'; }, 800);
+      setTimeout(() => { msgEl.textContent = 'Authorising payment...'; }, 1800);
+      setTimeout(() => { msgEl.textContent = 'Payment confirmed! Updating your access...'; }, 2800);
+      setTimeout(() => { window.location.href = 'extension-success.html'; }, 3800);
+    };
+  </script>
+</body>
+</html>

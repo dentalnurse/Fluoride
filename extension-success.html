@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Extension Confirmed - DNT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .success-wrap { min-height: calc(100vh - var(--nav-h)); display: flex; align-items: center; justify-content: center; padding: 3rem 1rem; background: var(--off-white); }
+    .success-card { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 3rem 2.5rem; max-width: 560px; width: 100%; text-align: center; }
+    .tick-circle { width: 80px; height: 80px; background: var(--success-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 1.5rem; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1.75rem 0; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .success-card { animation: fadeIn 0.4s ease; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:56px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+        <span class="nav-logo-text" style="display:none">DNT</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="success-wrap">
+    <div class="success-card">
+      <div class="tick-circle">✅</div>
+      <h1 style="font-size:1.7rem;margin-bottom:0.5rem">Extension Confirmed!</h1>
+      <p style="margin-bottom:1rem">Your 1-month extension has been confirmed! Your course access has been extended.</p>
+
+      <div style="display:inline-flex;align-items:center;gap:0.5rem;background:var(--success-light);color:var(--success);border-radius:100px;padding:0.4rem 1rem;font-size:0.83rem;font-weight:700;margin-bottom:1.25rem">
+        <span>✉️</span>
+        <span>Confirmation email sent to <span id="emailDisplay">you</span></span>
+      </div>
+
+      <hr class="divider"/>
+      <p style="color:var(--ink-light);font-size:0.9rem;margin-bottom:0.75rem">Redirecting you to your course dashboard in 3 seconds...</p>
+      <a href="dashboard.html" class="btn btn-primary btn-lg" style="width:100%;justify-content:center">Go to my course now</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="js/config.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const app  = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    const expiryInfo = JSON.parse(sessionStorage.getItem('expiryInfo') || '{}');
+    const expiryUid  = sessionStorage.getItem('expiryUid');
+    const learnerName  = expiryInfo.name  || '';
+    const learnerEmail = expiryInfo.email || '';
+
+    if (learnerEmail) {
+      document.getElementById('emailDisplay').textContent = learnerEmail;
+    }
+
+    async function doExtension(uid) {
+      try {
+        await updateDoc(doc(db, 'learners', uid), {
+          extensionMonths: increment(1),
+          extensionUpdatedAt: serverTimestamp()
+        });
+      } catch(e) {
+        console.error('Extension update error:', e);
+      }
+    }
+
+    async function sendExtensionEmails(name, email) {
+      if (typeof emailjs === 'undefined') return;
+      emailjs.init(EMAILJS_CONFIG.publicKey);
+      const now = new Date().toLocaleString('en-GB');
+      const promises = [];
+      if (email) {
+        promises.push(emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+          to_email: email, to_name: name,
+          learner_name: name, learner_email: email, learner_gdc: '',
+          submission_type: 'Extension Confirmed',
+          file_url: 'N/A', submitted_at: now,
+          message: 'Hi ' + name + ',\n\nYour 1-month course extension has been confirmed. Your access to the DNT Fluoride Varnish Application Certificate has been extended by 1 month.\n\nLog in to continue your course: https://dentalnurse.github.io/Fluoride/login.html\n\nIf you have any questions, please contact emily@dentalnurse.training\n\nThe DNT Team'
+        }, EMAILJS_CONFIG.publicKey));
+      }
+      promises.push(emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+        to_email: 'emily@dentalnurse.training', to_name: 'Emily',
+        learner_name: name, learner_email: email, learner_gdc: '',
+        submission_type: 'Extension Payment Received',
+        file_url: 'N/A', submitted_at: now,
+        message: 'Course extension payment received.\n\nLearner: ' + name + '\nEmail: ' + email + '\nPaid at: ' + now
+      }, EMAILJS_CONFIG.publicKey));
+      try { await Promise.all(promises); } catch(e) { console.warn('Email send error:', e); }
+    }
+
+    // Try to get uid from sessionStorage or current auth user
+    onAuthStateChanged(auth, async (user) => {
+      const uid = expiryUid || (user ? user.uid : null);
+      if (uid) {
+        await doExtension(uid);
+      }
+      // Send emails
+      await sendExtensionEmails(learnerName, learnerEmail);
+      // Clear session data
+      sessionStorage.removeItem('expiryInfo');
+      sessionStorage.removeItem('expiryUid');
+      // Redirect after 3 seconds
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 3000);
+    });
+  </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 const QUIZ_DATA = {
 
   1: { // Fluoride Science and Caries Prevention
-    title: "Module 1 Quiz — Fluoride Science and Caries Prevention",
+    title: "Module 1 Quiz - Fluoride Science and Caries Prevention",
     questions: [
       { q: "What is the concentration of fluoride in standard UK fluoride varnish?", options: ["1,000 ppm", "5,000 ppm", "22,600 ppm", "10,000 ppm"], correct: 2 },
       { q: "Which of the following best describes how fluoride prevents dental caries?", options: ["It kills all bacteria in the mouth", "It promotes remineralisation and inhibits demineralisation", "It hardens the enamel permanently", "It neutralises dietary acid"], correct: 1 },
@@ -22,7 +22,7 @@ const QUIZ_DATA = {
   },
 
   2: { // Patient Assessment and Communication
-    title: "Module 2 Quiz — Patient Assessment and Communication",
+    title: "Module 2 Quiz - Patient Assessment and Communication",
     questions: [
       { q: "Before applying fluoride varnish, which assessment MUST be carried out?", options: ["Full dental radiographic survey", "Intra-oral soft tissue and tooth assessment", "Blood pressure check", "Periodontal probing"], correct: 1 },
       { q: "Which of the following would be a reason to defer fluoride varnish application?", options: ["Patient has natural teeth", "Patient has a filling", "Active ulceration in the area to be treated", "Patient has a crown"], correct: 2 },
@@ -34,7 +34,7 @@ const QUIZ_DATA = {
       { q: "Which of the following is an example of POOR patient management?", options: ["Explaining each step before carrying it out", "Adapting communication to the patient's age", "Beginning treatment without explanation", "Providing written aftercare advice"], correct: 2 },
       { q: "Which of the following is a contraindication to fluoride varnish application?", options: ["Patient has multiple fillings", "Known allergy to colophony", "Patient is anxious", "Patient has fluoride toothpaste at home"], correct: 1 },
       { q: "What should be documented in the patient record after fluoride varnish application?", options: ["Only the product name", "Date, product, surfaces treated, consent, assessment findings, aftercare given", "Supervisor's home address", "The patient's next appointment date only"], correct: 1 },
-      { q: "For elderly patients, what additional consideration is particularly important?", options: ["They only need fluoride once per lifetime", "Xerostomia is common and increases caries risk — fluoride is especially beneficial", "They should not receive fluoride varnish", "Only apply to posterior teeth"], correct: 1 },
+      { q: "For elderly patients, what additional consideration is particularly important?", options: ["They only need fluoride once per lifetime", "Xerostomia is common and increases caries risk - fluoride is especially beneficial", "They should not receive fluoride varnish", "Only apply to posterior teeth"], correct: 1 },
       { q: "What does a caries risk assessment help to determine?", options: ["Whether to charge the patient", "The patient's likelihood of developing new carious lesions", "Which filling material to use", "Whether the patient needs a radiograph"], correct: 1 },
       { q: "Which professional interpreter approach is recommended where a language barrier exists?", options: ["Ask a family member to interpret", "Use a professional interpreter service", "Use gestures only", "Decline to treat until they learn English"], correct: 1 },
       { q: "What should you do if during your assessment you observe an unexplained soft tissue abnormality?", options: ["Apply fluoride varnish anyway", "Take a photo for your records", "Defer treatment and refer to the supervising dentist", "Document it and proceed"], correct: 2 },
@@ -43,14 +43,14 @@ const QUIZ_DATA = {
   },
 
   3: { // Clinical Application and Safety
-    title: "Module 3 Quiz — Clinical Application and Safety",
+    title: "Module 3 Quiz - Clinical Application and Safety",
     questions: [
       { q: "What is the recommended total dose of fluoride varnish per patient per application?", options: ["0.05–0.1 ml", "0.25–0.5 ml", "1–2 ml", "2–5 ml"], correct: 1 },
       { q: "In what order should tooth surfaces be prioritised during fluoride varnish application?", options: ["Anterior teeth first, then posterior", "Posterior teeth first, working anteriorly", "Random order is acceptable", "Only apply to upper teeth"], correct: 1 },
       { q: "Which surfaces should be given priority during application?", options: ["Buccal surfaces only", "Lingual surfaces only", "Occlusal pits, fissures, approximal margins and exposed root surfaces", "Incisal edges only"], correct: 2 },
       { q: "Why must teeth be dried before applying fluoride varnish?", options: ["It makes the varnish look better", "It allows the varnish to adhere properly to the tooth surface", "It is required by law", "To reduce bacteria"], correct: 1 },
       { q: "Which of the following PPE is required for the operator during fluoride varnish application?", options: ["Sterile gloves, FFP3 mask and full gown", "Non-sterile gloves, fluid-resistant surgical mask and eye protection", "Gloves only", "No PPE is required for fluoride varnish"], correct: 1 },
-      { q: "Application brushes and pledgets used for fluoride varnish are:", options: ["Reusable after sterilisation", "Single-use — must be discarded after each patient", "Reusable if rinsed with water", "Reusable for the same patient at different appointments"], correct: 1 },
+      { q: "Application brushes and pledgets used for fluoride varnish are:", options: ["Reusable after sterilisation", "Single-use - must be discarded after each patient", "Reusable if rinsed with water", "Reusable for the same patient at different appointments"], correct: 1 },
       { q: "How does fluoride varnish set after application?", options: ["It is air-dried using the three-in-one syringe", "It sets on contact with saliva", "It requires a curing light", "It sets after 24 hours"], correct: 1 },
       { q: "What immediate action should NOT be taken if acute fluoride toxicity is suspected?", options: ["Calling 999", "Giving milk or water if conscious", "Inducing vomiting", "Monitoring vital signs"], correct: 2 },
       { q: "Which of the following is the correct 3-stage decontamination cycle for reusable instruments?", options: ["Rinse, disinfect, store", "Clean, disinfect, sterilise", "Wipe, autoclave, store", "Soak, rinse, dry"], correct: 1 },
@@ -59,12 +59,12 @@ const QUIZ_DATA = {
       { q: "When should teeth NOT be brushed following fluoride varnish application?", options: ["For 15 minutes only", "Until the following morning", "For 48 hours", "Brushing can continue immediately"], correct: 1 },
       { q: "What should be placed in the buccal sulcus to assist with moisture control during application?", options: ["Gauze squares", "Cotton wool rolls or dry guards", "Tissue paper", "Nothing is needed"], correct: 1 },
       { q: "What is colophony and why is it clinically relevant?", options: ["A type of fluoride compound", "A resin constituent of many fluoride varnishes that is a known allergen", "A dental instrument", "A type of isolation material"], correct: 1 },
-      { q: "A patient shows signs of nausea and abdominal pain immediately after fluoride varnish application. What is the most likely concern?", options: ["Normal post-procedure discomfort", "Possible allergic reaction to the chair material", "Possible acute fluoride toxicity — follow emergency protocol", "The varnish has not set correctly"], correct: 2 },
+      { q: "A patient shows signs of nausea and abdominal pain immediately after fluoride varnish application. What is the most likely concern?", options: ["Normal post-procedure discomfort", "Possible allergic reaction to the chair material", "Possible acute fluoride toxicity - follow emergency protocol", "The varnish has not set correctly"], correct: 2 },
     ]
   },
 
   4: { // Professional Responsibilities and Law
-    title: "Module 4 Quiz — Professional Responsibilities and Law",
+    title: "Module 4 Quiz - Professional Responsibilities and Law",
     questions: [
       { q: "How many principles are contained in the GDC's Standards for the Dental Team (2013)?", options: ["6", "7", "9", "12"], correct: 2 },
       { q: "Which legislation governs how patient data is handled in the UK?", options: ["Health and Safety at Work Act 1974", "Mental Capacity Act 2005", "UK GDPR and Data Protection Act 2018", "GDC Standards for the Dental Team"], correct: 2 },
@@ -79,13 +79,13 @@ const QUIZ_DATA = {
       { q: "Which legal case established the principle that patients must be informed of all material risks before treatment?", options: ["Gillick v West Norfolk AHA [1985]", "Montgomery v Lanarkshire Health Board [2015]", "Bolam v Friern Hospital [1957]", "Chester v Afshar [2004]"], correct: 1 },
       { q: "For children's dental records, how long must they be retained?", options: ["Until the child turns 18", "Until age 25 or 11 years from last entry, whichever is longer", "For 5 years after the last appointment", "Until the child changes dental practice"], correct: 1 },
       { q: "A dental nurse applies fluoride varnish without a prescription from a dentist. This is:", options: ["Acceptable if they are qualified", "Outside their scope of practice and a GDC concern", "Permitted if a parent requests it", "Fine in a community setting"], correct: 1 },
-      { q: "What must you check regarding your indemnity insurance before applying fluoride varnish as an extended duty?", options: ["Nothing — indemnity covers all dental activities automatically", "That your policy specifically covers extended duties including fluoride varnish", "That your employer has insurance — you don't need your own", "That you have completed 2 years of post-registration experience"], correct: 1 },
-      { q: "If a dental nurse is unsure whether a clinical task falls within their competence, what should they do?", options: ["Attempt the task and document the outcome", "Decline the task and seek guidance — never be pressured to act outside your competence", "Ask a colleague to observe and proceed", "Check social media for guidance"], correct: 1 },
+      { q: "What must you check regarding your indemnity insurance before applying fluoride varnish as an extended duty?", options: ["Nothing - indemnity covers all dental activities automatically", "That your policy specifically covers extended duties including fluoride varnish", "That your employer has insurance - you don't need your own", "That you have completed 2 years of post-registration experience"], correct: 1 },
+      { q: "If a dental nurse is unsure whether a clinical task falls within their competence, what should they do?", options: ["Attempt the task and document the outcome", "Decline the task and seek guidance - never be pressured to act outside your competence", "Ask a colleague to observe and proceed", "Check social media for guidance"], correct: 1 },
     ]
   },
 
   5: { // Reluctance to Fluoride
-    title: "Module 5 Quiz — Reluctance to Fluoride and Managing Refusal",
+    title: "Module 5 Quiz - Reluctance to Fluoride and Managing Refusal",
     questions: [
       { q: "What is the most common reason patients decline fluoride varnish?", options: ["The procedure is too painful", "Misinformation found online or concerns about safety", "The cost is too high", "They prefer to use mouthwash instead"], correct: 1 },
       { q: "When a patient expresses concern about fluoride, what should be your first response?", options: ["Immediately correct them with facts", "Listen without judgment and allow them to explain fully", "Document the refusal and end the appointment", "Call the dentist in immediately"], correct: 1 },
@@ -98,10 +98,10 @@ const QUIZ_DATA = {
       { q: "What is the dental nurse's role when managing a patient who declines fluoride?", options: ["To convince them to accept treatment", "To inform without pressuring, respect autonomy, and document the outcome", "To escalate to the dentist immediately without discussion", "To offer a different procedure without explanation"], correct: 1 },
       { q: "A patient declines fluoride varnish but agrees to fluoride toothpaste. What does this suggest?", options: ["They have a fluoride allergy", "Their concern may be specific to the varnish application process rather than fluoride itself", "They do not understand fluoride at all", "They should be refused all future fluoride treatment"], correct: 1 },
       { q: "What does patient autonomy mean in the context of fluoride refusal?", options: ["The patient must follow clinical recommendations", "The patient has the right to make informed decisions about their own treatment, including declining", "The patient's family can override their decision", "Autonomy only applies to adults over 21"], correct: 1 },
-      { q: "If a patient who declined fluoride at a previous visit returns, what is the recommended approach?", options: ["Do not raise the topic again", "Open a calm, non-pressuring conversation — a patient who felt listened to is more likely to reconsider", "Document that they refused again without discussion", "Apply fluoride without asking, as consent was given at a previous visit"], correct: 1 },
+      { q: "If a patient who declined fluoride at a previous visit returns, what is the recommended approach?", options: ["Do not raise the topic again", "Open a calm, non-pressuring conversation - a patient who felt listened to is more likely to reconsider", "Document that they refused again without discussion", "Apply fluoride without asking, as consent was given at a previous visit"], correct: 1 },
       { q: "Which organisation supports the safety and use of fluoride varnish?", options: ["Only private dental organisations", "NHS England, NICE, the World Health Organization and all major UK dental bodies", "Only NICE, not the NHS", "No international health organisations endorse fluoride varnish"], correct: 1 },
-      { q: "What must always be documented when a patient declines fluoride varnish?", options: ["Nothing — only accepted treatments need recording", "That fluoride was recommended, the concern was discussed, information was provided, and the patient declined", "Only the patient's name and date", "The patient's reason for refusal and nothing else"], correct: 1 },
-      { q: "Fluorosis risk from correctly applied fluoride varnish is considered to be:", options: ["High — varnish should not be used in children under 6 for this reason", "Very low — the small amount used sets quickly and ingestion is negligible", "Moderate — parents should always sign a fluorosis waiver", "Unknown — no research has been conducted"], correct: 1 },
+      { q: "What must always be documented when a patient declines fluoride varnish?", options: ["Nothing - only accepted treatments need recording", "That fluoride was recommended, the concern was discussed, information was provided, and the patient declined", "Only the patient's name and date", "The patient's reason for refusal and nothing else"], correct: 1 },
+      { q: "Fluorosis risk from correctly applied fluoride varnish is considered to be:", options: ["High - varnish should not be used in children under 6 for this reason", "Very low - the small amount used sets quickly and ingestion is negligible", "Moderate - parents should always sign a fluorosis waiver", "Unknown - no research has been conducted"], correct: 1 },
     ]
   }
 
