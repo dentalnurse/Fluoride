@@ -38,6 +38,7 @@
       <button class="sidebar-item locked" id="sb-practical" onclick="showSection('practical')"><span class="si-icon">🦷</span><span style="flex:1;text-align:left;font-size:0.82rem">Practical Portfolio</span><span class="si-badge badge-lock" id="badge-practical">🔒</span></button>
       <button class="sidebar-item locked" id="sb-reflection" onclick="showSection('reflection')"><span class="si-icon">🪞</span><span style="flex:1;text-align:left;font-size:0.82rem">Final Reflection</span><span class="si-badge badge-lock" id="badge-reflection">🔒</span></button>
       <div class="sidebar-section-title">Completion</div>
+      <button class="sidebar-item" id="sb-mywork" onclick="showSection('mywork')"><span class="si-icon">📋</span><span style="flex:1;text-align:left;font-size:0.82rem">My Work</span><span class="si-badge" id="badge-mywork">→</span></button>
       <button class="sidebar-item locked" id="sb-certificate" onclick="showSection('certificate')"><span class="si-icon">🏆</span><span style="flex:1;text-align:left;font-size:0.82rem">My Certificate</span><span class="si-badge badge-lock" id="badge-certificate">🔒</span></button>
       <div class="sidebar-section-title">Resources</div>
       <button class="sidebar-item" id="sb-handbooks" onclick="window.open('handbook.html','_blank')"><span class="si-icon">📖</span><span style="flex:1;text-align:left;font-size:0.82rem">Handbooks</span></button>
@@ -48,7 +49,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, arrayUnion, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, getDocs, collection, updateDoc, arrayUnion, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
     const app = initializeApp(FIREBASE_CONFIG);
@@ -57,6 +58,7 @@
     const storage = getStorage(app);
     let learner = null;
     let uid = null;
+    let customContent = {};
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { window.location.href = 'login.html'; return; }
@@ -88,6 +90,14 @@
             learner._expiryDate = expiryDate.toLocaleDateString('en-GB');
           }
         }
+
+        // Load any custom module content from Firestore
+        try {
+          for (let i = 1; i <= 5; i++) {
+            const cs = await getDoc(doc(db, 'courseContent', 'module' + i));
+            if (cs.exists() && cs.data().html) customContent[i] = cs.data().html;
+          }
+        } catch(e2) { /* content overrides optional */ }
 
         renderSidebar();
         showSection('home');
@@ -125,6 +135,13 @@
         if (learner.supervisorsSubmitted) { supBadge.textContent='✓'; supBadge.className='si-badge badge-done'; }
         else { supBadge.textContent='→'; supBadge.className='si-badge badge-new'; }
       }
+      // My Work badge
+      const mwBadge = document.getElementById('badge-mywork');
+      if (mwBadge) {
+        const anySubmitted = learner.writtenSubmitted || learner.practicalSubmitted || learner.reflectionSubmitted;
+        if (anySubmitted) { mwBadge.textContent='✓'; mwBadge.className='si-badge badge-done'; }
+        else { mwBadge.textContent='→'; mwBadge.className='si-badge badge-new'; }
+      }
       // Certificate - unlock if all three passed
       const certBtn = document.getElementById('sb-certificate');
       const certBadge = document.getElementById('badge-certificate');
@@ -156,6 +173,7 @@
         return;
       }
       if (id === 'supervisors') { renderSupervisors(main); return; }
+      if (id === 'mywork') { renderMyWork(main); return; }
       if (id === 'certificate') { renderCertificate(main); return; }
       if (!allPassed) { main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Locked</h3><p>Complete all five theory modules to unlock this section</p></div>'; return; }
       if (id === 'written') { renderWritten(main); return; }
@@ -195,7 +213,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
     }
 
    function renderModule(el, modNum, status) {
-      const content = MODULE_CONTENT[modNum];
+      const content = customContent[modNum] || MODULE_CONTENT[modNum];
       const passed = status === 2 || status === '2';
       el.innerHTML = '<div class="dash-header"><h1>Module ' + modNum + ': ' + MODULES[modNum-1].title + '</h1>'
         + '<p>' + (passed ? '✅ Module complete - quiz passed' : 'Read through the content below. When you are ready, click Take the Quiz to complete this module.') + '</p>'
@@ -434,6 +452,51 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
       renderSidebar();
       renderSupervisors(document.getElementById('dashMain'));
     };
+
+    function renderMyWork(el) {
+      const items = [
+        { key:'written',    label:'Written Tasks',       icon:'✍️' },
+        { key:'practical',  label:'Practical Portfolio', icon:'🦷' },
+        { key:'reflection', label:'Final Reflection',    icon:'🪞' },
+      ];
+      const cards = items.map(({ key, label, icon }) => {
+        const submitted  = learner[key + 'Submitted'];
+        const passed     = learner[key + 'Passed'];
+        const feedback   = learner[key + 'Feedback'];
+        const fileUrl    = learner[key + 'FileUrl'];
+        const submittedAt = learner[key + 'SubmittedAt'];
+        const dateStr    = submittedAt?.toDate ? submittedAt.toDate().toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : null;
+
+        let statusBadge, statusColor;
+        if (passed)          { statusBadge='✅ Passed';           statusColor='#1A7F4B'; }
+        else if (submitted)  { statusBadge='📬 Submitted - awaiting review'; statusColor='#005A5F'; }
+        else                 { statusBadge='Not yet submitted';   statusColor='var(--ink-light)'; }
+
+        const fileLinks = fileUrl
+          ? fileUrl.split(', ').map((u,i) => `<a href="${u}" target="_blank" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.85rem;color:var(--teal-dark);font-weight:600;text-decoration:none;margin-right:0.75rem">📥 Download file${fileUrl.split(', ').length>1?' '+(i+1):''}</a>`).join('')
+          : '';
+
+        return `<div class="content-card" style="margin-bottom:1.25rem">
+          <div style="display:flex;align-items:flex-start;gap:1rem;margin-bottom:${submitted?'1rem':'0'}">
+            <div style="font-size:2rem;line-height:1">${icon}</div>
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.3rem">
+                <strong style="font-size:1rem">${label}</strong>
+                <span style="font-size:0.82rem;font-weight:600;color:${statusColor}">${statusBadge}</span>
+              </div>
+              ${dateStr ? `<div style="font-size:0.8rem;color:var(--ink-light)">Submitted: ${dateStr}</div>` : ''}
+              ${fileLinks ? `<div style="margin-top:0.6rem">${fileLinks}</div>` : ''}
+            </div>
+            ${!submitted ? `<button class="btn btn-outline btn-sm" onclick="showSection('${key}')">Go to ${label} →</button>` : ''}
+          </div>
+          ${feedback ? `<div style="background:var(--teal-pale);border-left:3px solid var(--teal);border-radius:0 var(--radius) var(--radius) 0;padding:0.85rem 1rem;margin-top:0.5rem"><div style="font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--teal-dark);margin-bottom:0.4rem">Assessor feedback</div><p style="font-size:0.9rem;color:var(--ink-mid);line-height:1.65;margin:0">${feedback}</p></div>` : (submitted && !passed ? `<div style="font-size:0.85rem;color:var(--ink-light);padding-top:0.5rem">Feedback will appear here once your assessor has reviewed your work.</div>` : '')}
+        </div>`;
+      });
+
+      const anySubmitted = learner.writtenSubmitted || learner.practicalSubmitted || learner.reflectionSubmitted;
+      el.innerHTML = '<div class="dash-header"><h1>My Work</h1><p>View your submitted assessments, assessor feedback, and download your files.</p></div>'
+        + (anySubmitted ? cards.join('') : '<div class="content-card" style="text-align:center;padding:2.5rem"><div style="font-size:2.5rem;margin-bottom:0.75rem">📭</div><p style="color:var(--ink-light)">You have not submitted any work yet. Complete all five theory modules to unlock your assessments.</p></div>');
+    }
 
     function renderCertificate(el) {
       const allCompleted = learner.writtenPassed && learner.practicalPassed && learner.reflectionPassed;

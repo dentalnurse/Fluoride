@@ -59,6 +59,7 @@
         <div class="admin-tab active" onclick="switchAdminTab('pending')">⏳ Awaiting Approval</div>
         <div class="admin-tab" onclick="switchAdminTab('all')">👥 All Learners</div>
         <div class="admin-tab" onclick="switchAdminTab('submissions')">📬 Submissions</div>
+        <div class="admin-tab" onclick="switchAdminTab('content')">✏️ Course Content</div>
       </div>
 
       <!-- Tab content -->
@@ -81,7 +82,7 @@
     import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, doc, updateDoc, serverTimestamp }
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const app  = initializeApp(FIREBASE_CONFIG);
@@ -144,7 +145,7 @@
     window.switchAdminTab = (tab) => {
       currentTab = tab;
       document.querySelectorAll('.admin-tab').forEach((t, i) => {
-        t.classList.toggle('active', ['pending','all','submissions'][i] === tab);
+        t.classList.toggle('active', ['pending','all','submissions','content'][i] === tab);
       });
       renderTab(tab);
     };
@@ -154,6 +155,7 @@
       if (tab === 'pending')     { renderPendingTab(el); return; }
       if (tab === 'all')         { renderAllTab(el); return; }
       if (tab === 'submissions') { renderSubmissionsTab(el); return; }
+      if (tab === 'content')     { renderContentTab(el); return; }
     }
 
     // ── Pending tab ────────────────────────────────────────────────────────
@@ -237,37 +239,118 @@
     };
 
     // ── Submissions tab ──────────────────────────────────────────────────
+    let subFilter = 'all';
+
     function renderSubmissionsTab(el) {
-      const withSubs = learners.filter(l => l.writtenSubmitted || l.practicalSubmitted || l.reflectionSubmitted);
-      if (!withSubs.length) {
+      const allRows = learners.flatMap(l => {
+        const rows = [];
+        if (l.writtenSubmitted)    rows.push({ l, type:'written',    label:'Written Tasks',       url:l.writtenFileUrl,    feedback:l.writtenFeedback,    passed:l.writtenPassed,    at:l.writtenSubmittedAt });
+        if (l.practicalSubmitted)  rows.push({ l, type:'practical',  label:'Practical Portfolio', url:l.practicalFileUrl,  feedback:l.practicalFeedback,  passed:l.practicalPassed,  at:l.practicalSubmittedAt });
+        if (l.reflectionSubmitted) rows.push({ l, type:'reflection', label:'Final Reflection',    url:l.reflectionFileUrl, feedback:l.reflectionFeedback, passed:l.reflectionPassed, at:l.reflectionSubmittedAt });
+        return rows;
+      });
+      if (!allRows.length) {
         el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No submissions yet.</div>';
         return;
       }
+      const filtered = subFilter === 'pending' ? allRows.filter(r => !r.passed)
+                     : subFilter === 'passed'  ? allRows.filter(r =>  r.passed)
+                     : allRows;
+      const counts = { all: allRows.length, pending: allRows.filter(r=>!r.passed).length, passed: allRows.filter(r=>r.passed).length };
       el.innerHTML = `
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
+          ${[['all','All'],['pending','Awaiting review'],['passed','Passed']].map(([v,lbl]) =>
+            `<button class="btn btn-sm ${subFilter===v?'btn-primary':'btn-outline'}" onclick="setSubFilter('${v}')">${lbl} <span style="opacity:0.7">(${counts[v]})</span></button>`
+          ).join('')}
+        </div>
         <table class="admin-table">
           <thead><tr>
-            <th>Learner</th><th>Submission</th><th>Submitted</th><th>File</th><th>Feedback</th><th>Actions</th>
+            <th>Learner</th><th>Submission</th><th>Submitted</th><th>File</th><th>Status</th><th>Actions</th>
           </tr></thead>
           <tbody>
-            ${withSubs.flatMap(l => {
-              const rows = [];
-              if (l.writtenSubmitted)    rows.push({ l, type:'written',    label:'Written Tasks',      url:l.writtenFileUrl,    feedback:l.writtenFeedback,    at:l.writtenSubmittedAt });
-              if (l.practicalSubmitted)  rows.push({ l, type:'practical',  label:'Practical Portfolio', url:l.practicalFileUrl,  feedback:l.practicalFeedback,  at:l.practicalSubmittedAt });
-              if (l.reflectionSubmitted) rows.push({ l, type:'reflection', label:'Final Reflection',    url:l.reflectionFileUrl, feedback:l.reflectionFeedback, at:l.reflectionSubmittedAt });
-              return rows;
-            }).map(({ l, type, label, url, feedback, at }) => `<tr>
+            ${filtered.length ? filtered.map(({ l, type, label, url, feedback, passed, at }) => `<tr>
               <td><div class="td-name">${l.name}</div><div class="td-email">${l.email}</div></td>
               <td><span class="pill pill-teal">${label}</span></td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${at?.toDate ? at.toDate().toLocaleDateString('en-GB') : '-'}</td>
-              <td>${url ? `<a href="${url}" target="_blank" class="submission-link">📥 Download</a>` : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'}</td>
-              <td style="font-size:0.82rem">${feedback ? `<span style="color:var(--success)">✓ Given</span>` : '<span style="color:var(--ink-light)">Pending</span>'}</td>
+              <td>${url ? url.split(', ').map(u=>`<a href="${u}" target="_blank" class="submission-link" style="display:block;margin-bottom:2px">📥 Download</a>`).join('') : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'}</td>
+              <td style="font-size:0.82rem">${passed ? '<span class="pill pill-green">Passed</span>' : feedback ? '<span style="color:var(--teal-dark)">Feedback given</span>' : '<span style="color:var(--ink-light)">Awaiting review</span>'}</td>
               <td>
-                <button class="btn btn-primary btn-sm" onclick="openFeedbackModal('${l.id}','${type}','${l.name}')">${feedback ? 'Edit feedback' : 'Add feedback'}</button>
-<button class="btn btn-success btn-sm" onclick="markPassed('${l.id}','${type}','${l.name}')">✓ Mark passed</button>
+                <div class="admin-actions">
+                  <button class="btn btn-primary btn-sm" onclick="openFeedbackModal('${l.id}','${type}','${l.name}')">${feedback ? 'Edit feedback' : 'Add feedback'}</button>
+                  ${!passed ? `<button class="btn btn-success btn-sm" onclick="markPassed('${l.id}','${type}','${l.name}')">✓ Mark passed</button>` : ''}
+                </div>
               </td>
-            </tr>`).join('')}
+            </tr>`).join('') : '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--ink-light)">No submissions in this category.</td></tr>'}
           </tbody>
         </table>`;
+    }
+
+    window.setSubFilter = (f) => { subFilter = f; renderSubmissionsTab(document.getElementById('tabContent')); };
+
+    // ── Course content editor tab ─────────────────────────────────────────
+    async function renderContentTab(el) {
+      el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--ink-light)">Loading course content...</div>';
+      const contentDocs = {};
+      for (let i = 1; i <= 5; i++) {
+        try {
+          const snap = await getDoc(doc(db, 'courseContent', 'module' + i));
+          if (snap.exists() && snap.data().html) contentDocs[i] = snap.data().html;
+        } catch(e) { /* no content saved yet */ }
+      }
+      let selectedModule = 1;
+      const moduleTitles = ['Fluoride Science','Patient Assessment','Clinical Application','Professional Law','Managing Refusal'];
+
+      function drawEditor() {
+        const current = contentDocs[selectedModule] || '';
+        el.innerHTML = `
+          <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:1rem">Edit the HTML content for each module. Changes are saved to the database and shown to learners immediately. Clear a module to revert to the built-in default.</p>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.25rem">
+            ${[1,2,3,4,5].map(i=>`<button class="btn btn-sm ${selectedModule===i?'btn-primary':'btn-outline'}" onclick="selectContentMod(${i})">Module ${i}${contentDocs[i]?'  ✏️':''}</button>`).join('')}
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;gap:1rem;flex-wrap:wrap">
+            <strong style="font-size:0.95rem">Module ${selectedModule}: ${moduleTitles[selectedModule-1]}</strong>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+              <button class="btn btn-outline btn-sm" onclick="previewContent()">👁 Preview</button>
+              <button class="btn btn-outline btn-sm" style="color:var(--warn)" onclick="clearContentMod(${selectedModule})">Reset to default</button>
+              <button class="btn btn-primary btn-sm" onclick="saveContent(${selectedModule})">💾 Save changes</button>
+            </div>
+          </div>
+          <textarea id="contentEditor" style="width:100%;height:420px;font-family:monospace;font-size:0.82rem;padding:0.75rem 1rem;border:1.5px solid var(--border);border-radius:var(--radius);resize:vertical;line-height:1.55;outline:none">${escHtml(current)}</textarea>
+          <p style="font-size:0.78rem;color:var(--ink-light);margin-top:0.5rem">Use standard HTML: &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;/&lt;li&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;table&gt;. If blank, the built-in module content is used.</p>`;
+      }
+
+      function escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }
+
+      window.selectContentMod = (i) => { selectedModule = i; drawEditor(); };
+
+      window.saveContent = async (modNum) => {
+        const html = document.getElementById('contentEditor').value.trim();
+        await setDoc(doc(db, 'courseContent', 'module' + modNum), { html, updatedAt: serverTimestamp() });
+        contentDocs[modNum] = html;
+        drawEditor();
+        showToast('Module ' + modNum + ' content saved ✅', 'success');
+      };
+
+      window.clearContentMod = async (modNum) => {
+        if (!confirm('Reset Module ' + modNum + ' to built-in default? The custom content will be deleted.')) return;
+        await setDoc(doc(db, 'courseContent', 'module' + modNum), { html: '', updatedAt: serverTimestamp() });
+        delete contentDocs[modNum];
+        drawEditor();
+        showToast('Module ' + modNum + ' reset to default ✓');
+      };
+
+      window.previewContent = () => {
+        const html = document.getElementById('contentEditor')?.value || '';
+        const win = window.open('', '_blank');
+        if (win) {
+          win.document.write('<html><head><meta charset="UTF-8"><style>body{font-family:Nunito Sans,system-ui,sans-serif;padding:2rem;max-width:780px;margin:0 auto;color:#1a1a1a}h2{color:#005A5F;margin:1.5rem 0 0.75rem}p{margin-bottom:0.85rem;line-height:1.7}ul,ol{margin:0.5rem 0 1rem 1.5rem}li{margin-bottom:0.35rem}table{width:100%;border-collapse:collapse;margin:1rem 0}th{background:#005A5F;color:white;padding:0.5rem 0.75rem;text-align:left}td{padding:0.5rem 0.75rem;border-bottom:1px solid #eee}</style></head><body>' + html + '</body></html>');
+          win.document.close();
+        }
+      };
+
+      drawEditor();
     }
 
     // ── Approve learner ──────────────────────────────────────────────────
