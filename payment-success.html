@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment Confirmed — DNT Fluoride Varnish Certificate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .success-wrap {
+      min-height: calc(100vh - var(--nav-h));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+      background: var(--off-white);
+    }
+    .success-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      padding: 3rem 2.5rem;
+      max-width: 560px;
+      width: 100%;
+      text-align: center;
+    }
+    .tick-circle {
+      width: 80px;
+      height: 80px;
+      background: var(--success-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      margin: 0 auto 1.5rem;
+    }
+    .steps-list {
+      text-align: left;
+      margin: 1.75rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.9rem;
+      padding: 0.85rem 1rem;
+      background: var(--teal-pale);
+      border-radius: var(--radius);
+      border-left: 3px solid var(--teal);
+    }
+    .step-num {
+      min-width: 24px;
+      height: 24px;
+      background: var(--teal);
+      color: var(--white);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+      margin-top: 0.1rem;
+    }
+    .step-text strong { display: block; font-size: 0.9rem; color: var(--ink); }
+    .step-text span { font-size: 0.82rem; color: var(--ink-light); }
+    .email-sent-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--success-light);
+      color: var(--success);
+      border-radius: 100px;
+      padding: 0.4rem 1rem;
+      font-size: 0.83rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+    }
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.75rem 0;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .success-card { animation: fadeIn 0.4s ease; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:40px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+        <span class="nav-logo-text" style="display:none">DNT</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="success-wrap">
+    <div class="success-card">
+      <div class="tick-circle">✅</div>
+
+      <h1 style="font-size:1.7rem;margin-bottom:0.5rem">Payment confirmed!</h1>
+      <p style="margin-bottom:1rem">Thank you for enrolling on the <strong>DNT Certificate in Fluoride Varnish Application</strong>.</p>
+
+      <div class="email-sent-badge" id="emailBadge">
+        <span>✉️</span>
+        <span>Confirmation email sent to <span id="emailDisplay">you</span></span>
+      </div>
+
+      <hr class="divider"/>
+
+      <h3 style="margin-bottom:0.5rem;text-align:left">What happens next</h3>
+
+      <div class="steps-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>Check your inbox</strong>
+            <span>A confirmation email has been sent to you. It includes a summary of your enrolment and what to expect.</span>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>Your account is set up</strong>
+            <span>Your login details will be emailed to you within <strong>1 working day</strong> once your account has been activated by your assessor.</span>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>Start learning</strong>
+            <span>Log in to your course dashboard and begin Module 1. Work through all five modules at your own pace.</span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider"/>
+
+      <a href="login.html" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-bottom:0.75rem">
+        Go to login
+      </a>
+
+      <p style="font-size:0.8rem;color:var(--ink-light)">
+        Questions? Email <a href="mailto:emily@dentalnurse.training" style="color:var(--teal);font-weight:600">emily@dentalnurse.training</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="js/config.js"></script>
+  <script>
+    if (typeof emailjs !== 'undefined') emailjs.init(EMAILJS_CONFIG.publicKey);
+
+    const enrolData = JSON.parse(sessionStorage.getItem('enrolData') || '{}');
+    const learnerName  = ((enrolData.firstName || '') + ' ' + (enrolData.lastName || '')).trim() || 'Learner';
+    const learnerEmail = enrolData.email || '';
+    const learnerGDC   = enrolData.gdc || '';
+    const paidAt       = new Date().toLocaleString('en-GB');
+
+    // Show learner's email in the badge
+    if (learnerEmail) {
+      document.getElementById('emailDisplay').textContent = learnerEmail;
+    }
+
+    // Send confirmation email to learner
+    async function sendEmails() {
+      const promises = [];
+
+      // 1. Learner confirmation email
+      if (learnerEmail && typeof emailjs !== 'undefined') {
+        promises.push(
+          emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+            to_email:        learnerEmail,
+            to_name:         learnerName,
+            learner_name:    learnerName,
+            learner_email:   learnerEmail,
+            learner_gdc:     learnerGDC,
+            submission_type: 'Enrolment Confirmed',
+            file_url:        'N/A',
+            submitted_at:    paidAt,
+            message:
+              'Congratulations ' + learnerName + '!\n\n' +
+              'Your payment has been received and your enrolment on the DNT Certificate in Fluoride Varnish Application is confirmed.\n\n' +
+              'WHAT HAPPENS NEXT:\n' +
+              'Your course login details will be sent to you within 1 working day once your account has been activated by your assessor.\n\n' +
+              'COURSE DETAILS:\n' +
+              '• 5 theory modules with MCQs\n' +
+              '• 3 written tasks\n' +
+              '• 10-entry clinical logbook\n' +
+              '• 2 case studies\n' +
+              '• End-of-course reflection\n\n' +
+              'GDC number registered: ' + learnerGDC + '\n\n' +
+              'If you have any questions, please email emily@dentalnurse.training\n\n' +
+              'We look forward to supporting you through the course!\n\n' +
+              'The DNT Team'
+          }, EMAILJS_CONFIG.publicKey)
+        );
+      }
+
+      // 2. Admin notification email
+      if (typeof emailjs !== 'undefined') {
+        promises.push(
+          emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+            to_email:        'emily@dentalnurse.training',
+            to_name:         'Emily',
+            learner_name:    learnerName,
+            learner_email:   learnerEmail,
+            learner_gdc:     learnerGDC,
+            submission_type: 'New Enrolment — Payment Received',
+            file_url:        'N/A',
+            submitted_at:    paidAt,
+            message:
+              'New enrolment received with payment!\n\n' +
+              'Name: '       + learnerName                           + '\n' +
+              'Email: '      + learnerEmail                          + '\n' +
+              'GDC: '        + learnerGDC                            + '\n' +
+              'Phone: '      + (enrolData.phone      || 'Not provided') + '\n' +
+              'Workplace: '  + (enrolData.workplace  || 'Not provided') + '\n' +
+              'Experience: ' + (enrolData.experience || 'Not provided') + '\n' +
+              'Supervisor: ' + (enrolData.supervisor || 'Not provided') + '\n' +
+              'Indemnity: '  + (enrolData.indemnity  || 'Not provided') + '\n' +
+              'Notes: '      + (enrolData.notes      || 'None')         + '\n\n' +
+              'Payment confirmed at: ' + paidAt + '\n\n' +
+              'Action required: Please set up their course account and send login details within 1 working day.'
+          }, EMAILJS_CONFIG.publicKey)
+        );
+      }
+
+      try {
+        await Promise.all(promises);
+        console.log('Confirmation emails sent.');
+      } catch (err) {
+        console.warn('Email send error:', err);
+      }
+
+      // Clear session data after emails are sent
+      sessionStorage.removeItem('enrolData');
+    }
+
+    sendEmails();
+  </script>
+</body>
+</html>
