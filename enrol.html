@@ -24,7 +24,7 @@
     <div class="container">
       <p style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-bottom:0.5rem"><a href="index.html" style="color:rgba(255,255,255,0.7)">Home</a> / Enrol</p>
       <h1 style="color:var(--white);margin-bottom:0.5rem">Enrol on the Course</h1>
-      <p style="color:rgba(255,255,255,0.75);max-width:520px">Complete the form below to register your interest. We will send you an invoice within 1 working day. Once payment is received your course access will be activated.</p>
+      <p style="color:rgba(255,255,255,0.75);max-width:520px">Complete the form below and pay securely by card. A confirmation email will be sent to you instantly, and your course access will be activated within 1 working day.</p>
     </div>
   </div>
   <div class="container" style="padding:3rem 0">
@@ -72,17 +72,10 @@
           </div>
           <div class="form-group"><label>Anything else you would like us to know?</label><textarea id="enrolNotes" placeholder="Optional"></textarea></div>
           <div style="background:var(--teal-pale);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:0.88rem;color:var(--ink-mid);line-height:1.6">
-            By submitting this form you confirm you hold current GDC registration as a dental nurse and meet the course entry requirements. Submitting this form does not guarantee a place - we will be in touch within 1 working day to confirm your enrolment and send your invoice.
+            By submitting this form you confirm you hold current GDC registration as a dental nurse and meet the course entry requirements. You will be taken to a secure payment screen to pay your course fee. Once payment is confirmed, your enrolment email will be sent automatically.
           </div>
           <div id="enrolError" class="form-error" style="display:none;margin-bottom:1rem"></div>
-          <button class="btn btn-primary btn-lg" onclick="submitEnrolment()">Submit enrolment</button>
-        </div>
-        <div id="successMsg" style="display:none;text-align:center;padding:3rem 2rem">
-          <div style="font-size:3.5rem;margin-bottom:1rem">✅</div>
-          <h2 style="margin-bottom:0.75rem">Enrolment received!</h2>
-          <p style="margin-bottom:0.5rem">Thank you for enrolling on the DNT Certificate in Fluoride Varnish Application.</p>
-          <p style="margin-bottom:1.5rem">We will be in touch within 1 working day with your invoice. Once payment is received your course access will be activated and you will receive your login details.</p>
-          <p style="font-size:0.88rem;color:var(--ink-light)">Questions? Email <a href="mailto:emily@dentalnurse.training" style="color:var(--teal);font-weight:600">emily@dentalnurse.training</a></p>
+          <button class="btn btn-primary btn-lg" onclick="submitEnrolment()">Continue to payment →</button>
         </div>
       </div>
       <div>
@@ -92,7 +85,7 @@
           <div style="border-bottom:1px solid rgba(255,255,255,0.1);padding:0.65rem 0;display:flex;justify-content:space-between;font-size:0.9rem"><span style="color:rgba(255,255,255,0.6)">Assessment</span><span style="color:var(--white);font-weight:600">Portfolio based</span></div>
           <div style="border-bottom:1px solid rgba(255,255,255,0.1);padding:0.65rem 0;display:flex;justify-content:space-between;font-size:0.9rem"><span style="color:rgba(255,255,255,0.6)">Applications</span><span style="color:var(--white);font-weight:600">10 witnessed</span></div>
           <div style="border-bottom:1px solid rgba(255,255,255,0.1);padding:0.65rem 0;display:flex;justify-content:space-between;font-size:0.9rem"><span style="color:rgba(255,255,255,0.6)">Duration</span><span style="color:var(--white);font-weight:600">3-6 months</span></div>
-          <div style="padding:0.65rem 0;display:flex;justify-content:space-between;font-size:0.9rem"><span style="color:rgba(255,255,255,0.6)">Fee</span><span style="color:var(--white);font-weight:600">Invoice on enrolment</span></div>
+          <div style="padding:0.65rem 0;display:flex;justify-content:space-between;font-size:0.9rem"><span style="color:rgba(255,255,255,0.6)">Fee</span><span style="color:var(--white);font-weight:600" id="sidebarPrice">£100</span></div>
           <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.1)">
             <p style="font-size:0.82rem;color:rgba(255,255,255,0.55);line-height:1.6">Entry requirements: current GDC registration, 6+ months post-registration experience, named clinical supervisor, appropriate indemnity.</p>
           </div>
@@ -106,23 +99,22 @@
     </div>
   </footer>
   <div class="toast" id="toast"></div>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="js/config.js"></script>
   <script>
-    if (typeof emailjs !== 'undefined') emailjs.init(EMAILJS_CONFIG.publicKey);
+    document.getElementById('sidebarPrice').textContent = COURSE_PRICE;
 
-    window.submitEnrolment = async () => {
-      const firstName = document.getElementById('firstName').value.trim();
-      const lastName = document.getElementById('lastName').value.trim();
-      const email = document.getElementById('enrolEmail').value.trim();
-      const gdc = document.getElementById('enrolGDC').value.trim();
-      const phone = document.getElementById('enrolPhone').value.trim();
-      const workplace = document.getElementById('enrolWorkplace').value.trim();
+    window.submitEnrolment = () => {
+      const firstName  = document.getElementById('firstName').value.trim();
+      const lastName   = document.getElementById('lastName').value.trim();
+      const email      = document.getElementById('enrolEmail').value.trim();
+      const gdc        = document.getElementById('enrolGDC').value.trim();
+      const phone      = document.getElementById('enrolPhone').value.trim();
+      const workplace  = document.getElementById('enrolWorkplace').value.trim();
       const experience = document.getElementById('enrolExperience').value;
       const supervisor = document.getElementById('enrolSupervisor').value;
-      const indemnity = document.getElementById('enrolIndemnity').value;
-      const notes = document.getElementById('enrolNotes').value.trim();
-      const errEl = document.getElementById('enrolError');
+      const indemnity  = document.getElementById('enrolIndemnity').value;
+      const notes      = document.getElementById('enrolNotes').value.trim();
+      const errEl      = document.getElementById('enrolError');
       errEl.style.display = 'none';
 
       if (!firstName || !lastName || !email || !gdc || !experience || !supervisor || !indemnity) {
@@ -131,32 +123,13 @@
         return;
       }
 
-      const btn = document.querySelector('[onclick="submitEnrolment()"]');
-      btn.disabled = true;
-      btn.textContent = 'Sending...';
+      // Store details in sessionStorage for the payment page
+      sessionStorage.setItem('enrolData', JSON.stringify({
+        firstName, lastName, email, gdc, phone, workplace, experience, supervisor, indemnity, notes
+      }));
 
-      try {
-        await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
-          to_email: 'emily@dentalnurse.training',
-          to_name: 'Emily',
-          learner_name: firstName + ' ' + lastName,
-          learner_email: email,
-          learner_gdc: gdc,
-          submission_type: 'New Enrolment',
-          file_url: 'No file',
-          submitted_at: new Date().toLocaleString('en-GB'),
-          message: 'New enrolment received!\n\nName: ' + firstName + ' ' + lastName + '\nEmail: ' + email + '\nGDC: ' + gdc + '\nPhone: ' + (phone||'Not provided') + '\nWorkplace: ' + (workplace||'Not provided') + '\nExperience: ' + experience + '\nSupervisor: ' + supervisor + '\nIndemnity: ' + indemnity + '\nNotes: ' + (notes||'None')
-        }, EMAILJS_CONFIG.publicKey);
-
-        document.getElementById('formWrap').style.display = 'none';
-        document.getElementById('successMsg').style.display = 'block';
-      } catch(e) {
-        console.error(e);
-        errEl.textContent = 'Something went wrong. Please email emily@dentalnurse.training directly.';
-        errEl.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'Submit enrolment';
-      }
+      // Redirect to payment screen
+      window.location.href = 'payment.html';
     };
   </script>
 </body>
