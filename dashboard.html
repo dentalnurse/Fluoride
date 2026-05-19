@@ -49,7 +49,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, getDocs, collection, updateDoc, arrayUnion, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, getDocs, collection, updateDoc, setDoc, arrayUnion, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
     const app = initializeApp(FIREBASE_CONFIG);
@@ -555,11 +555,11 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
       const errEl = document.getElementById('decErr');
       btn.disabled = true; btn.textContent = 'Saving...';
       try {
-        await updateDoc(doc(db, 'learners', uid), {
+        await setDoc(doc(db, 'learners', uid), {
           declarationSigned: true,
           declarationSignedAt: serverTimestamp(),
           declarationSignedName: name,
-        });
+        }, { merge: true });
         learner.declarationSigned = true;
         document.getElementById('declarationOverlay')?.remove();
         renderSidebar();
