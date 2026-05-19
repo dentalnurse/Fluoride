@@ -154,6 +154,8 @@
   <script src="js/config.js"></script>
   <script>
     if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
+    // If enrolData is present, redirect to account creation instead
+    if (sessionStorage.getItem('enrolData')) { window.location.href = 'create-account.html'; }
 
     const enrolData = JSON.parse(sessionStorage.getItem('enrolData') || '{}');
     const learnerName  = ((enrolData.firstName || '') + ' ' + (enrolData.lastName || '')).trim() || 'Learner';
