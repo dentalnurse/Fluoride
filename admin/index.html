@@ -235,12 +235,18 @@
 
     function renderAllRows(list) {
       return list.map(l => {
-        const mp = l.moduleProgress || {};
+        const mp   = l.moduleProgress || {};
         const passed = [1,2,3,4,5].filter(i => mp[i]===2).length;
-        return `<tr>
+        const days = daysUntilExpiry(l);
+        const rowStyle = expiryRowStyle(days);
+        const expBadge = expiryBadge(days);
+        return `<tr style="${rowStyle}">
           <td><div class="td-name">${l.name}</div></td>
           <td><div style="font-size:0.82rem">${l.email}</div><div class="td-email">GDC: ${l.gdc}</div></td>
-          <td>${l.unlocked ? '<span class="pill pill-green">Active</span>' : '<span class="pill pill-orange">Pending</span>'}</td>
+          <td style="display:flex;flex-wrap:wrap;gap:0.3rem;align-items:center;padding-top:0.6rem">
+            ${l.unlocked ? '<span class="pill pill-green">Active</span>' : '<span class="pill pill-orange">Pending</span>'}
+            ${expBadge}
+          </td>
           <td><span class="pill ${passed===5?'pill-green':passed>0?'pill-teal':'pill-grey'}">${passed}/5</span></td>
           <td>${l.writtenSubmitted    ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">-</span>'}</td>
           <td>${l.practicalSubmitted  ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">-</span>'}</td>
@@ -249,6 +255,7 @@
             <div class="admin-actions">
               <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">Manage</button>
               ${!l.unlocked ? `<button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${l.name}')">Approve</button>` : ''}
+              ${days !== null && days <= 14 ? `<button class="btn btn-sm" style="background:#FFF3CD;color:#92400E;border:1px solid #F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Remind</button>` : ''}
             </div>
           </td>
         </tr>`;
@@ -473,6 +480,7 @@
         <div class="modal-footer">
           ${!l.unlocked ? `<button class="btn btn-success" onclick="approveLearner('${l.id}','${l.name}');closeModal()">✓ Approve learner</button>` : ''}
           <button class="btn btn-outline" onclick="sendWelcomeEmail('${l.id}')">📧 Send welcome email</button>
+          ${(() => { const d = daysUntilExpiry(l); return d !== null && d <= 14 ? `<button class="btn btn-outline" style="color:#92400E;border-color:#F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>` : `<button class="btn btn-outline" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>`; })()}
           <button class="btn btn-outline" onclick="saveNotes('${l.id}')">Save notes</button>
           <button class="btn btn-primary" onclick="closeModal()">Close</button>
         </div>`;
@@ -493,6 +501,27 @@
         l.email,
         'Welcome to your Dental Nurse Training Fluoride Varnish Application Certificate',
         'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Certificate in Fluoride Varnish Application!\n\nYour course is now active. You can log in at any time here:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks, clinical logbook, and case studies\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 3 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck — we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+      );
+    };
+
+    window.sendExpiryReminder = (id) => {
+      const l = learners.find(x => x.id === id);
+      if (!l) return;
+      const days  = daysUntilExpiry(l);
+      const daysStr = days !== null ? days + ' days' : 'shortly';
+      const extLink = 'https://dentalnurse.github.io/Fluoride/extension-payment.html'
+        + '?name='  + encodeURIComponent(l.name)
+        + '&email=' + encodeURIComponent(l.email);
+      // Queue Emily's self-reminder second so it shows after the learner email is sent
+      _emailQueue.push({
+        to: 'emily@dentalnurse.training',
+        subject: 'Reminder: course expiry for ' + l.name,
+        body: 'Hi Emily,\n\nThis is an automated reminder that you have just sent a course expiry notice to:\n\nLearner: ' + l.name + '\nEmail: ' + l.email + '\nCourse expires in: ' + daysStr + '\n\nIf they do not purchase an extension, their access will expire and they will need to re-enrol to continue.\n\nDental Nurse Training',
+      });
+      promptEmail(
+        l.email,
+        'Your Dental Nurse Training course access is expiring soon',
+        'Dear ' + l.name + ',\n\nThis is a reminder that your access to the Dental Nurse Training Certificate in Fluoride Varnish Application will expire in approximately ' + daysStr + '.\n\nIf you would like to continue, you can purchase a 1-month extension for £12 using the link below:\n\n' + extLink + '\n\nIf you have already completed the course or do not wish to continue, no action is needed.\n\nIf you have any questions, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
       );
     };
 
@@ -618,7 +647,32 @@
       openLearnerModal(learnerId);
     };
 
+    // ── Expiry helper ─────────────────────────────────────────────────────
+    function daysUntilExpiry(l) {
+      if (!l.enrolledAt?.toDate) return null;
+      const expiry = new Date(l.enrolledAt.toDate());
+      expiry.setMonth(expiry.getMonth() + 3 + (l.extensionMonths || 0));
+      return Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24));
+    }
+
+    function expiryBadge(days) {
+      if (days === null) return '';
+      if (days <= 0)  return '<span class="pill" style="background:#FEE2E2;color:#991B1B">Expired</span>';
+      if (days <= 7)  return '<span class="pill" style="background:#FEE2E2;color:#991B1B">⚠️ ' + days + 'd left</span>';
+      if (days <= 14) return '<span class="pill" style="background:#FFF3CD;color:#92400E">⏰ ' + days + 'd left</span>';
+      return '';
+    }
+
+    function expiryRowStyle(days) {
+      if (days === null) return '';
+      if (days <= 7)  return 'background:#FFF5F5;';
+      if (days <= 14) return 'background:#FFFBF0;';
+      return '';
+    }
+
     // ── Email prompt helpers ──────────────────────────────────────────────
+    let _emailQueue = [];
+
     window.promptEmail = (to, subject, body) => {
       document.getElementById('epTo').textContent      = to;
       document.getElementById('epSubject').textContent = subject;
@@ -630,8 +684,13 @@
       document.getElementById('emailPromptModal').classList.remove('hidden');
     };
 
-    window.dismissEmailPrompt = () =>
+    window.dismissEmailPrompt = () => {
       document.getElementById('emailPromptModal').classList.add('hidden');
+      if (_emailQueue.length) {
+        const next = _emailQueue.shift();
+        setTimeout(() => promptEmail(next.to, next.subject, next.body), 200);
+      }
+    };
 
     window.copyEmailBody = () => {
       const body = document.getElementById('epBody').textContent;
