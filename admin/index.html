@@ -539,11 +539,20 @@
       showToast(name + ' marked as passed for ' + type + ' ✅', 'success');
       if (l) {
         const typeLabels = { written: 'Written Tasks', practical: 'Practical Portfolio', reflection: 'Final Reflection' };
-        promptEmail(
-          l.email,
-          'Assessment passed: ' + typeLabels[type] + ' - DNT Fluoride Varnish Certificate',
-          'Congratulations ' + l.name + '!\n\nGreat news - your ' + typeLabels[type] + ' has been marked as passed!\n\nLog in to your dashboard to see your progress:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nWell done and keep up the great work!\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
-        );
+        const allNowPassed = l.writtenPassed && l.practicalPassed && l.reflectionPassed;
+        if (allNowPassed) {
+          promptEmail(
+            l.email,
+            'Congratulations - You have completed the DNT Fluoride Varnish Application Certificate!',
+            'Congratulations ' + l.name + '!\n\nWhat an achievement! You have successfully passed all three assessments for the DNT Certificate in Fluoride Varnish Application.\n\nYour certificate is now available to view and download from your course dashboard:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nThis certificate records 10 hours of verifiable CPD against GDC Outcomes C and D. You can use it as evidence of your CPD in your GDC Enhanced CPD record.\n\nAs a final request — it would mean a great deal to us if you could take 2 minutes to share your feedback on the course. Your thoughts help us improve the experience for future learners:\nhttps://forms.gle/SS25kq76yMiAPKiJA\n\nThank you for choosing Dental Nurse Training. It has been a pleasure supporting you through this qualification.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+          );
+        } else {
+          promptEmail(
+            l.email,
+            'Assessment passed: ' + typeLabels[type] + ' - DNT Fluoride Varnish Certificate',
+            'Congratulations ' + l.name + '!\n\nGreat news - your ' + typeLabels[type] + ' has been marked as passed!\n\nLog in to your dashboard to see your progress:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nWell done and keep up the great work!\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
+          );
+        }
       }
       renderTab(currentTab);
     };
