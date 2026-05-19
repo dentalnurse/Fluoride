@@ -364,7 +364,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
             to_email: 'emily@dentalnurse.training',
             learner_name: learner.name, learner_email: learner.email, learner_gdc: learner.gdc,
             submission_type: type, file_url: fileUrl || 'Text only', submitted_at: new Date().toLocaleString('en-GB')
-          }, EMAILJS_CONFIG.publicKey);
+          });
         }
         renderSidebar(); showSection(type);
         showToast('Submitted! Your assessor has been notified. ✅', 'success');
@@ -639,7 +639,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>
     if (typeof emailjs !== 'undefined') {
-      emailjs.init(EMAILJS_CONFIG.publicKey);
+      emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
     }
   </script>
 </body>
