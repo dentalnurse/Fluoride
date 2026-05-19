@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create your account - DNT Fluoride Varnish Certificate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .create-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem 1rem; background:var(--off-white); }
+    .create-card { background:var(--white); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); padding:2.5rem 2rem; max-width:480px; width:100%; }
+    .confirmed-badge { display:flex; align-items:center; gap:0.6rem; background:#E8F7EE; color:#1A7F4B; border-radius:100px; padding:0.45rem 1rem; font-size:0.85rem; font-weight:700; margin-bottom:1.75rem; width:fit-content; }
+    .pw-strength { height:4px; border-radius:2px; margin-top:0.4rem; transition:width 0.3s,background 0.3s; width:0; }
+    .pw-hint { font-size:0.78rem; color:var(--ink-light); margin-top:0.35rem; }
+    .divider { border:none; border-top:1px solid var(--border); margin:1.5rem 0; }
+  </style>
+</head>
+<body>
+  <div class="create-wrap">
+    <div class="create-card">
+
+      <div class="confirmed-badge">
+        <span>✅</span><span>Payment confirmed</span>
+      </div>
+
+      <div class="auth-logo" style="margin-bottom:1.5rem">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
+             alt="DNT" style="height:52px;margin:0 auto 0.75rem;display:block"
+             onerror="this.style.display='none'"/>
+        <h2 style="text-align:center">Create your account</h2>
+        <p style="text-align:center;font-size:0.88rem;color:var(--ink-light);margin-top:0.25rem">Choose a password to access your course immediately</p>
+      </div>
+
+      <!-- Learner summary -->
+      <div style="background:var(--teal-pale);border:1px solid var(--teal-light);border-radius:var(--radius);padding:0.85rem 1rem;margin-bottom:1.5rem;font-size:0.88rem">
+        <div style="font-weight:700;color:var(--teal-dark);margin-bottom:0.2rem" id="summaryName">Loading...</div>
+        <div style="color:var(--ink-light)" id="summaryEmail"></div>
+        <div style="color:var(--ink-light)" id="summaryGDC"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="newPassword">Create a password</label>
+        <input type="password" id="newPassword" placeholder="At least 8 characters" oninput="checkStrength(this.value)" autocomplete="new-password"/>
+        <div class="pw-strength" id="pwStrength"></div>
+        <div class="pw-hint" id="pwHint">Use at least 8 characters</div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirm password</label>
+        <input type="password" id="confirmPassword" placeholder="Repeat your password" autocomplete="new-password" oninput="checkMatch()"/>
+        <div class="pw-hint" id="matchHint" style="display:none"></div>
+      </div>
+
+      <div id="createError" class="form-error" style="display:none;margin-bottom:1rem"></div>
+
+      <button class="btn btn-primary form-submit" id="createBtn" onclick="createAccount()">
+        Create account &amp; start learning →
+      </button>
+
+      <hr class="divider"/>
+      <p style="font-size:0.8rem;color:var(--ink-light);text-align:center">
+        Already have an account? <a href="login.html" style="color:var(--teal);font-weight:600">Log in</a>
+      </p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword }
+                               from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, serverTimestamp }
+                               from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const app  = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    const enrolData = JSON.parse(sessionStorage.getItem('enrolData') || '{}');
+
+    if (!enrolData.email) {
+      window.location.href = 'enrol.html';
+    }
+
+    const fullName = ((enrolData.firstName || '') + ' ' + (enrolData.lastName || '')).trim();
+    document.getElementById('summaryName').textContent  = fullName || 'Your account';
+    document.getElementById('summaryEmail').textContent = enrolData.email || '';
+    document.getElementById('summaryGDC').textContent   = enrolData.gdc ? 'GDC: ' + enrolData.gdc : '';
+
+    window.checkStrength = (val) => {
+      const bar  = document.getElementById('pwStrength');
+      const hint = document.getElementById('pwHint');
+      if (!val) { bar.style.width = '0'; hint.textContent = 'Use at least 8 characters'; return; }
+      let score = 0;
+      if (val.length >= 8)  score++;
+      if (val.length >= 12) score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+      const colours = ['#EF4444','#F59E0B','#F59E0B','#22C55E','#16A34A'];
+      const labels  = ['Too short','Weak','Fair','Good','Strong'];
+      bar.style.width      = (score / 5 * 100) + '%';
+      bar.style.background = colours[score - 1] || '#EF4444';
+      hint.textContent     = score < 2 ? 'Use at least 8 characters' : 'Password strength: ' + labels[score - 1];
+      hint.style.color     = colours[score - 1] || 'var(--ink-light)';
+    };
+
+    window.checkMatch = () => {
+      const pw   = document.getElementById('newPassword').value;
+      const conf = document.getElementById('confirmPassword').value;
+      const hint = document.getElementById('matchHint');
+      if (!conf) { hint.style.display = 'none'; return; }
+      hint.style.display = 'block';
+      if (pw === conf) { hint.textContent = '✓ Passwords match'; hint.style.color = '#16A34A'; }
+      else             { hint.textContent = '✗ Passwords do not match'; hint.style.color = '#EF4444'; }
+    };
+
+    window.createAccount = async () => {
+      const password = document.getElementById('newPassword').value;
+      const confirm  = document.getElementById('confirmPassword').value;
+      const errEl    = document.getElementById('createError');
+      const btn      = document.getElementById('createBtn');
+
+      errEl.style.display = 'none';
+
+      if (password.length < 8) {
+        errEl.textContent = 'Password must be at least 8 characters.';
+        errEl.style.display = 'block'; return;
+      }
+      if (password !== confirm) {
+        errEl.textContent = 'Passwords do not match.';
+        errEl.style.display = 'block'; return;
+      }
+
+      btn.disabled = true; btn.textContent = 'Creating your account...';
+
+      try {
+        // Create Firebase Auth user
+        const cred = await createUserWithEmailAndPassword(auth, enrolData.email, password);
+        const uid  = cred.user.uid;
+
+        // Create Firestore learner document
+        await setDoc(doc(db, 'learners', uid), {
+          name:        fullName,
+          email:       enrolData.email,
+          gdc:         enrolData.gdc         || '',
+          phone:       enrolData.phone        || '',
+          workplace:   enrolData.workplace    || '',
+          experience:  enrolData.experience   || '',
+          notes:       enrolData.notes        || '',
+          unlocked:    true,
+          enrolledAt:  serverTimestamp(),
+          moduleProgress: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        });
+
+        // Try to notify Emily (best effort - no hard dependency)
+        try {
+          if (typeof emailjs !== 'undefined') {
+            emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+              to_email: 'emily@dentalnurse.training', to_name: 'Emily',
+              learner_name: fullName, learner_email: enrolData.email, learner_gdc: enrolData.gdc || '',
+              submission_type: 'New Enrolment - Account Created',
+              file_url: 'N/A', submitted_at: new Date().toLocaleString('en-GB'),
+              message: 'New learner has enrolled and created their account.\n\nName: ' + fullName + '\nEmail: ' + enrolData.email + '\nGDC: ' + (enrolData.gdc||'') + '\nPhone: ' + (enrolData.phone||'') + '\nWorkplace: ' + (enrolData.workplace||'') + '\n\nThey now have access to the course.'
+            });
+          }
+        } catch(e2) { /* notification is best-effort */ }
+
+        // Clear session and go to dashboard
+        sessionStorage.removeItem('enrolData');
+        window.location.href = 'dashboard.html';
+
+      } catch(e) {
+        console.error(e);
+        btn.disabled = false; btn.textContent = 'Create account & start learning →';
+        if (e.code === 'auth/email-already-in-use') {
+          errEl.innerHTML = 'An account with this email already exists. <a href="login.html" style="color:var(--teal);font-weight:600">Log in instead</a>';
+        } else if (e.code === 'auth/weak-password') {
+          errEl.textContent = 'Please choose a stronger password (at least 6 characters).';
+        } else {
+          errEl.textContent = 'Could not create account. Please try again or contact emily@dentalnurse.training';
+        }
+        errEl.style.display = 'block';
+      }
+    };
+
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') window.createAccount(); });
+  </script>
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>if(typeof emailjs!=='undefined')emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
+</body>
+</html>
