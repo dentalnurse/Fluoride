@@ -89,8 +89,9 @@
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
-    let learners   = [];
-    let currentTab = 'pending';
+    let learners            = [];
+    let currentTab          = 'pending';
+    let supervisorAgreements = {};
 
     // ── Auth ───────────────────────────────────────────────────────────────
     onAuthStateChanged(auth, (user) => {
@@ -125,6 +126,10 @@
     async function loadLearners() {
       const snap = await getDocs(collection(db, 'learners'));
       learners = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      try {
+        const agrSnap = await getDocs(collection(db, 'supervisorAgreements'));
+        agrSnap.docs.forEach(d => { supervisorAgreements[d.id] = d.data(); });
+      } catch(e) { /* collection may not exist yet */ }
       updateStats();
       renderTab(currentTab);
     }
@@ -385,28 +390,70 @@
     window.openLearnerModal = (id) => {
       const l  = learners.find(x => x.id === id);
       if (!l) return;
-      const mp = l.moduleProgress || {};
+      const mp   = l.moduleProgress || {};
+      const sups = l.supervisors || [];
+
+      const supSection = `
+        <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.85rem">
+            <h4 style="margin:0;font-size:0.95rem">Clinical Supervisors (${sups.length})</h4>
+            ${sups.length ? `<button class="btn btn-outline btn-sm" onclick="reloadAndOpenModal('${id}')">↺ Refresh status</button>` : ''}
+          </div>
+          ${sups.length ? `<div style="display:flex;flex-direction:column;gap:0.6rem">
+            ${sups.map((s, i) => {
+              const agr = s.token ? supervisorAgreements[s.token] : null;
+              const status = s.approved ? 'approved' : agr ? 'signed' : s.guidanceSent ? 'sent' : 'pending';
+              const badge = {
+                approved: '<span class="pill pill-green">✓ Approved</span>',
+                signed:   '<span class="pill pill-teal">✍️ Signed - awaiting approval</span>',
+                sent:     '<span class="pill pill-orange">📧 Guidance sent</span>',
+                pending:  '<span class="pill pill-grey">Not contacted</span>',
+              }[status];
+              const actionBtn = status === 'approved' ? ''
+                : status === 'signed'
+                  ? `<button class="btn btn-success btn-sm" onclick="approveSupervisor('${id}',${i})">✓ Approve</button>`
+                  : s.email
+                    ? `<button class="btn btn-primary btn-sm" onclick="sendSupGuidance('${id}',${i})">${s.guidanceSent ? '↺ Resend' : '📧 Send guidance'}</button>`
+                    : '<span style="font-size:0.78rem;color:var(--warn)">No email</span>';
+              return `<div style="padding:0.75rem 1rem;background:var(--off-white);border-radius:var(--radius);border:1px solid var(--border)">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;flex-wrap:wrap">
+                  <div>
+                    <div style="font-weight:700;font-size:0.88rem">${s.name}</div>
+                    <div style="font-size:0.8rem;color:var(--ink-light)">${s.email||'No email'} &middot; GDC: ${s.gdc}</div>
+                    ${agr ? `<div style="font-size:0.78rem;color:var(--success);margin-top:0.2rem">Signed by: ${agr.signedName} (GDC ${agr.signedGdc}) &middot; ${agr.signedAt?.toDate ? agr.signedAt.toDate().toLocaleDateString('en-GB') : 'date unknown'}</div>` : ''}
+                    ${l.declarationSigned ? '' : ''}
+                  </div>
+                  <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0">${badge} ${actionBtn}</div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>` : `<p style="font-size:0.88rem;color:var(--ink-light)">No supervisors registered yet.</p>`}
+        </div>`;
+
       document.getElementById('learnerModalContent').innerHTML = `
         <div class="modal-header">
           <h3>${l.name}</h3>
           <button class="modal-close" onclick="closeModal()">×</button>
         </div>
         <table style="width:100%;font-size:0.9rem;border-collapse:collapse">
-          ${[['Email', l.email],['GDC', l.gdc],['Status', l.unlocked?'Active':'Pending approval'],
+          ${[['Email', l.email],['GDC', l.gdc],
+             ['Status', l.unlocked?'Active':'Pending approval'],
+             ['Declaration', l.declarationSigned ? '✅ Signed (' + (l.declarationSignedName||'') + ')' : '⏳ Not yet signed'],
              ['Enrolled', l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'],
              ['Module 1', mp[1]===2?'✅ Passed':mp[1]===1?'In progress':'Not started'],
              ['Module 2', mp[2]===2?'✅ Passed':mp[2]===1?'In progress':'Not started'],
              ['Module 3', mp[3]===2?'✅ Passed':mp[3]===1?'In progress':'Not started'],
              ['Module 4', mp[4]===2?'✅ Passed':mp[4]===1?'In progress':'Not started'],
              ['Module 5', mp[5]===2?'✅ Passed':mp[5]===1?'In progress':'Not started'],
-             ['Written',    l.writtenSubmitted?'✅ Submitted':'Not submitted'],
-             ['Practical',  l.practicalSubmitted?'✅ Submitted':'Not submitted'],
-             ['Reflection', l.reflectionSubmitted?'✅ Submitted':'Not submitted'],
+             ['Written',    l.writtenSubmitted ? (l.writtenPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
+             ['Practical',  l.practicalSubmitted ? (l.practicalPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
+             ['Reflection', l.reflectionSubmitted ? (l.reflectionPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
            ].map(([k,v]) => `<tr style="border-bottom:1px solid var(--border)">
-            <td style="padding:0.55rem 0.75rem;color:var(--ink-light);font-weight:600;width:140px">${k}</td>
+            <td style="padding:0.55rem 0.75rem;color:var(--ink-light);font-weight:600;width:150px">${k}</td>
             <td style="padding:0.55rem 0.75rem">${v}</td>
            </tr>`).join('')}
         </table>
+        ${supSection}
         <div class="form-group" style="margin-top:1.25rem">
           <label>Internal notes (not visible to learner)</label>
           <textarea id="adminNotes" style="min-height:80px">${l.notes||''}</textarea>
@@ -417,6 +464,11 @@
           <button class="btn btn-primary" onclick="closeModal()">Close</button>
         </div>`;
       document.getElementById('learnerModal').classList.remove('hidden');
+    };
+
+    window.reloadAndOpenModal = async (id) => {
+      await loadLearners();
+      openLearnerModal(id);
     };
 
     window.closeModal = () => document.getElementById('learnerModal').classList.add('hidden');
@@ -488,6 +540,71 @@
         }, EMAILJS_CONFIG.publicKey);
       }
       renderTab(currentTab);
+    };
+
+    // ── Supervisor guidance & approval ───────────────────────────────────
+    window.sendSupGuidance = async (learnerId, supIdx) => {
+      const l = learners.find(x => x.id === learnerId);
+      if (!l?.supervisors?.[supIdx]) return;
+      const s = l.supervisors[supIdx];
+      if (!s.email) { showToast('No email address for this supervisor.', 'error'); return; }
+      // Generate a unique token
+      const token = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,'0')).join('');
+      // Update supervisor record
+      const updatedSups = l.supervisors.map((sup, i) =>
+        i === supIdx ? { ...sup, token, guidanceSent: true, guidanceSentAt: new Date().toISOString() } : sup
+      );
+      await updateDoc(doc(db, 'learners', learnerId), { supervisors: updatedSups });
+      l.supervisors = updatedSups;
+      // Build the unique signing link
+      const link = 'https://dentalnurse.github.io/Fluoride/supervisor-agreement.html'
+        + '?l=' + encodeURIComponent(learnerId)
+        + '&s=' + supIdx
+        + '&t=' + token
+        + '&ln=' + encodeURIComponent(l.name)
+        + '&sn=' + encodeURIComponent(s.name)
+        + '&sg=' + encodeURIComponent(s.gdc)
+        + '&se=' + encodeURIComponent(s.email);
+      // Send email to supervisor
+      try {
+        await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+          to_email: s.email, to_name: s.name,
+          learner_name: l.name, learner_email: l.email, learner_gdc: l.gdc,
+          submission_type: 'Supervisor Guidance',
+          file_url: link,
+          submitted_at: new Date().toLocaleString('en-GB'),
+          message: 'Dear ' + s.name + ',\n\nYou have been registered as a clinical supervisor by ' + l.name + ' for their DNT Certificate in Fluoride Varnish Application.\n\nPlease click the link below to read the supervisor guidance and sign the online supervisor agreement (this takes approximately 5 minutes):\n\n' + link + '\n\nYou will be asked to confirm your GDC registration number as part of the agreement. Once you have signed, your details will be returned to the learner\'s course record and reviewed by our assessor.\n\nIf you have any questions, please contact emily@dentalnurse.training\n\nKind regards,\nEmily Bremner\nDental Nurse Training',
+        }, EMAILJS_CONFIG.publicKey);
+        showToast('Guidance email sent to ' + s.name + ' ✅', 'success');
+      } catch(e) {
+        console.error(e);
+        showToast('Record updated but email failed. Please email ' + s.email + ' manually.', 'error');
+      }
+      openLearnerModal(learnerId);
+    };
+
+    window.approveSupervisor = async (learnerId, supIdx) => {
+      const l = learners.find(x => x.id === learnerId);
+      if (!l?.supervisors) return;
+      const s = l.supervisors[supIdx];
+      if (!confirm('Approve ' + s.name + ' as a supervisor for ' + l.name + '? The learner will be notified.')) return;
+      const updatedSups = l.supervisors.map((sup, i) =>
+        i === supIdx ? { ...sup, approved: true, approvedAt: new Date().toISOString() } : sup
+      );
+      await updateDoc(doc(db, 'learners', learnerId), { supervisors: updatedSups });
+      l.supervisors = updatedSups;
+      // Notify learner
+      if (typeof emailjs !== 'undefined') {
+        emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+          to_email: l.email, to_name: l.name,
+          learner_name: l.name, learner_email: l.email, learner_gdc: l.gdc,
+          submission_type: 'Supervisor Approved',
+          file_url: 'N/A', submitted_at: new Date().toLocaleString('en-GB'),
+          message: 'Hi ' + l.name + ',\n\nGreat news - your supervisor ' + s.name + ' has been approved and is now confirmed for your clinical logbook.\n\nYou can view the status of all your supervisors in your course dashboard.\n\nLog in here: https://dentalnurse.github.io/Fluoride/login.html\n\nThe DNT Team',
+        }, EMAILJS_CONFIG.publicKey);
+      }
+      showToast(s.name + ' approved as supervisor ✅', 'success');
+      openLearnerModal(learnerId);
     };
 
     // ── Keyboard shortcut for login ────────────────────────────────────────

@@ -99,6 +99,11 @@
           }
         } catch(e2) { /* content overrides optional */ }
 
+        if (!learner.declarationSigned) {
+          showDeclarationOverlay();
+          return;
+        }
+
         renderSidebar();
         showSection('home');
       } catch(e) {
@@ -387,9 +392,16 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
       const submitted = learner.supervisorsSubmitted;
       let listHtml = sups.length
         ? '<div style="margin-bottom:1.25rem"><strong style="font-size:0.9rem;color:var(--ink-mid)">Registered supervisors</strong><div style="margin-top:0.75rem;display:flex;flex-direction:column;gap:0.5rem">'
-          + sups.map((s, i) => '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:var(--teal-pale);border:1px solid var(--teal-light);border-radius:var(--radius)"><div><strong style="font-size:0.9rem">' + s.name + '</strong><div style="font-size:0.82rem;color:var(--ink-light)">' + s.email + ' · GDC: ' + s.gdc + '</div></div>'
-            + (!submitted ? '<button onclick="removeSupervisor(' + i + ')" style="background:none;border:none;color:var(--warn);cursor:pointer;font-size:0.9rem;padding:0.25rem">✕</button>' : '')
-            + '</div>').join('')
+          + sups.map((s, i) => {
+              const statusBadge = s.approved
+                ? '<span style="font-size:0.78rem;font-weight:700;color:#1A7F4B;background:#E8F7EE;border-radius:100px;padding:0.2rem 0.6rem">✅ Approved</span>'
+                : s.guidanceSent
+                  ? '<span style="font-size:0.78rem;font-weight:700;color:#92400E;background:#FFF8E7;border-radius:100px;padding:0.2rem 0.6rem">⏳ Awaiting signature</span>'
+                  : submitted
+                    ? '<span style="font-size:0.78rem;font-weight:600;color:var(--ink-light);background:var(--off-white);border-radius:100px;padding:0.2rem 0.6rem;border:1px solid var(--border)">Pending assessor contact</span>'
+                    : '';
+              return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:var(--teal-pale);border:1px solid var(--teal-light);border-radius:var(--radius);gap:0.5rem;flex-wrap:wrap"><div><strong style="font-size:0.9rem">' + s.name + '</strong><div style="font-size:0.82rem;color:var(--ink-light)">' + s.email + ' · GDC: ' + s.gdc + '</div></div><div style="display:flex;align-items:center;gap:0.5rem">' + statusBadge + (!submitted ? '<button onclick="removeSupervisor(' + i + ')" style="background:none;border:none;color:var(--warn);cursor:pointer;font-size:0.9rem;padding:0.25rem">✕</button>' : '') + '</div></div>';
+            }).join('')
           + '</div></div>'
         : '';
       el.innerHTML = '<div class="dash-header"><h1>My Supervisors</h1><p>Register your clinical supervisor(s) for the practical portfolio.</p></div>'
@@ -451,6 +463,114 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
       showToast('Supervisors submitted! ✅', 'success');
       renderSidebar();
       renderSupervisors(document.getElementById('dashMain'));
+    };
+
+    function showDeclarationOverlay() {
+      document.getElementById('declarationOverlay')?.remove();
+      const today = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+      const overlay = document.createElement('div');
+      overlay.id = 'declarationOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:#F8FAFA;z-index:9999;overflow-y:auto';
+      overlay.innerHTML = `
+        <div style="max-width:720px;margin:0 auto;padding:2rem 1rem 4rem">
+          <div style="text-align:center;margin-bottom:2rem">
+            <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
+                 alt="DNT" style="height:64px;display:block;margin:0 auto 1rem" onerror="this.style.display='none'"/>
+            <h1 style="color:#005A5F;font-size:1.75rem;margin-bottom:0.4rem">Learner Declaration</h1>
+            <p style="color:var(--ink-light)">Please read and sign this declaration before beginning your course</p>
+          </div>
+
+          <div class="content-card" style="margin-bottom:1.25rem">
+            <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:0.85rem">Course Requirements</h2>
+            <p style="margin-bottom:0.75rem">The <strong>DNT Certificate in Fluoride Varnish Application</strong> is a 10-hour verifiable CPD course. To receive your certificate you must complete all of the following:</p>
+            <ul style="margin:0 0 1rem 1.25rem;line-height:1.9;font-size:0.9rem">
+              <li>Complete all <strong>five theory modules</strong> and pass each end-of-module MCQ (75% pass mark; unlimited retakes)</li>
+              <li>Complete <strong>three written tasks</strong> (400-600 words each) and upload to the platform</li>
+              <li>Complete a <strong>clinical logbook</strong> of <strong>10 supervised fluoride varnish applications</strong>, each countersigned by a GDC-registered supervisor who was physically present</li>
+              <li>Complete <strong>two clinical case studies</strong></li>
+              <li>Write a <strong>final reflective account</strong> (300-500 words)</li>
+            </ul>
+            <p style="margin-bottom:0;font-size:0.9rem">Course access: <strong>3 months</strong> from enrolment. Extensions are available at £12 per additional month.</p>
+          </div>
+
+          <div class="content-card" style="margin-bottom:1.25rem">
+            <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:0.85rem">What is Expected of You</h2>
+            <ul style="margin:0 0 0 1.25rem;line-height:1.9;font-size:0.9rem">
+              <li><strong>Professional conduct:</strong> You must act in accordance with your GDC Standards throughout this course</li>
+              <li><strong>Authentic written work:</strong> All submissions must be entirely your own. Using AI tools (such as ChatGPT) to write or substantially complete your assignments is not permitted</li>
+              <li><strong>Genuine supervised practice:</strong> Each logbook entry must represent a real, supervised application you performed. Falsifying entries is a serious professional matter that may be referred to the GDC</li>
+              <li><strong>Appropriate supervisors:</strong> Your supervisor must be a GDC-registered dentist, dental hygienist, or dental therapist who was physically present during the application</li>
+              <li><strong>Timely completion:</strong> You are responsible for managing your time to complete the course within your access period</li>
+            </ul>
+          </div>
+
+          <div class="content-card" style="margin-bottom:1.25rem">
+            <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:1rem">Declaration</h2>
+            <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:1.1rem">Please tick each statement to confirm you have read and agree:</p>
+            <div id="decChecks">
+              ${[
+                ['d1','I am currently registered with the General Dental Council (GDC) and my registration is in good standing'],
+                ['d2','I understand and accept all course requirements and commit to completing every component to the required standard'],
+                ['d3','All work I submit will be entirely my own. I will not use AI-generated content, plagiarise, or present others\' work as my own'],
+                ['d4','I understand that falsifying logbook entries or supervised practice records is a serious breach of GDC Standards that could result in fitness to practise proceedings'],
+                ['d5','I will ensure all clinical supervisors I register are GDC-registered and were physically present during the applications I record'],
+                ['d6','I understand the course lasts 3 months from enrolment and that I am responsible for managing my time accordingly'],
+                ['d7','I consent to Dental Nurse Training storing and processing my personal data for the purpose of administering this course and issuing my CPD certificate'],
+              ].map(([id,txt]) => `<label style="display:flex;align-items:flex-start;gap:0.75rem;margin-bottom:0.85rem;cursor:pointer;font-size:0.9rem;line-height:1.55">
+                <input type="checkbox" id="${id}" style="width:18px;height:18px;flex-shrink:0;margin-top:0.18rem;accent-color:#005A5F" onchange="checkDecReady()"/>
+                <span>${txt}</span>
+              </label>`).join('')}
+            </div>
+          </div>
+
+          <div class="content-card">
+            <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:0.4rem">Digital Signature</h2>
+            <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:1.25rem">By typing your full legal name and clicking the button below you are signing this declaration digitally. This is recorded with a timestamp and carries the same weight as a handwritten signature.</p>
+            <div class="form-group" style="margin-bottom:1rem">
+              <label for="declarationName">Your full legal name *</label>
+              <input type="text" id="declarationName" placeholder="e.g. Jane Elizabeth Smith" oninput="checkDecReady()" style="font-size:1rem"/>
+            </div>
+            <div style="font-size:0.88rem;color:var(--ink-light);margin-bottom:1.25rem">Date: <strong>${today}</strong></div>
+            <div id="decErr" style="display:none;font-size:0.88rem;color:#D32F2F;background:#FFF0F0;border-radius:var(--radius);padding:0.6rem 0.9rem;margin-bottom:0.75rem"></div>
+            <button id="decBtn" class="btn btn-primary" style="width:100%;font-size:1rem;padding:0.9rem" onclick="submitDeclaration()" disabled>
+              ✍️ I agree and sign this declaration
+            </button>
+            <p style="font-size:0.78rem;color:#9B9B9B;text-align:center;margin-top:0.75rem">Your signature will be stored securely alongside your course record</p>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+    }
+
+    window.checkDecReady = () => {
+      const allTicked = ['d1','d2','d3','d4','d5','d6','d7'].every(id => document.getElementById(id)?.checked);
+      const name = document.getElementById('declarationName')?.value.trim();
+      const btn  = document.getElementById('decBtn');
+      if (btn) btn.disabled = !(allTicked && name);
+    };
+
+    window.submitDeclaration = async () => {
+      const name  = document.getElementById('declarationName').value.trim();
+      if (!name) return;
+      const btn   = document.getElementById('decBtn');
+      const errEl = document.getElementById('decErr');
+      btn.disabled = true; btn.textContent = 'Saving...';
+      try {
+        await updateDoc(doc(db, 'learners', uid), {
+          declarationSigned: true,
+          declarationSignedAt: serverTimestamp(),
+          declarationSignedName: name,
+        });
+        learner.declarationSigned = true;
+        document.getElementById('declarationOverlay')?.remove();
+        renderSidebar();
+        showSection('home');
+        showToast('Declaration signed. Welcome to your course! ✅', 'success');
+      } catch(e) {
+        console.error(e);
+        errEl.textContent = 'Could not save. Please try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = '✍️ I agree and sign this declaration';
+      }
     };
 
     function renderMyWork(el) {

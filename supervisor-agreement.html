@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Supervisor Agreement - DNT Fluoride Varnish Certificate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .info-box  { background:#F0F9FA; border:1px solid #B2D8DB; border-left:4px solid #00747A; border-radius:8px; padding:1.1rem 1.25rem; margin-bottom:1.25rem; }
+    .warn-box  { background:#FFF8E7; border:1px solid #FBBF24; border-left:4px solid #F59E0B; border-radius:8px; padding:1.1rem 1.25rem; margin-bottom:1.25rem; }
+    .check-row { display:flex; align-items:flex-start; gap:0.75rem; margin-bottom:0.85rem; font-size:0.9rem; line-height:1.55; cursor:pointer; }
+    .check-row input[type=checkbox] { width:18px; height:18px; flex-shrink:0; margin-top:0.18rem; accent-color:#005A5F; }
+  </style>
+</head>
+<body>
+  <div id="app" style="max-width:760px;margin:0 auto;padding:2rem 1rem 4rem">
+    <div style="text-align:center;padding:4rem 1rem">
+      <div style="font-size:2rem;margin-bottom:1rem">⏳</div>
+      <p style="color:var(--ink-light)">Loading agreement...</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp }
+                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const app = initializeApp(FIREBASE_CONFIG);
+    const db  = getFirestore(app);
+
+    const params      = new URLSearchParams(window.location.search);
+    const learnerUid  = params.get('l') || '';
+    const supIndex    = parseInt(params.get('s') || '0', 10);
+    const token       = params.get('t') || '';
+    const learnerName = decodeURIComponent(params.get('ln') || 'the learner');
+    const supName     = decodeURIComponent(params.get('sn') || '');
+    const supGdc      = decodeURIComponent(params.get('sg') || '');
+
+    const el = document.getElementById('app');
+
+    if (!learnerUid || !token) {
+      el.innerHTML = `<div style="text-align:center;padding:4rem 1rem">
+        <div style="font-size:2.5rem;margin-bottom:1rem">⚠️</div>
+        <h2 style="color:#D32F2F;margin-bottom:0.75rem">Invalid link</h2>
+        <p style="color:var(--ink-light);max-width:440px;margin:0 auto">This supervisor agreement link is invalid or has expired. Please ask the learner to contact their assessor at <a href="mailto:emily@dentalnurse.training">emily@dentalnurse.training</a> for a new link.</p>
+      </div>`;
+    } else {
+      // Check if already signed
+      try {
+        const existing = await getDoc(doc(db, 'supervisorAgreements', token));
+        if (existing.exists()) {
+          const d = existing.data();
+          el.innerHTML = alreadySignedHtml(d);
+          return;
+        }
+      } catch(e) { /* rules may block read - proceed to form */ }
+      renderForm();
+    }
+
+    function alreadySignedHtml(d) {
+      return `<div style="text-align:center;padding:3rem 1rem">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:56px;margin-bottom:1.5rem;display:block;margin-left:auto;margin-right:auto" onerror="this.style.display='none'"/>
+        <div style="font-size:3rem;margin-bottom:1rem">✅</div>
+        <h2 style="color:#1A7F4B;margin-bottom:0.75rem">Agreement already signed</h2>
+        <p style="color:var(--ink-light);max-width:440px;margin:0 auto">You have already signed this supervisor agreement. Your signature has been recorded and the learner's assessor has been notified. You may close this page.</p>
+        <p style="font-size:0.85rem;color:#9B9B9B;margin-top:1rem">Signed by: <strong>${esc(d.signedName||supName)}</strong></p>
+      </div>`;
+    }
+
+    function renderForm() {
+      el.innerHTML = `
+        <div style="text-align:center;margin-bottom:2rem">
+          <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
+               alt="DNT" style="height:64px;display:block;margin:0 auto 1rem" onerror="this.style.display='none'"/>
+          <h1 style="color:#005A5F;margin-bottom:0.25rem">Clinical Supervisor Agreement</h1>
+          <p style="color:var(--ink-light)">DNT Certificate in Fluoride Varnish Application</p>
+        </div>
+
+        <!-- Context banner -->
+        <div class="info-box">
+          <p style="margin-bottom:0.4rem">You have been registered as a clinical supervisor by <strong>${esc(learnerName)}</strong> for their <strong>DNT Certificate in Fluoride Varnish Application</strong>.</p>
+          <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:0">Your details on record: <strong>${esc(supName)}</strong> &middot; GDC: <strong>${esc(supGdc)}</strong></p>
+        </div>
+
+        <!-- What the course involves -->
+        <div class="content-card" style="margin-bottom:1.25rem">
+          <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:0.85rem">About the Course</h2>
+          <p style="margin-bottom:0.75rem">The <strong>DNT Certificate in Fluoride Varnish Application</strong> qualifies dental nurses to apply fluoride varnish as an extended duty in line with the GDC Scope of Practice. The clinical component requires the learner to complete <strong>10 supervised fluoride varnish applications</strong> and 2 case studies, each directly witnessed and authenticated by a GDC-registered clinical supervisor.</p>
+          <p style="margin-bottom:0">You are being asked to act as one of their clinical supervisors for the hands-on component of their training.</p>
+        </div>
+
+        <!-- Responsibilities -->
+        <div class="content-card" style="margin-bottom:1.25rem">
+          <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:0.85rem">Your Responsibilities as a Clinical Supervisor</h2>
+          <ul style="margin:0 0 0 1.25rem;line-height:1.9;font-size:0.9rem">
+            <li><strong>Be physically present</strong> during every fluoride varnish application you are supervising - remote or retrospective supervision is not acceptable</li>
+            <li><strong>Directly observe</strong> the learner's clinical technique, patient communication, consent process, and adherence to clinical guidelines</li>
+            <li><strong>Verify the accuracy</strong> of each logbook entry before countersigning - you are confirming the application took place as described</li>
+            <li><strong>Sign each logbook entry</strong> with a digital or handwritten signature only - typed or printed names are not accepted as signatures</li>
+            <li><strong>Provide constructive feedback</strong> and guidance to support the learner's development throughout their supervised practice</li>
+            <li><strong>Raise any concerns</strong> about patient safety or the learner's practice immediately, in line with your professional obligations</li>
+          </ul>
+        </div>
+
+        <!-- GDC / Professional implications -->
+        <div class="warn-box">
+          <h2 style="color:#92400E;font-size:1.05rem;margin-bottom:0.85rem">Professional and GDC Implications</h2>
+          <p style="margin-bottom:0.75rem;font-size:0.9rem"><strong>By recording your GDC registration number on a logbook entry, you are making a professional declaration</strong> that you were present and that the entry is accurate.</p>
+          <ul style="margin:0 0 0.85rem 1.25rem;line-height:1.8;font-size:0.9rem">
+            <li>Only GDC-registered dentists, dental hygienists, and dental therapists may supervise and countersign entries for this course</li>
+            <li>Countersigning an inaccurate or fabricated logbook entry constitutes <strong>professional misconduct</strong> under GDC Standards for the Dental Team (Principle 6 - Be honest and act with integrity)</li>
+            <li>You must only countersign entries for applications you personally and directly witnessed</li>
+            <li>If you have any doubt about the accuracy of an entry, you should decline to sign it</li>
+          </ul>
+          <p style="margin-bottom:0;font-size:0.88rem;color:#92400E;font-style:italic">If you observe any concerns about patient safety or clinical standards during a supervised application, you must act immediately in accordance with your professional obligations.</p>
+        </div>
+
+        <!-- Signature section -->
+        <div class="content-card">
+          <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:0.5rem">Supervisor Agreement &amp; Digital Signature</h2>
+          <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:1.25rem">Please tick each confirmation below and type your full legal name to sign this agreement digitally. Your signature will be recorded with the date and time and returned to the learner's course record.</p>
+
+          <div id="supChecks">
+            ${[
+              ['sc1', 'I am currently registered with the General Dental Council (GDC) and my registration is in good standing'],
+              ['sc2', 'I have read and understood my responsibilities as a clinical supervisor for this course'],
+              ['sc3', 'I will only countersign logbook entries for fluoride varnish applications I personally and directly witnessed'],
+              ['sc4', 'I understand that recording my GDC number on a logbook entry is a professional declaration of authenticity and accuracy'],
+              ['sc5', 'I am willing to act as a clinical supervisor for <strong>' + esc(learnerName) + '</strong> and to make myself available to witness their supervised clinical applications'],
+            ].map(([id, txt]) => `<label class="check-row">
+              <input type="checkbox" id="${id}" onchange="checkReady()"/>
+              <span>${txt}</span>
+            </label>`).join('')}
+          </div>
+
+          <div class="form-group" style="margin-top:1.25rem;margin-bottom:1rem">
+            <label for="signName">Your full legal name (as it appears on your GDC registration) *</label>
+            <input type="text" id="signName" placeholder="e.g. Dr Jane Elizabeth Smith" oninput="checkReady()"/>
+          </div>
+          <div class="form-group" style="margin-bottom:1.5rem">
+            <label for="signGdc">Your GDC registration number *</label>
+            <input type="text" id="signGdc" placeholder="e.g. 12345" oninput="checkReady()" style="max-width:220px"/>
+          </div>
+
+          <div id="supErr" style="display:none;color:#D32F2F;font-size:0.88rem;margin-bottom:0.75rem;padding:0.6rem 0.9rem;background:#FFF0F0;border-radius:var(--radius)"></div>
+
+          <button id="signBtn" class="btn btn-primary" style="width:100%;font-size:1rem;padding:0.9rem" onclick="submitAgreement()" disabled>
+            ✍️ I agree and sign this supervisor agreement
+          </button>
+          <p style="font-size:0.78rem;color:#9B9B9B;margin-top:0.75rem;text-align:center">This signature is recorded with a timestamp and is legally equivalent to a handwritten signature</p>
+        </div>`;
+    }
+
+    window.checkReady = () => {
+      const allTicked = ['sc1','sc2','sc3','sc4','sc5'].every(id => document.getElementById(id)?.checked);
+      const name = document.getElementById('signName')?.value.trim();
+      const gdc  = document.getElementById('signGdc')?.value.trim();
+      const btn  = document.getElementById('signBtn');
+      if (btn) btn.disabled = !(allTicked && name && gdc);
+    };
+
+    window.submitAgreement = async () => {
+      const name = document.getElementById('signName').value.trim();
+      const gdc  = document.getElementById('signGdc').value.trim();
+      if (!name || !gdc) return;
+      const btn  = document.getElementById('signBtn');
+      const errEl = document.getElementById('supErr');
+      btn.disabled = true; btn.textContent = 'Saving...';
+      try {
+        await setDoc(doc(db, 'supervisorAgreements', token), {
+          learnerUid, supIndex, learnerName, supName, supGdc,
+          signedName: name, signedGdc: gdc,
+          signedAt: serverTimestamp(), token,
+        });
+        // Notify Emily
+        if (typeof emailjs !== 'undefined') {
+          emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+            to_email: 'emily@dentalnurse.training', to_name: 'Emily',
+            learner_name: learnerName, learner_email: '', learner_gdc: '',
+            submission_type: 'Supervisor Agreement Signed',
+            file_url: 'Admin panel',
+            submitted_at: new Date().toLocaleString('en-GB'),
+            message: 'A supervisor agreement has been signed and is ready for your approval.\n\nLearner: ' + learnerName + '\nSupervisor: ' + name + '\nGDC number confirmed: ' + gdc + '\n\nPlease log in to the admin panel to approve this supervisor:\nhttps://dentalnurse.github.io/Fluoride/admin/index.html\n\nOnce approved, the learner will be notified.',
+          }, EMAILJS_CONFIG.publicKey);
+        }
+        el.innerHTML = `
+          <div style="text-align:center;padding:3rem 1rem">
+            <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:56px;display:block;margin:0 auto 1.5rem" onerror="this.style.display='none'"/>
+            <div style="font-size:3rem;margin-bottom:1rem">✅</div>
+            <h2 style="color:#1A7F4B;margin-bottom:0.75rem">Agreement signed - thank you!</h2>
+            <p style="max-width:480px;margin:0 auto 1rem;color:var(--ink-light)">Your supervisor agreement has been recorded and ${esc(learnerName)}'s assessor has been notified. Once your agreement has been reviewed, you will be approved as a supervisor and ${esc(learnerName)} will be notified.</p>
+            <p style="font-size:0.85rem;color:#9B9B9B">Signed by: <strong>${esc(name)}</strong> &middot; GDC: <strong>${esc(gdc)}</strong></p>
+            <p style="font-size:0.85rem;color:#9B9B9B;margin-top:0.25rem">You may now close this page.</p>
+          </div>`;
+      } catch(e) {
+        console.error(e);
+        errEl.textContent = 'Could not save your agreement. Please try again or contact emily@dentalnurse.training';
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = '✍️ I agree and sign this supervisor agreement';
+      }
+    };
+
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+  </script>
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>if(typeof emailjs!=='undefined')emailjs.init(EMAILJS_CONFIG.publicKey);</script>
+</body>
+</html>
