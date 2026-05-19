@@ -14,7 +14,7 @@ const FIREBASE_CONFIG = {
 // Sign up free at emailjs.com, create a service + template, paste IDs here
 const EMAILJS_CONFIG = {
   serviceId:  "service_h9qou6j",
-  templateId: "template_o63hswi",
+  templateId: "template_ipzdewe",
   publicKey:  "saPEjicUFr73FNtI2"
 };
 

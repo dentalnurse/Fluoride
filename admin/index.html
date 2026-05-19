@@ -372,14 +372,14 @@
             submission_type: 'Welcome', file_url: 'N/A',
             submitted_at: new Date().toLocaleString('en-GB'),
             message: 'Congratulations ' + l.name + '! Your DNT Fluoride Varnish Certificate course is now active. Log in at: https://dentalnurse.github.io/Fluoride/login.html using your email address and the password sent separately. Work through the 5 modules in order, pass each MCQ, then complete your written tasks, logbook and case studies. Duration: 3 months. Questions? Contact emily@dentalnurse.training. Good luck! DNT Dental Nurse Training'
-          }, EMAILJS_CONFIG.publicKey);
-          showToast(name + ' approved and welcome email sent!', 'success');
+          });
+          showToast(name + ' approved and welcome email sent! ✅', 'success');
         } else {
-          showToast(name + ' approved!', 'success');
+          showToast(name + ' approved! (EmailJS not loaded - send welcome email manually)', 'error');
         }
       } catch(e) {
-        console.error(e);
-        showToast(name + ' approved! Welcome email failed - send manually.', 'success');
+        console.error('Welcome email error:', e);
+        showToast('Approved but welcome email failed: ' + (e?.text || e?.message || 'unknown error') + ' - send manually to ' + (learners.find(x=>x.name===name)?.email||'learner'), 'error');
       }
       updateStats();
       renderTab(currentTab);
@@ -518,7 +518,7 @@
           submission_type: 'Feedback Available',
           file_url: 'N/A', submitted_at: new Date().toLocaleString('en-GB'),
           message: 'Hi ' + l.name + ',\n\nYour assessor has reviewed your ' + typeLabels[type] + ' and feedback is now available in your course dashboard.\n\nPlease log in to view your feedback: https://dentalnurse.github.io/Fluoride/login.html\n\nIf you have any questions, please contact emily@dentalnurse.training\n\nThe DNT Team'
-        }, EMAILJS_CONFIG.publicKey);
+        });
       }
     };
 
@@ -537,7 +537,7 @@
           submission_type: 'Assessment Passed',
           file_url: 'N/A', submitted_at: new Date().toLocaleString('en-GB'),
           message: 'Congratulations ' + l.name + '!\n\nYour ' + typeLabels[type] + ' has been marked as passed!\n\nPlease log in to your dashboard to see your progress: https://dentalnurse.github.io/Fluoride/login.html\n\nThe DNT Team'
-        }, EMAILJS_CONFIG.publicKey);
+        });
       }
       renderTab(currentTab);
     };
@@ -574,7 +574,7 @@
           file_url: link,
           submitted_at: new Date().toLocaleString('en-GB'),
           message: 'Dear ' + s.name + ',\n\nYou have been registered as a clinical supervisor by ' + l.name + ' for their DNT Certificate in Fluoride Varnish Application.\n\nPlease click the link below to read the supervisor guidance and sign the online supervisor agreement (this takes approximately 5 minutes):\n\n' + link + '\n\nYou will be asked to confirm your GDC registration number as part of the agreement. Once you have signed, your details will be returned to the learner\'s course record and reviewed by our assessor.\n\nIf you have any questions, please contact emily@dentalnurse.training\n\nKind regards,\nEmily Bremner\nDental Nurse Training',
-        }, EMAILJS_CONFIG.publicKey);
+        });
         showToast('Guidance email sent to ' + s.name + ' ✅', 'success');
       } catch(e) {
         console.error(e);
@@ -601,7 +601,7 @@
           submission_type: 'Supervisor Approved',
           file_url: 'N/A', submitted_at: new Date().toLocaleString('en-GB'),
           message: 'Hi ' + l.name + ',\n\nGreat news - your supervisor ' + s.name + ' has been approved and is now confirmed for your clinical logbook.\n\nYou can view the status of all your supervisors in your course dashboard.\n\nLog in here: https://dentalnurse.github.io/Fluoride/login.html\n\nThe DNT Team',
-        }, EMAILJS_CONFIG.publicKey);
+        });
       }
       showToast(s.name + ' approved as supervisor ✅', 'success');
       openLearnerModal(learnerId);
@@ -623,6 +623,6 @@
   </script>
   <script src="../js/config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script>if(typeof emailjs!=='undefined')emailjs.init(EMAILJS_CONFIG.publicKey);</script>
+  <script>if(typeof emailjs!=='undefined')emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
 </body>
 </html>

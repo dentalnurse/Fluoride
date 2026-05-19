@@ -183,7 +183,7 @@
             file_url: 'Admin panel',
             submitted_at: new Date().toLocaleString('en-GB'),
             message: 'A supervisor agreement has been signed and is ready for your approval.\n\nLearner: ' + learnerName + '\nSupervisor: ' + name + '\nGDC number confirmed: ' + gdc + '\n\nPlease log in to the admin panel to approve this supervisor:\nhttps://dentalnurse.github.io/Fluoride/admin/index.html\n\nOnce approved, the learner will be notified.',
-          }, EMAILJS_CONFIG.publicKey);
+          });
         }
         el.innerHTML = `
           <div style="text-align:center;padding:3rem 1rem">
@@ -208,6 +208,6 @@
   </script>
   <script src="js/config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script>if(typeof emailjs!=='undefined')emailjs.init(EMAILJS_CONFIG.publicKey);</script>
+  <script>if(typeof emailjs!=='undefined')emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
 </body>
 </html>

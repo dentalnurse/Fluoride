@@ -153,7 +153,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="js/config.js"></script>
   <script>
-    if (typeof emailjs !== 'undefined') emailjs.init(EMAILJS_CONFIG.publicKey);
+    if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
 
     const enrolData = JSON.parse(sessionStorage.getItem('enrolData') || '{}');
     const learnerName  = ((enrolData.firstName || '') + ' ' + (enrolData.lastName || '')).trim() || 'Learner';
@@ -197,7 +197,7 @@
               'If you have any questions, please email emily@dentalnurse.training\n\n' +
               'We look forward to supporting you through the course!\n\n' +
               'The DNT Team'
-          }, EMAILJS_CONFIG.publicKey)
+          })
         );
       }
 
@@ -226,7 +226,7 @@
               'Notes: '      + (enrolData.notes      || 'None')         + '\n\n' +
               'Payment confirmed at: ' + paidAt + '\n\n' +
               'Action required: Please set up their course account and send login details within 1 working day.'
-          }, EMAILJS_CONFIG.publicKey)
+          })
         );
       }
 

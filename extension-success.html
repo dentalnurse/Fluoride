@@ -76,7 +76,7 @@
 
     async function sendExtensionEmails(name, email) {
       if (typeof emailjs === 'undefined') return;
-      emailjs.init(EMAILJS_CONFIG.publicKey);
+      emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
       const now = new Date().toLocaleString('en-GB');
       const promises = [];
       if (email) {
@@ -86,7 +86,7 @@
           submission_type: 'Extension Confirmed',
           file_url: 'N/A', submitted_at: now,
           message: 'Hi ' + name + ',\n\nYour 1-month course extension has been confirmed. Your access to the DNT Fluoride Varnish Application Certificate has been extended by 1 month.\n\nLog in to continue your course: https://dentalnurse.github.io/Fluoride/login.html\n\nIf you have any questions, please contact emily@dentalnurse.training\n\nThe DNT Team'
-        }, EMAILJS_CONFIG.publicKey));
+        }));
       }
       promises.push(emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
         to_email: 'emily@dentalnurse.training', to_name: 'Emily',
@@ -94,7 +94,7 @@
         submission_type: 'Extension Payment Received',
         file_url: 'N/A', submitted_at: now,
         message: 'Course extension payment received.\n\nLearner: ' + name + '\nEmail: ' + email + '\nPaid at: ' + now
-      }, EMAILJS_CONFIG.publicKey));
+      }));
       try { await Promise.all(promises); } catch(e) { console.warn('Email send error:', e); }
     }
 
