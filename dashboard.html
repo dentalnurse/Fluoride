@@ -170,7 +170,7 @@
       const mp = learner.moduleProgress || {};
       const allPassed = [1,2,3,4,5].every(i => (mp[i] === 2 || mp[i] === '2'));
       if (id === 'home') { renderHome(main, mp, allPassed); return; }
-      if (id.startsWith('m')) {
+      if (id.startsWith('m') && id.length === 2) {
         const n = parseInt(id[1]);
         const accessible = n === 1 || mp[n-1] === 2 || mp[n-1] === '2';
         if (!accessible) { main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Locked</h3><p>Complete the previous module first</p></div>'; return; }
