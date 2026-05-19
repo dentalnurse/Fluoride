@@ -472,6 +472,7 @@
         </div>
         <div class="modal-footer">
           ${!l.unlocked ? `<button class="btn btn-success" onclick="approveLearner('${l.id}','${l.name}');closeModal()">✓ Approve learner</button>` : ''}
+          <button class="btn btn-outline" onclick="sendWelcomeEmail('${l.id}')">📧 Send welcome email</button>
           <button class="btn btn-outline" onclick="saveNotes('${l.id}')">Save notes</button>
           <button class="btn btn-primary" onclick="closeModal()">Close</button>
         </div>`;
@@ -484,6 +485,16 @@
     };
 
     window.closeModal = () => document.getElementById('learnerModal').classList.add('hidden');
+
+    window.sendWelcomeEmail = (id) => {
+      const l = learners.find(x => x.id === id);
+      if (!l) return;
+      promptEmail(
+        l.email,
+        'Welcome to your Dental Nurse Training Fluoride Varnish Application Certificate',
+        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Certificate in Fluoride Varnish Application!\n\nYour course is now active. You can log in at any time here:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks, clinical logbook, and case studies\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 3 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck — we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+      );
+    };
 
     window.saveNotes = async (id) => {
       const notes = document.getElementById('adminNotes').value;
@@ -586,7 +597,6 @@
         'Supervisor agreement - Dental Nurse Training Fluoride Varnish Certificate (' + l.name + ')',
         'Dear ' + s.name + ',\n\nYou have been registered as a clinical supervisor by ' + l.name + ' for their Dental Nurse Training Certificate in Fluoride Varnish Application.\n\nPlease click the link below to read the supervisor guidance and sign the online supervisor agreement (this takes approximately 5 minutes):\n\n' + link + '\n\nYou will be asked to confirm your GDC registration number as part of the agreement. Once you have signed, your details will be returned to the learner\'s course record and reviewed by our assessor.\n\nIf you have any questions, please do not hesitate to contact me.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
       );
-      openLearnerModal(learnerId);
     };
 
     window.approveSupervisor = async (learnerId, supIdx) => {
