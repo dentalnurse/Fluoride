@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Supervisor Agreement - DNT Fluoride Varnish Certificate</title>
+  <title>Supervisor Agreement - Dental Nurse Training Fluoride Varnish Certificate</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/style.css"/>
@@ -22,6 +22,7 @@
     </div>
   </div>
 
+  <script src="js/config.js"></script>
   <script type="module">
     import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc, serverTimestamp }
@@ -61,7 +62,7 @@
 
     function alreadySignedHtml(d) {
       return `<div style="text-align:center;padding:3rem 1rem">
-        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:56px;margin-bottom:1.5rem;display:block;margin-left:auto;margin-right:auto" onerror="this.style.display='none'"/>
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="Dental Nurse Training" style="height:56px;margin-bottom:1.5rem;display:block;margin-left:auto;margin-right:auto" onerror="this.style.display='none'"/>
         <div style="font-size:3rem;margin-bottom:1rem">✅</div>
         <h2 style="color:#1A7F4B;margin-bottom:0.75rem">Agreement already signed</h2>
         <p style="color:var(--ink-light);max-width:440px;margin:0 auto">You have already signed this supervisor agreement. Your signature has been recorded and the learner's assessor has been notified. You may close this page.</p>
@@ -73,21 +74,21 @@
       el.innerHTML = `
         <div style="text-align:center;margin-bottom:2rem">
           <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
-               alt="DNT" style="height:64px;display:block;margin:0 auto 1rem" onerror="this.style.display='none'"/>
+               alt="Dental Nurse Training" style="height:64px;display:block;margin:0 auto 1rem" onerror="this.style.display='none'"/>
           <h1 style="color:#005A5F;margin-bottom:0.25rem">Clinical Supervisor Agreement</h1>
-          <p style="color:var(--ink-light)">DNT Certificate in Fluoride Varnish Application</p>
+          <p style="color:var(--ink-light)">Dental Nurse Training Certificate in Fluoride Varnish Application</p>
         </div>
 
         <!-- Context banner -->
         <div class="info-box">
-          <p style="margin-bottom:0.4rem">You have been registered as a clinical supervisor by <strong>${esc(learnerName)}</strong> for their <strong>DNT Certificate in Fluoride Varnish Application</strong>.</p>
+          <p style="margin-bottom:0.4rem">You have been registered as a clinical supervisor by <strong>${esc(learnerName)}</strong> for their <strong>Dental Nurse Training Certificate in Fluoride Varnish Application</strong>.</p>
           <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:0">Your details on record: <strong>${esc(supName)}</strong> &middot; GDC: <strong>${esc(supGdc)}</strong></p>
         </div>
 
         <!-- What the course involves -->
         <div class="content-card" style="margin-bottom:1.25rem">
           <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:0.85rem">About the Course</h2>
-          <p style="margin-bottom:0.75rem">The <strong>DNT Certificate in Fluoride Varnish Application</strong> qualifies dental nurses to apply fluoride varnish as an extended duty in line with the GDC Scope of Practice. The clinical component requires the learner to complete <strong>10 supervised fluoride varnish applications</strong> and 2 case studies, each directly witnessed and authenticated by a GDC-registered clinical supervisor.</p>
+          <p style="margin-bottom:0.75rem">The <strong>Dental Nurse Training Certificate in Fluoride Varnish Application</strong> qualifies dental nurses to apply fluoride varnish as an extended duty in line with the GDC Scope of Practice. The clinical component requires the learner to complete <strong>10 supervised fluoride varnish applications</strong> and 2 case studies, each directly witnessed and authenticated by a GDC-registered clinical supervisor.</p>
           <p style="margin-bottom:0">You are being asked to act as one of their clinical supervisors for the hands-on component of their training.</p>
         </div>
 
@@ -187,7 +188,7 @@
         }
         el.innerHTML = `
           <div style="text-align:center;padding:3rem 1rem">
-            <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="DNT" style="height:56px;display:block;margin:0 auto 1.5rem" onerror="this.style.display='none'"/>
+            <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="Dental Nurse Training" style="height:56px;display:block;margin:0 auto 1.5rem" onerror="this.style.display='none'"/>
             <div style="font-size:3rem;margin-bottom:1rem">✅</div>
             <h2 style="color:#1A7F4B;margin-bottom:0.75rem">Agreement signed - thank you!</h2>
             <p style="max-width:480px;margin:0 auto 1rem;color:var(--ink-light)">Your supervisor agreement has been recorded and ${esc(learnerName)}'s assessor has been notified. Once your agreement has been reviewed, you will be approved as a supervisor and ${esc(learnerName)} will be notified.</p>
@@ -206,7 +207,6 @@
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
   </script>
-  <script src="js/config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>if(typeof emailjs!=='undefined')emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
 </body>
