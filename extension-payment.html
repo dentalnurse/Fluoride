@@ -174,8 +174,9 @@
   <script src="js/config.js"></script>
   <script>
     const expiryInfo = JSON.parse(sessionStorage.getItem('expiryInfo') || '{}');
-    const learnerName = expiryInfo.name || '';
-    const learnerEmail = expiryInfo.email || '';
+    const urlParams  = new URLSearchParams(window.location.search);
+    const learnerName  = expiryInfo.name  || decodeURIComponent(urlParams.get('name')  || '');
+    const learnerEmail = expiryInfo.email || decodeURIComponent(urlParams.get('email') || '');
 
     document.getElementById('summaryName').textContent = learnerName || '-';
     document.getElementById('summaryEmail').textContent = learnerEmail || '-';

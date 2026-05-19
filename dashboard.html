@@ -85,9 +85,6 @@
             sessionStorage.setItem('expiryUid', uid);
             window.location.href = 'extension-payment.html';
             return;
-          } else if (daysUntilExpiry <= 14) {
-            learner._expiryWarning = daysUntilExpiry;
-            learner._expiryDate = expiryDate.toLocaleDateString('en-GB');
           }
         }
 
@@ -194,10 +191,7 @@
       const passed = [1,2,3,4,5].filter(i => mp[i] === 2 || mp[i] === '2').length;
       const pct = Math.round(passed / 5 * 100);
       const icons = ['🔬','🗣️','🦷','⚖️','💬'];
-      const expiryBanner = learner._expiryWarning
-        ? '<div style="background:#FFF3CD;border:1px solid #FBBF24;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:0.75rem"><span style="font-size:1.3rem">⏰</span><div><strong style="color:#92400E">Your course access expires in ' + learner._expiryWarning + ' days (' + learner._expiryDate + ')</strong><p style="color:#92400E;font-size:0.85rem;margin:0.25rem 0 0">To continue after this date you will need a 1-month extension (£12). <a href="extension-payment.html" style="color:#92400E;font-weight:700;text-decoration:underline">Purchase extension</a></p></div></div>'
-        : '';
-      el.innerHTML = expiryBanner + '<div class="dash-header"><h1>Welcome back, ' + (learner.name||'').split(' ')[0] + ' 👋</h1><p>GDC: ' + (learner.gdc||'-') + '</p></div>'
+      el.innerHTML = '<div class="dash-header"><h1>Welcome back, ' + (learner.name||'').split(' ')[0] + ' 👋</h1><p>GDC: ' + (learner.gdc||'-') + '</p></div>'
         + '<div class="content-card" style="margin-bottom:1.25rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem"><strong>Theory progress</strong><span style="font-size:0.85rem;color:var(--teal-dark);font-weight:700">' + passed + '/5 modules complete</span></div><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div></div>'
         + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.85rem;margin-bottom:1.5rem">'
         + [1,2,3,4,5].map(i => {
