@@ -42,6 +42,7 @@
       <button class="sidebar-item locked" id="sb-certificate" onclick="showSection('certificate')"><span class="si-icon">🏆</span><span style="flex:1;text-align:left;font-size:0.82rem">My Certificate</span><span class="si-badge badge-lock" id="badge-certificate">🔒</span></button>
       <div class="sidebar-section-title">Resources</div>
       <button class="sidebar-item" id="sb-handbooks" onclick="window.open('handbook.html','_blank')"><span class="si-icon">📖</span><span style="flex:1;text-align:left;font-size:0.82rem">Handbooks</span></button>
+      <button class="sidebar-item" id="sb-profile" onclick="showSection('profile')"><span class="si-icon">👤</span><span style="flex:1;text-align:left;font-size:0.82rem">My Details</span></button>
     </aside>
     <main class="dash-main" id="dashMain"></main>
   </div>
@@ -59,6 +60,10 @@
     let learner = null;
     let uid = null;
     let customContent = {};
+
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { window.location.href = 'login.html'; return; }
@@ -187,6 +192,7 @@
         renderPractical(main); return;
       }
       if (id === 'reflection') { renderReflection(main); return; }
+      if (id === 'profile') { renderProfile(main); return; }
     };function renderHome(el, mp, allPassed) {
       const passed = [1,2,3,4,5].filter(i => mp[i] === 2 || mp[i] === '2').length;
       const pct = Math.round(passed / 5 * 100);
@@ -564,6 +570,83 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
         errEl.textContent = 'Could not save. Please try again.';
         errEl.style.display = 'block';
         btn.disabled = false; btn.textContent = '✍️ I agree and sign this declaration';
+      }
+    };
+
+    function renderProfile(el) {
+      el.innerHTML = `
+        <div class="dash-header"><h1>My Details</h1><p>Update your personal and professional information below.</p></div>
+        <div class="content-card">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div class="form-group">
+              <label for="pf-name">Full name *</label>
+              <input type="text" id="pf-name" value="${esc(learner.name||'')}" placeholder="Your full name"/>
+            </div>
+            <div class="form-group">
+              <label for="pf-email">Email address</label>
+              <input type="text" id="pf-email" value="${esc(learner.email||'')}" disabled style="opacity:0.6;cursor:not-allowed" title="Email cannot be changed here"/>
+            </div>
+            <div class="form-group">
+              <label for="pf-phone">Phone number</label>
+              <input type="tel" id="pf-phone" value="${esc(learner.phone||'')}" placeholder="e.g. 07700 900000"/>
+            </div>
+            <div class="form-group">
+              <label for="pf-gdc">GDC registration number *</label>
+              <input type="text" id="pf-gdc" value="${esc(learner.gdc||'')}" placeholder="e.g. 12345"/>
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label for="pf-workplace">Workplace name</label>
+              <input type="text" id="pf-workplace" value="${esc(learner.workplace||'')}" placeholder="e.g. Sunshine Dental Practice"/>
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label for="pf-workplaceAddress">Workplace address</label>
+              <input type="text" id="pf-workplaceAddress" value="${esc(learner.workplaceAddress||'')}" placeholder="e.g. 1 High Street, Exeter EX1 1AA"/>
+            </div>
+            <div class="form-group">
+              <label for="pf-experience">Clinical experience level</label>
+              <select id="pf-experience">
+                ${['Less than 1 year','1–2 years','3–5 years','5–10 years','10+ years'].map(o =>
+                  `<option value="${o}" ${learner.experience===o?'selected':''}>${o}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pf-indemnity">Indemnity provider</label>
+              <input type="text" id="pf-indemnity" value="${esc(learner.indemnity||'')}" placeholder="e.g. MDDUS, Dental Protection"/>
+            </div>
+          </div>
+          <p style="font-size:0.8rem;color:var(--ink-light);margin-top:0.5rem">* Required fields. Email address can only be changed by contacting <a href="mailto:emily@dentalnurse.training">emily@dentalnurse.training</a>.</p>
+          <div id="pf-err" style="display:none;color:#D32F2F;font-size:0.88rem;margin-bottom:0.75rem;padding:0.6rem 0.9rem;background:#FFF0F0;border-radius:var(--radius)"></div>
+          <button class="btn btn-primary" style="margin-top:1rem" onclick="saveProfile()">Save changes</button>
+        </div>`;
+    }
+
+    window.saveProfile = async () => {
+      const name    = document.getElementById('pf-name').value.trim();
+      const phone   = document.getElementById('pf-phone').value.trim();
+      const gdc     = document.getElementById('pf-gdc').value.trim();
+      const workplace = document.getElementById('pf-workplace').value.trim();
+      const workplaceAddress = document.getElementById('pf-workplaceAddress').value.trim();
+      const experience = document.getElementById('pf-experience').value;
+      const indemnity = document.getElementById('pf-indemnity').value.trim();
+      const errEl = document.getElementById('pf-err');
+      if (!name || !gdc) {
+        errEl.textContent = 'Full name and GDC number are required.';
+        errEl.style.display = 'block'; return;
+      }
+      errEl.style.display = 'none';
+      const btn = document.querySelector('[onclick="saveProfile()"]');
+      btn.disabled = true; btn.textContent = 'Saving...';
+      try {
+        await setDoc(doc(db, 'learners', uid), { name, phone, gdc, workplace, workplaceAddress, experience, indemnity }, { merge: true });
+        Object.assign(learner, { name, phone, gdc, workplace, workplaceAddress, experience, indemnity });
+        document.getElementById('navName').textContent = name.split(' ')[0];
+        showToast('Details saved successfully ✅', 'success');
+        btn.disabled = false; btn.textContent = 'Save changes';
+      } catch(e) {
+        console.error(e);
+        errEl.textContent = 'Could not save. Please try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Save changes';
       }
     };
 
