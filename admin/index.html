@@ -116,7 +116,7 @@
 
     // ── Auth ───────────────────────────────────────────────────────────────
     onAuthStateChanged(auth, (user) => {
-      if (user && user.email === ADMIN_EMAIL) {
+      if (user && ADMIN_EMAILS.includes(user.email)) {
         document.getElementById('adminLogin').style.display  = 'none';
         document.getElementById('adminPanel').style.display  = '';
         loadLearners();
@@ -127,7 +127,7 @@
       const email = document.getElementById('adminEmail').value.trim();
       const pass  = document.getElementById('adminPass').value;
       const err   = document.getElementById('adminLoginErr');
-      if (email !== ADMIN_EMAIL) {
+      if (!ADMIN_EMAILS.includes(email)) {
         err.textContent = 'Invalid admin credentials.'; err.style.display = 'block'; return;
       }
       try {
@@ -423,7 +423,7 @@
           ${sups.length && !Object.keys(supervisorAgreements).length && sups.some(s=>s.guidanceSent&&!s.approved) ? `<div style="background:#FFF8E7;border:1px solid #FBBF24;border-radius:6px;padding:0.6rem 0.85rem;font-size:0.8rem;color:#92400E;margin-bottom:0.75rem">⚠️ Signed agreements could not be loaded. Check your Firestore rules allow authenticated reads on the <strong>supervisorAgreements</strong> collection, then click ↺ Refresh.</div>` : ''}
           ${sups.length ? `<div style="display:flex;flex-direction:column;gap:0.6rem">
             ${sups.map((s, i) => {
-              const agr = s.token ? supervisorAgreements[s.token] : null;
+              const agr = s.token ? (supervisorAgreements[s.token] || Object.values(supervisorAgreements).find(a => a.learnerUid === id && a.supGdc === s.gdc && a.signedAt)) : null;
               const status = s.approved ? 'approved' : agr ? 'signed' : s.guidanceSent ? 'sent' : 'pending';
               const badge = {
                 approved: '<span class="pill pill-green">✓ Approved</span>',
@@ -623,15 +623,13 @@
       );
       await updateDoc(doc(db, 'learners', learnerId), { supervisors: updatedSups });
       l.supervisors = updatedSups;
-      // Build the unique signing link
-      const link = 'https://dentalnurse.github.io/Fluoride/supervisor-agreement.html'
-        + '?l=' + encodeURIComponent(learnerId)
-        + '&s=' + supIdx
-        + '&t=' + token
-        + '&ln=' + encodeURIComponent(l.name)
-        + '&sn=' + encodeURIComponent(s.name)
-        + '&sg=' + encodeURIComponent(s.gdc)
-        + '&se=' + encodeURIComponent(s.email);
+      // Store agreement data in Firestore so the link only needs the token
+      await setDoc(doc(db, 'supervisorAgreements', token), {
+        learnerUid: learnerId, supIndex: supIdx,
+        learnerName: l.name, supName: s.name, supGdc: s.gdc, supEmail: s.email,
+        token, pending: true,
+      });
+      const link = 'https://dentalnurse.github.io/Fluoride/supervisor-agreement.html?t=' + token;
       showToast('Supervisor link generated ✅', 'success');
       promptEmail(
         s.email,

@@ -18,10 +18,14 @@ const EMAILJS_CONFIG = {
   publicKey:  "saPEjicUFr73FNtI2"
 };
 
-// ── Admin identity ───────────────────────────────────────────────────────
-// Only used to redirect admin to the correct dashboard after login.
-// Password is managed entirely by Firebase Authentication — never stored here.
-const ADMIN_EMAIL = "emily@dentalnurse.training";
+// ── Admin identities ─────────────────────────────────────────────────────
+// Add email addresses here for anyone who should have admin access.
+// Passwords are managed entirely by Firebase Authentication — never stored here.
+const ADMIN_EMAILS = [
+  "emily@dentalnurse.training",
+  "erica@dentalnurse.training",
+];
+const ADMIN_EMAIL = ADMIN_EMAILS[0]; // kept for backwards compatibility
 
 // ── Stripe payment link ──────────────────────────────────────────────────
 // Create a payment link in your Stripe dashboard and paste the URL here
