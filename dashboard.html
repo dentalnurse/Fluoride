@@ -312,7 +312,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
           </div>
           ${submitted
             ? `<div style="background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.9rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${esc(savedText) || '<em style="color:var(--ink-light)">Not answered</em>'}</div>`
-            : `<textarea id="ta-${key}" style="min-height:220px;font-size:0.9rem;line-height:1.75" placeholder="Write your response here (400–600 words)..." oninput="onWrittenInput('${key}')">${esc(savedText)}</textarea>`
+            : `<textarea id="ta-${key}" style="min-height:380px;font-size:0.93rem;line-height:1.85" placeholder="Write your response here (400–600 words)..." oninput="onWrittenInput('${key}')">${esc(savedText)}</textarea>`
           }
         </div>`;
       }).join('');
