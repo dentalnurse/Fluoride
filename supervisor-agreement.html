@@ -31,7 +31,8 @@
     const app = initializeApp(FIREBASE_CONFIG);
     const db  = getFirestore(app);
 
-    const token = new URLSearchParams(window.location.search).get('t') || '';
+    const params = new URLSearchParams(window.location.search);
+    const token  = params.get('t') || '';
 
     const el = document.getElementById('app');
 
@@ -47,24 +48,33 @@
         return;
       }
 
-      // Fetch agreement data (and check if already signed) from Firestore
+      // Fetch agreement data from Firestore
       try {
         const snap = await getDoc(doc(db, 'supervisorAgreements', token));
-        if (!snap.exists()) {
-          el.innerHTML = `<div style="text-align:center;padding:4rem 1rem">
-            <div style="font-size:2.5rem;margin-bottom:1rem">⚠️</div>
-            <h2 style="color:#D32F2F;margin-bottom:0.75rem">Link not found</h2>
-            <p style="color:var(--ink-light);max-width:440px;margin:0 auto">This supervisor agreement link is invalid or has expired. Please ask the learner to contact their assessor at <a href="mailto:emily@dentalnurse.training">emily@dentalnurse.training</a> for a new link.</p>
-          </div>`;
-          return;
+        if (snap.exists()) {
+          const d = snap.data();
+          if (d.signedAt) { el.innerHTML = alreadySignedHtml(d); return; }
+          learnerUid  = d.learnerUid  || '';
+          supIndex    = d.supIndex    || 0;
+          learnerName = d.learnerName || 'the learner';
+          supName     = d.supName     || '';
+          supGdc      = d.supGdc      || '';
+        } else {
+          // Fallback for links generated before short-URL update — read from URL params
+          learnerUid  = params.get('l') || '';
+          supIndex    = parseInt(params.get('s') || '0', 10);
+          learnerName = decodeURIComponent(params.get('ln') || 'the learner');
+          supName     = decodeURIComponent(params.get('sn') || '');
+          supGdc      = decodeURIComponent(params.get('sg') || '');
+          if (!learnerUid) {
+            el.innerHTML = `<div style="text-align:center;padding:4rem 1rem">
+              <div style="font-size:2.5rem;margin-bottom:1rem">⚠️</div>
+              <h2 style="color:#D32F2F;margin-bottom:0.75rem">Link not found</h2>
+              <p style="color:var(--ink-light);max-width:440px;margin:0 auto">This supervisor agreement link is invalid or has expired. Please ask the learner to contact their assessor at <a href="mailto:emily@dentalnurse.training">emily@dentalnurse.training</a> for a new link.</p>
+            </div>`;
+            return;
+          }
         }
-        const d = snap.data();
-        if (d.signedAt) { el.innerHTML = alreadySignedHtml(d); return; }
-        learnerUid = d.learnerUid || '';
-        supIndex   = d.supIndex   || 0;
-        learnerName = d.learnerName || 'the learner';
-        supName    = d.supName    || '';
-        supGdc     = d.supGdc     || '';
       } catch(e) {
         console.error(e);
         el.innerHTML = `<div style="text-align:center;padding:4rem 1rem">
