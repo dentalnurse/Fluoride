@@ -61,7 +61,7 @@
       if (!email || !pass) { errEl.textContent = 'Please enter your email and password.'; errEl.style.display = 'block'; return; }
       try {
         await signInWithEmailAndPassword(auth, email, pass);
-        if (email === ADMIN_EMAIL) { window.location.href = 'admin/index.html'; return; }
+        if (ADMIN_EMAILS.includes(email)) { window.location.href = 'admin/index.html'; return; }
         window.location.href = 'dashboard.html';
       } catch(e) {
         errEl.textContent = e.code === 'auth/invalid-credential' ? 'Incorrect email or password.' : 'Login failed. Please try again.';
