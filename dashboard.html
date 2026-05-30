@@ -396,16 +396,239 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
     };
 
     function renderPractical(el) {
-      const entries = learner.logbookEntries || [];
-      el.innerHTML = '<div class="dash-header"><h1>Practical Portfolio</h1><p>Complete your 10-entry logbook and two case studies.</p></div>'
-        + (learner.practicalPassed ? '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Practical portfolio passed! Well done.</div>' : learner.practicalSubmitted ? '<div class="submission-status status-submitted"><span>📬</span> Practical portfolio submitted - your assessor will review and provide feedback.</div>' : '')
-        + '<div class="content-card" style="margin-bottom:1.25rem"><h2>Clinical Logbook - ' + entries.length + '/10 entries</h2><p style="margin-bottom:1rem">Log each supervised fluoride varnish application using the template. Each entry must include the name of the supervising clinician. Note: only digital or handwritten signatures will be accepted - no printed or typed signatures.</p>'
-        + '<a href="https://dentalnurse.github.io/Fluoride/DNT_FVA_Logbook.pdf" target="_blank" target="_blank" class="btn btn-outline btn-sm">📥 Open logbook template</a></div>'
-        + '<div class="content-card" style="margin-bottom:1.25rem"><h2>Case Studies - ' + (learner.casestudyCount||0) + '/2</h2><p style="margin-bottom:1rem">Complete two case studies using the template.</p><a href="https://dentalnurse.github.io/Fluoride/DNT_FVA_CaseStudy.pdf" target="_blank" target="_blank" class="btn btn-outline btn-sm">📥 Open case study template</a></div>'
-        + (!learner.practicalSubmitted ? '<div class="content-card"><h2>Upload your practical portfolio</h2><p style="margin-bottom:1rem">Upload your completed logbook and both case studies as a single document or zip file.</p><div class="upload-zone" id="practicalUpload" onclick="document.getElementById(\'practicalFile\').click()"><div class="uz-icon">📎</div><h4>Upload logbook and case studies</h4><p>PDF, Word or ZIP</p></div><input type="file" id="practicalFile" accept=".pdf,.doc,.docx,.zip" style="display:none" multiple onchange="uploadSubmission(&quot;practical&quot;, this)"/><div id="practicalFileList" class="upload-file-list"></div><button class="btn btn-primary" id="practicalSubmitBtn" style="margin-top:1rem;display:none" onclick="submitWork(\'practical\')">Submit practical portfolio</button></div>' : '')
-        + (learner.practicalFeedback ? '<div class="callout" style="margin-top:1rem"><div class="callout-label">Assessor feedback</div><p>' + learner.practicalFeedback + '</p></div>' : '');
-      setupUploadZone('practicalUpload', 'practicalFile');
+      const submitted  = learner.practicalSubmitted;
+      const passed     = learner.practicalPassed;
+      const entries    = learner.logbookEntries || [];
+      const approvedSups = (learner.supervisors || []).filter(s => s.approved);
+
+      let html = '<div class="dash-header"><h1>Practical Portfolio</h1><p>Complete your 10-entry clinical logbook and two case studies directly below.</p></div>';
+      if (passed) {
+        html += '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Practical portfolio passed! Well done.</div>';
+      } else if (submitted) {
+        html += '<div class="submission-status status-submitted"><span>📬</span> Submitted — your assessor will review and provide feedback.</div>';
+      }
+
+      // ── Logbook ──
+      html += `<div class="content-card" style="margin-bottom:1.25rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div><h2 style="margin:0">Clinical Logbook</h2><p style="margin:0.25rem 0 0;font-size:0.88rem;color:var(--ink-light)">${entries.length}/10 entries completed</p></div>
+          ${!submitted && entries.length < 10 ? `<button class="btn btn-primary btn-sm" onclick="addLogbookEntry()">+ Add entry</button>` : ''}
+        </div>`;
+
+      if (entries.length === 0) {
+        html += `<p style="color:var(--ink-light);font-size:0.9rem">No entries yet. Click <strong>+ Add entry</strong> after each supervised application.</p>`;
+      } else {
+        html += entries.map((e, i) => `
+          <div style="border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.75rem;background:var(--off-white)">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">
+              <strong style="font-size:0.9rem">Entry ${i+1} — ${e.date||'No date'}</strong>
+              ${!submitted ? `<button class="btn btn-outline btn-sm" style="padding:0.2rem 0.6rem;font-size:0.75rem;color:#D32F2F;border-color:#D32F2F" onclick="deleteLogbookEntry(${i})">Remove</button>` : ''}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.35rem 1.5rem;font-size:0.85rem;color:var(--ink-mid)">
+              <div><span style="color:var(--ink-light)">Patient type:</span> ${e.patientType||'—'}</div>
+              <div><span style="color:var(--ink-light)">Product:</span> ${e.product||'—'}</div>
+              <div><span style="color:var(--ink-light)">Supervisor:</span> ${e.supervisorName||'—'}</div>
+              <div><span style="color:var(--ink-light)">GDC:</span> ${e.supervisorGdc||'—'}</div>
+              ${e.notes ? `<div style="grid-column:1/-1"><span style="color:var(--ink-light)">Notes:</span> ${e.notes}</div>` : ''}
+            </div>
+          </div>`).join('');
+      }
+      html += `</div>`;
+
+      // ── Case studies ──
+      const CASE_STUDIES = [
+        { key: 'caseStudy1', label: 'Case Study 1', prompt: 'Describe a patient case where you applied fluoride varnish. Include patient background, your assessment, the application process, and the outcome.' },
+        { key: 'caseStudy2', label: 'Case Study 2', prompt: 'Describe a second patient case, ideally one that presented a different challenge or patient type to your first case study.' },
+      ];
+      html += CASE_STUDIES.map(({ key, label, prompt }) => {
+        const savedText = learner[key] || '';
+        const wc = wordCount(savedText);
+        const wcColour = wc >= 200 ? '#1A7F4B' : wc > 0 ? '#92400E' : 'var(--ink-light)';
+        return `<div class="content-card" style="margin-bottom:1.25rem">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
+            <div>
+              <strong style="font-size:1rem">${label}</strong>
+              <p style="margin:0.25rem 0 0;color:var(--ink-mid);font-size:0.9rem">${prompt}</p>
+            </div>
+            <span id="wc-${key}" style="font-size:0.82rem;font-weight:600;color:${wcColour};white-space:nowrap">${wc} words</span>
+          </div>
+          ${submitted
+            ? `<div style="background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.9rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${esc(savedText)||'<em style="color:var(--ink-light)">Not completed</em>'}</div>`
+            : `<textarea id="ta-${key}" style="min-height:380px;font-size:0.93rem;line-height:1.85" placeholder="Write your case study here..." oninput="onPracticalInput('${key}')">${esc(savedText)}</textarea>`
+          }
+        </div>`;
+      }).join('');
+
+      if (!submitted) {
+        const canSubmit = entries.length >= 10 && (learner.caseStudy1||'').trim() && (learner.caseStudy2||'').trim();
+        html += `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
+          <button class="btn btn-outline" onclick="savePracticalDrafts()">💾 Save drafts</button>
+          <button class="btn btn-primary" id="practicalSubmitBtn" onclick="submitPractical()" ${canSubmit?'':'disabled'}>Submit practical portfolio</button>
+          <span id="practical-save-status" style="font-size:0.82rem;color:var(--ink-light)"></span>
+        </div>
+        ${entries.length < 10 ? `<p style="font-size:0.82rem;color:var(--ink-light)">You need ${10-entries.length} more logbook ${10-entries.length===1?'entry':'entries'} before you can submit.</p>` : ''}`;
+      }
+
+      if (learner.practicalFeedback) {
+        html += `<div class="callout"><div class="callout-label">Assessor feedback</div><p>${learner.practicalFeedback}</p></div>`;
+      }
+      el.innerHTML = html;
     }
+
+    window.addLogbookEntry = () => {
+      const approvedSups = (learner.supervisors || []).filter(s => s.approved);
+      const supOptions = approvedSups.length
+        ? approvedSups.map(s => `<option value="${esc(s.name)}|${esc(s.gdc)}">${esc(s.name)} (GDC: ${esc(s.gdc)})</option>`).join('')
+        : '';
+      const main = document.getElementById('dashMain');
+      const formDiv = document.createElement('div');
+      formDiv.id = 'logbookEntryForm';
+      formDiv.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem';
+      formDiv.innerHTML = `
+        <div style="background:#fff;border-radius:var(--radius-lg);padding:2rem;max-width:540px;width:100%;max-height:90vh;overflow-y:auto">
+          <h3 style="margin:0 0 1.25rem;color:var(--teal-dark)">Add Logbook Entry</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+            <div class="form-group" style="margin:0"><label>Date of application *</label><input type="date" id="le-date" max="${new Date().toISOString().split('T')[0]}"/></div>
+            <div class="form-group" style="margin:0"><label>Patient type *</label>
+              <select id="le-patientType">
+                <option value="">Select...</option>
+                <option>Adult patient</option>
+                <option>Child patient</option>
+                <option>Patient with special needs</option>
+                <option>High-risk patient</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;grid-column:1/-1"><label>Fluoride product used *</label>
+              <select id="le-product">
+                <option value="">Select...</option>
+                <option>Duraphat 22,600 ppm varnish</option>
+                <option>Colgate Duraphat varnish</option>
+                <option>Enamel Pro varnish</option>
+                <option>Other</option>
+              </select>
+            </div>
+            ${approvedSups.length ? `
+            <div class="form-group" style="margin:0;grid-column:1/-1"><label>Supervising clinician *</label>
+              <select id="le-supSelect" onchange="onSupSelect()">
+                <option value="">Select supervisor...</option>
+                ${supOptions}
+                <option value="other">Other (enter manually)</option>
+              </select>
+            </div>` : ''}
+            <div class="form-group" style="margin:0"><label>Supervisor name *</label><input type="text" id="le-supName" placeholder="e.g. Dr Jane Smith"/></div>
+            <div class="form-group" style="margin:0"><label>Supervisor GDC *</label><input type="text" id="le-supGdc" placeholder="e.g. 123456"/></div>
+            <div class="form-group" style="margin:0;grid-column:1/-1"><label>Clinical notes / observations</label><textarea id="le-notes" style="min-height:100px" placeholder="Patient response, technique notes, any challenges..."></textarea></div>
+          </div>
+          <div id="le-err" style="display:none;color:#D32F2F;font-size:0.85rem;margin-top:0.75rem;padding:0.5rem 0.75rem;background:#FFF0F0;border-radius:var(--radius)"></div>
+          <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
+            <button class="btn btn-primary" onclick="saveLogbookEntry()">Save entry</button>
+            <button class="btn btn-outline" onclick="document.getElementById('logbookEntryForm').remove()">Cancel</button>
+          </div>
+        </div>`;
+      document.body.appendChild(formDiv);
+    };
+
+    window.onSupSelect = () => {
+      const sel = document.getElementById('le-supSelect');
+      if (!sel) return;
+      const val = sel.value;
+      if (val && val !== 'other') {
+        const [name, gdc] = val.split('|');
+        document.getElementById('le-supName').value = name;
+        document.getElementById('le-supGdc').value = gdc;
+      } else if (val === 'other') {
+        document.getElementById('le-supName').value = '';
+        document.getElementById('le-supGdc').value = '';
+      }
+    };
+
+    window.saveLogbookEntry = async () => {
+      const date         = document.getElementById('le-date').value;
+      const patientType  = document.getElementById('le-patientType').value;
+      const product      = document.getElementById('le-product').value;
+      const supervisorName = document.getElementById('le-supName').value.trim();
+      const supervisorGdc  = document.getElementById('le-supGdc').value.trim();
+      const notes        = document.getElementById('le-notes').value.trim();
+      const errEl        = document.getElementById('le-err');
+      if (!date || !patientType || !product || !supervisorName || !supervisorGdc) {
+        errEl.textContent = 'Please complete all required fields.';
+        errEl.style.display = 'block'; return;
+      }
+      const entry = { date, patientType, product, supervisorName, supervisorGdc, notes };
+      if (!learner.logbookEntries) learner.logbookEntries = [];
+      learner.logbookEntries.push(entry);
+      try {
+        await setDoc(doc(db, 'learners', uid), { logbookEntries: learner.logbookEntries }, { merge: true });
+        document.getElementById('logbookEntryForm').remove();
+        showToast('Entry saved ✅', 'success');
+        renderPractical(document.getElementById('dashMain'));
+        renderSidebar();
+      } catch(e) {
+        console.error(e);
+        errEl.textContent = 'Could not save. Please try again.';
+        errEl.style.display = 'block';
+        learner.logbookEntries.pop();
+      }
+    };
+
+    window.deleteLogbookEntry = async (index) => {
+      if (!confirm('Remove this logbook entry?')) return;
+      learner.logbookEntries.splice(index, 1);
+      await setDoc(doc(db, 'learners', uid), { logbookEntries: learner.logbookEntries }, { merge: true });
+      showToast('Entry removed');
+      renderPractical(document.getElementById('dashMain'));
+    };
+
+    let practicalSaveTimer = null;
+    window.onPracticalInput = (key) => {
+      const ta = document.getElementById('ta-' + key);
+      if (!ta) return;
+      const wc = wordCount(ta.value);
+      const wcEl = document.getElementById('wc-' + key);
+      if (wcEl) { wcEl.textContent = wc + ' words'; wcEl.style.color = wc >= 200 ? '#1A7F4B' : wc > 0 ? '#92400E' : 'var(--ink-light)'; }
+      clearTimeout(practicalSaveTimer);
+      practicalSaveTimer = setTimeout(() => savePracticalDrafts(true), 3000);
+    };
+
+    window.savePracticalDrafts = async (auto = false) => {
+      const data = {};
+      ['caseStudy1','caseStudy2'].forEach(key => {
+        const ta = document.getElementById('ta-' + key);
+        if (ta) { data[key] = ta.value; learner[key] = ta.value; }
+      });
+      try {
+        await setDoc(doc(db, 'learners', uid), data, { merge: true });
+        const statusEl = document.getElementById('practical-save-status');
+        if (statusEl) { statusEl.textContent = auto ? 'Auto-saved ✓' : 'Drafts saved ✓'; setTimeout(() => { if(statusEl) statusEl.textContent=''; }, 3000); }
+      } catch(e) { console.error(e); }
+    };
+
+    window.submitPractical = async () => {
+      const btn = document.getElementById('practicalSubmitBtn');
+      btn.disabled = true; btn.textContent = 'Submitting...';
+      const data = { practicalSubmitted: true, practicalSubmittedAt: serverTimestamp() };
+      ['caseStudy1','caseStudy2'].forEach(key => {
+        const ta = document.getElementById('ta-' + key);
+        if (ta) { data[key] = ta.value; learner[key] = ta.value; }
+      });
+      try {
+        await setDoc(doc(db, 'learners', uid), data, { merge: true });
+        learner.practicalSubmitted = true;
+        if (typeof emailjs !== 'undefined') {
+          emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+            to_email: 'emily@dentalnurse.training',
+            learner_name: learner.name||'Unknown', learner_email: learner.email||'', learner_gdc: learner.gdc||'',
+            submission_type: 'Practical Portfolio', file_url: 'View in admin panel', submitted_at: new Date().toLocaleString('en-GB'),
+            message: 'Practical portfolio submitted by ' + (learner.name||'Unknown') + '. Log in to the admin panel to review:\nhttps://dentalnurse.github.io/Fluoride/admin/index.html',
+          });
+        }
+        renderSidebar(); showSection('practical');
+        showToast('Practical portfolio submitted! ✅', 'success');
+      } catch(e) {
+        console.error(e); showToast('Could not submit. Please try again.', 'error');
+        btn.disabled = false; btn.textContent = 'Submit practical portfolio';
+      }
+    };
 
     function renderReflection(el) {
       el.innerHTML = '<div class="dash-header"><h1>End-of-Course Reflective Account</h1><p>300-500 words reflecting on your learning throughout this course.</p></div>'

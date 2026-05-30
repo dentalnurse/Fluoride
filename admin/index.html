@@ -309,7 +309,9 @@
               <td style="font-size:0.82rem;color:var(--ink-light)">${at?.toDate ? at.toDate().toLocaleDateString('en-GB') : '-'}</td>
               <td>${type === 'written'
                 ? `<button class="btn btn-outline btn-sm" onclick="viewWrittenResponses('${l.id}','${l.name.replace(/'/g,"\\'") }')">👁 View responses</button>`
-                : url ? url.split(', ').map(u=>`<a href="${u}" target="_blank" class="submission-link" style="display:block;margin-bottom:2px">📥 Download</a>`).join('') : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'
+                : type === 'practical'
+                  ? `<button class="btn btn-outline btn-sm" onclick="viewPracticalPortfolio('${l.id}','${l.name.replace(/'/g,"\\'")}')">👁 View portfolio</button>`
+                  : url ? url.split(', ').map(u=>`<a href="${u}" target="_blank" class="submission-link" style="display:block;margin-bottom:2px">📥 Download</a>`).join('') : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'
               }</td>
               <td style="font-size:0.82rem">${passed ? '<span class="pill pill-green">Passed</span>' : feedback ? '<span style="color:var(--teal-dark)">Feedback given</span>' : '<span style="color:var(--ink-light)">Awaiting review</span>'}</td>
               <td>
@@ -623,6 +625,52 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-primary btn-sm" onclick="document.getElementById('feedbackModal').classList.add('hidden');openFeedbackModal('${id}','written','${name.replace(/'/g,"\\'")}')">Add feedback</button>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('feedbackModal').classList.add('hidden')">Close</button>
+        </div>`;
+      modal.classList.remove('hidden');
+    };
+
+    window.viewPracticalPortfolio = async (id, name) => {
+      const snap = await getDoc(doc(db, 'learners', id));
+      const d = snap.exists() ? snap.data() : {};
+      const entries = d.logbookEntries || [];
+      const modal = document.getElementById('feedbackModal');
+      document.getElementById('feedbackModalContent').innerHTML = `
+        <div class="modal-header">
+          <h3>Practical Portfolio — ${name}</h3>
+          <button class="modal-close" onclick="document.getElementById('feedbackModal').classList.add('hidden')">×</button>
+        </div>
+        <div style="max-height:65vh;overflow-y:auto;padding-right:0.5rem">
+          <strong style="font-size:0.9rem;color:var(--teal-dark)">Clinical Logbook (${entries.length}/10 entries)</strong>
+          ${entries.length ? `<table style="width:100%;font-size:0.82rem;border-collapse:collapse;margin:0.75rem 0 1.5rem">
+            <thead><tr style="background:var(--teal-pale)">
+              <th style="padding:0.5rem;text-align:left">#</th>
+              <th style="padding:0.5rem;text-align:left">Date</th>
+              <th style="padding:0.5rem;text-align:left">Patient</th>
+              <th style="padding:0.5rem;text-align:left">Product</th>
+              <th style="padding:0.5rem;text-align:left">Supervisor</th>
+              <th style="padding:0.5rem;text-align:left">GDC</th>
+              <th style="padding:0.5rem;text-align:left">Notes</th>
+            </tr></thead>
+            <tbody>${entries.map((e,i)=>`<tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:0.4rem 0.5rem">${i+1}</td>
+              <td style="padding:0.4rem 0.5rem">${e.date||'—'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.patientType||'—'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.product||'—'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.supervisorName||'—'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.supervisorGdc||'—'}</td>
+              <td style="padding:0.4rem 0.5rem;color:var(--ink-light)">${e.notes||''}</td>
+            </tr>`).join('')}</tbody>
+          </table>` : `<p style="font-size:0.85rem;color:var(--ink-light);margin:0.5rem 0 1.5rem">No logbook entries recorded.</p>`}
+          ${[['Case Study 1','caseStudy1'],['Case Study 2','caseStudy2']].map(([label,key])=>`
+            <div style="margin-bottom:1.25rem">
+              <strong style="font-size:0.9rem;color:var(--teal-dark)">${label}</strong>
+              <div style="margin-top:0.5rem;background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.88rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${d[key]?d[key].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):'<em style="color:var(--ink-light)">Not completed</em>'}</div>
+              ${d[key]?`<div style="font-size:0.78rem;color:var(--ink-light);margin-top:0.25rem">${d[key].trim().split(/\s+/).filter(Boolean).length} words</div>`:''}
+            </div>`).join('')}
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary btn-sm" onclick="document.getElementById('feedbackModal').classList.add('hidden');openFeedbackModal('${id}','practical','${name.replace(/'/g,"\\'")}')">Add feedback</button>
           <button class="btn btn-outline btn-sm" onclick="document.getElementById('feedbackModal').classList.add('hidden')">Close</button>
         </div>`;
       modal.classList.remove('hidden');
