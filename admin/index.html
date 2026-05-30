@@ -202,7 +202,7 @@
           <tbody>
             ${pending.map(l => `<tr>
               <td><div class="td-name">${l.name}</div></td>
-              <td><div>${l.email}</div><div class="td-email">GDC: ${l.gdc}</div></td>
+              <td><div>${l.email||'—'}</div><div class="td-email">GDC: ${l.gdc||'—'}</div></td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'}</td>
               <td>
                 <div class="admin-actions">
@@ -244,7 +244,7 @@
         const expBadge = expiryBadge(days);
         return `<tr style="${rowStyle}">
           <td><div class="td-name">${l.name}</div></td>
-          <td><div style="font-size:0.82rem">${l.email}</div><div class="td-email">GDC: ${l.gdc}</div></td>
+          <td><div style="font-size:0.82rem">${l.email||'—'}</div><div class="td-email">GDC: ${l.gdc||'—'}</div></td>
           <td style="display:flex;flex-wrap:wrap;gap:0.3rem;align-items:center;padding-top:0.6rem">
             ${l.unlocked ? '<span class="pill pill-green">Active</span>' : '<span class="pill pill-orange">Pending</span>'}
             ${expBadge}
@@ -304,7 +304,7 @@
           </tr></thead>
           <tbody>
             ${filtered.length ? filtered.map(({ l, type, label, url, feedback, passed, at }) => `<tr>
-              <td><div class="td-name">${l.name}</div><div class="td-email">${l.email}</div></td>
+              <td><div class="td-name">${l.name}</div><div class="td-email">${l.email||'—'}</div></td>
               <td><span class="pill pill-teal">${label}</span></td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${at?.toDate ? at.toDate().toLocaleDateString('en-GB') : '-'}</td>
               <td>${url ? url.split(', ').map(u=>`<a href="${u}" target="_blank" class="submission-link" style="display:block;margin-bottom:2px">📥 Download</a>`).join('') : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'}</td>
@@ -467,7 +467,7 @@
           <button class="modal-close" onclick="closeModal()">×</button>
         </div>
         <table style="width:100%;font-size:0.9rem;border-collapse:collapse">
-          ${[['Email', l.email],['GDC', l.gdc],
+          ${[['Email', l.email||'—'],['GDC', l.gdc||'—'],
              ['Status', l.unlocked?'Active':'Pending approval'],
              ['Declaration', l.declarationSigned ? '✅ Signed (' + (l.declarationSignedName||'') + ')' : '⏳ Not yet signed'],
              ['Enrolled', l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'],
