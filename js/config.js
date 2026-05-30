@@ -23,7 +23,7 @@ const EMAILJS_CONFIG = {
 // Passwords are managed entirely by Firebase Authentication — never stored here.
 const ADMIN_EMAILS = [
   "emily@dentalnurse.training",
-  // "secondadmin@example.com",
+  "erica@dentalnurse.training",
 ];
 const ADMIN_EMAIL = ADMIN_EMAILS[0]; // kept for backwards compatibility
 
