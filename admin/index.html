@@ -307,7 +307,10 @@
               <td><div class="td-name">${l.name}</div><div class="td-email">${l.email||'—'}</div></td>
               <td><span class="pill pill-teal">${label}</span></td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${at?.toDate ? at.toDate().toLocaleDateString('en-GB') : '-'}</td>
-              <td>${url ? url.split(', ').map(u=>`<a href="${u}" target="_blank" class="submission-link" style="display:block;margin-bottom:2px">📥 Download</a>`).join('') : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'}</td>
+              <td>${type === 'written'
+                ? `<button class="btn btn-outline btn-sm" onclick="viewWrittenResponses('${l.id}','${l.name.replace(/'/g,"\\'") }')">👁 View responses</button>`
+                : url ? url.split(', ').map(u=>`<a href="${u}" target="_blank" class="submission-link" style="display:block;margin-bottom:2px">📥 Download</a>`).join('') : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'
+              }</td>
               <td style="font-size:0.82rem">${passed ? '<span class="pill pill-green">Passed</span>' : feedback ? '<span style="color:var(--teal-dark)">Feedback given</span>' : '<span style="color:var(--ink-light)">Awaiting review</span>'}</td>
               <td>
                 <div class="admin-actions">
@@ -593,6 +596,36 @@
       const l = learners.find(x => x.id === id);
       if (l) l.notes = notes;
       showToast('Notes saved ✓');
+    };
+
+    // ── View written responses ────────────────────────────────────────────
+    window.viewWrittenResponses = async (id, name) => {
+      const snap = await getDoc(doc(db, 'learners', id));
+      const d = snap.exists() ? snap.data() : {};
+      const tasks = [
+        { label: 'Task 1 — Consent process', key: 'writtenTask1' },
+        { label: 'Task 2 — GDC responsibilities', key: 'writtenTask2' },
+        { label: 'Task 3 — Fluoride science', key: 'writtenTask3' },
+      ];
+      const modal = document.getElementById('feedbackModal');
+      document.getElementById('feedbackModalContent').innerHTML = `
+        <div class="modal-header">
+          <h3>Written Tasks — ${name}</h3>
+          <button class="modal-close" onclick="document.getElementById('feedbackModal').classList.add('hidden')">×</button>
+        </div>
+        <div style="max-height:60vh;overflow-y:auto;padding-right:0.5rem">
+          ${tasks.map(({ label, key }) => `
+            <div style="margin-bottom:1.5rem">
+              <strong style="font-size:0.9rem;color:var(--teal-dark)">${label}</strong>
+              <div style="margin-top:0.5rem;background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.88rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${d[key] ? d[key].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '<em style="color:var(--ink-light)">Not answered</em>'}</div>
+              <div style="font-size:0.78rem;color:var(--ink-light);margin-top:0.25rem">${d[key] ? (d[key].trim().split(/\s+/).filter(Boolean).length + ' words') : ''}</div>
+            </div>`).join('')}
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary btn-sm" onclick="document.getElementById('feedbackModal').classList.add('hidden');openFeedbackModal('${id}','written','${name.replace(/'/g,"\\'")}')">Add feedback</button>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('feedbackModal').classList.add('hidden')">Close</button>
+        </div>`;
+      modal.classList.remove('hidden');
     };
 
     // ── Feedback modal ────────────────────────────────────────────────────

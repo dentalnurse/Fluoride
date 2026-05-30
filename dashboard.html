@@ -279,21 +279,121 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
       draw();
     }
 
-    function renderWritten(el) {
-      el.innerHTML = '<div class="dash-header"><h1>Written Tasks</h1><p>Complete all three written tasks and upload your answers.</p></div>'
-        + (learner.writtenPassed ? '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Written tasks passed! Well done.</div>' : learner.writtenSubmitted ? '<div class="submission-status status-submitted"><span>📬</span> Written tasks submitted - your assessor will review and provide feedback.</div>' : '')
-        + '<div class="content-card"><h2>Three written tasks</h2><p style="margin-bottom:1rem">Download the written tasks document, complete all three tasks, and upload below.</p>'
-        + '<div style="display:grid;gap:1rem;margin:1.25rem 0">'
-        + '<div style="padding:1rem;background:var(--teal-pale);border-radius:var(--radius);border-left:4px solid var(--teal)"><strong>Task 1:</strong> Explain the consent process as it applies to fluoride varnish application (400-600 words)</div>'
-        + '<div style="padding:1rem;background:var(--teal-pale);border-radius:var(--radius);border-left:4px solid var(--teal)"><strong>Task 2:</strong> Explain your responsibilities as a GDC registrant and the professional and legal requirements when applying fluoride varnish (400-600 words)</div>'
-        + '<div style="padding:1rem;background:var(--teal-pale);border-radius:var(--radius);border-left:4px solid var(--teal)"><strong>Task 3:</strong> Explain the science of fluoride and how it prevents dental caries (400-600 words)</div>'
-        + '</div>'
-        + '<a href="https://dentalnurse.github.io/Fluoride/DNT_FVA_WrittenTasks.pdf" target="_blank" target="_blank" class="btn btn-outline" style="margin-bottom:1.5rem">📥 Open written tasks sheet</a>'
-        + (!learner.writtenSubmitted ? '<div class="upload-zone" id="writtenUpload" onclick="document.getElementById(\'writtenFile\').click()"><div class="uz-icon">📎</div><h4>Upload your completed tasks</h4><p>PDF or Word document</p></div><input type="file" id="writtenFile" accept=".pdf,.doc,.docx" style="display:none" onchange="uploadSubmission(\'written\', this)"/><div id="writtenFileList" class="upload-file-list"></div><button class="btn btn-primary" id="writtenSubmitBtn" style="margin-top:1rem;display:none" onclick="submitWork(\'written\')">Submit written tasks</button>' : '')
-        + (learner.writtenFeedback ? '<div class="callout" style="margin-top:1.5rem"><div class="callout-label">Assessor feedback</div><p>' + learner.writtenFeedback + '</p></div>' : '')
-        + '</div>';
-      setupUploadZone('writtenUpload', 'writtenFile');
+    const WRITTEN_TASKS = [
+      { key: 'writtenTask1', label: 'Task 1', prompt: 'Explain the consent process as it applies to fluoride varnish application.' },
+      { key: 'writtenTask2', label: 'Task 2', prompt: 'Explain your responsibilities as a GDC registrant and the professional and legal requirements when applying fluoride varnish.' },
+      { key: 'writtenTask3', label: 'Task 3', prompt: 'Explain the science of fluoride and how it prevents dental caries.' },
+    ];
+
+    function wordCount(text) {
+      return (text || '').trim().split(/\s+/).filter(Boolean).length;
     }
+
+    function renderWritten(el) {
+      const submitted = learner.writtenSubmitted;
+      const passed    = learner.writtenPassed;
+      let html = '<div class="dash-header"><h1>Written Tasks</h1><p>Answer all three tasks below. Each response should be 400–600 words. Your work saves automatically as you type.</p></div>';
+      if (passed) {
+        html += '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Written tasks passed! Well done.</div>';
+      } else if (submitted) {
+        html += '<div class="submission-status status-submitted"><span>📬</span> Submitted — your assessor will review and provide feedback.</div>';
+      }
+      html += WRITTEN_TASKS.map(({ key, label, prompt }) => {
+        const savedText = learner[key] || '';
+        const wc = wordCount(savedText);
+        const wcColour = wc >= 400 && wc <= 600 ? '#1A7F4B' : wc > 600 ? '#D32F2F' : wc > 0 ? '#92400E' : 'var(--ink-light)';
+        return `<div class="content-card" style="margin-bottom:1.25rem">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
+            <div>
+              <strong style="font-size:1rem">${label}</strong>
+              <p style="margin:0.25rem 0 0;color:var(--ink-mid);font-size:0.9rem">${prompt}</p>
+            </div>
+            <span id="wc-${key}" style="font-size:0.82rem;font-weight:600;color:${wcColour};white-space:nowrap">${wc} words</span>
+          </div>
+          ${submitted
+            ? `<div style="background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.9rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${esc(savedText) || '<em style="color:var(--ink-light)">Not answered</em>'}</div>`
+            : `<textarea id="ta-${key}" style="min-height:220px;font-size:0.9rem;line-height:1.75" placeholder="Write your response here (400–600 words)..." oninput="onWrittenInput('${key}')">${esc(savedText)}</textarea>`
+          }
+        </div>`;
+      }).join('');
+      if (!submitted) {
+        html += `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
+          <button class="btn btn-outline" onclick="saveWrittenDrafts()">💾 Save drafts</button>
+          <button class="btn btn-primary" id="writtenSubmitBtn" onclick="submitWrittenTasks()">Submit written tasks</button>
+          <span id="written-save-status" style="font-size:0.82rem;color:var(--ink-light)"></span>
+        </div>`;
+      }
+      if (learner.writtenFeedback) {
+        html += `<div class="callout"><div class="callout-label">Assessor feedback</div><p>${learner.writtenFeedback}</p></div>`;
+      }
+      el.innerHTML = html;
+      if (!submitted) updateWrittenSubmitBtn();
+    }
+
+    let writtenSaveTimer = null;
+    window.onWrittenInput = (key) => {
+      const ta = document.getElementById('ta-' + key);
+      if (!ta) return;
+      const wc = wordCount(ta.value);
+      const wcEl = document.getElementById('wc-' + key);
+      if (wcEl) {
+        wcEl.textContent = wc + ' words';
+        wcEl.style.color = wc >= 400 && wc <= 600 ? '#1A7F4B' : wc > 600 ? '#D32F2F' : wc > 0 ? '#92400E' : 'var(--ink-light)';
+      }
+      updateWrittenSubmitBtn();
+      clearTimeout(writtenSaveTimer);
+      writtenSaveTimer = setTimeout(() => saveWrittenDrafts(true), 3000);
+    };
+
+    function updateWrittenSubmitBtn() {
+      const btn = document.getElementById('writtenSubmitBtn');
+      if (!btn) return;
+      const allHaveContent = WRITTEN_TASKS.every(({ key }) => {
+        const ta = document.getElementById('ta-' + key);
+        return ta && ta.value.trim().length > 0;
+      });
+      btn.disabled = !allHaveContent;
+    }
+
+    window.saveWrittenDrafts = async (auto = false) => {
+      const data = {};
+      WRITTEN_TASKS.forEach(({ key }) => {
+        const ta = document.getElementById('ta-' + key);
+        if (ta) { data[key] = ta.value; learner[key] = ta.value; }
+      });
+      try {
+        await setDoc(doc(db, 'learners', uid), data, { merge: true });
+        const statusEl = document.getElementById('written-save-status');
+        if (statusEl) { statusEl.textContent = auto ? 'Auto-saved ✓' : 'Drafts saved ✓'; setTimeout(() => { if(statusEl) statusEl.textContent=''; }, 3000); }
+      } catch(e) { console.error(e); }
+    };
+
+    window.submitWrittenTasks = async () => {
+      const btn = document.getElementById('writtenSubmitBtn');
+      btn.disabled = true; btn.textContent = 'Submitting...';
+      const data = { writtenSubmitted: true, writtenSubmittedAt: serverTimestamp() };
+      WRITTEN_TASKS.forEach(({ key }) => {
+        const ta = document.getElementById('ta-' + key);
+        if (ta) { data[key] = ta.value; learner[key] = ta.value; }
+      });
+      try {
+        await setDoc(doc(db, 'learners', uid), data, { merge: true });
+        learner.writtenSubmitted = true;
+        if (typeof emailjs !== 'undefined') {
+          emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+            to_email: 'emily@dentalnurse.training',
+            learner_name: learner.name || 'Unknown', learner_email: learner.email || '', learner_gdc: learner.gdc || '',
+            submission_type: 'Written Tasks', file_url: 'View in admin panel', submitted_at: new Date().toLocaleString('en-GB'),
+            message: 'Written tasks submitted by ' + (learner.name||'Unknown') + '. Log in to the admin panel to review:\nhttps://dentalnurse.github.io/Fluoride/admin/index.html',
+          });
+        }
+        renderSidebar(); showSection('written');
+        showToast('Written tasks submitted! ✅', 'success');
+      } catch(e) {
+        console.error(e); showToast('Could not submit. Please try again.', 'error');
+        btn.disabled = false; btn.textContent = 'Submit written tasks';
+      }
+    };
 
     function renderPractical(el) {
       const entries = learner.logbookEntries || [];
