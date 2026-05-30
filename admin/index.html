@@ -463,27 +463,48 @@
 
       document.getElementById('learnerModalContent').innerHTML = `
         <div class="modal-header">
-          <h3>${l.name}</h3>
+          <h3>${l.name||'Unnamed learner'}</h3>
           <button class="modal-close" onclick="closeModal()">×</button>
         </div>
-        <table style="width:100%;font-size:0.9rem;border-collapse:collapse">
-          ${[['Email', l.email||'—'],['GDC', l.gdc||'—'],
-             ['Status', l.unlocked?'Active':'Pending approval'],
-             ['Declaration', l.declarationSigned ? '✅ Signed (' + (l.declarationSignedName||'') + ')' : '⏳ Not yet signed'],
-             ['Enrolled', l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'],
-             ['Module 1', mp[1]===2?'✅ Passed':mp[1]===1?'In progress':'Not started'],
-             ['Module 2', mp[2]===2?'✅ Passed':mp[2]===1?'In progress':'Not started'],
-             ['Module 3', mp[3]===2?'✅ Passed':mp[3]===1?'In progress':'Not started'],
-             ['Module 4', mp[4]===2?'✅ Passed':mp[4]===1?'In progress':'Not started'],
-             ['Module 5', mp[5]===2?'✅ Passed':mp[5]===1?'In progress':'Not started'],
-             ['Written',    l.writtenSubmitted ? (l.writtenPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
-             ['Practical',  l.practicalSubmitted ? (l.practicalPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
-             ['Reflection', l.reflectionSubmitted ? (l.reflectionPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
-           ].map(([k,v]) => `<tr style="border-bottom:1px solid var(--border)">
-            <td style="padding:0.55rem 0.75rem;color:var(--ink-light);font-weight:600;width:150px">${k}</td>
-            <td style="padding:0.55rem 0.75rem">${v}</td>
-           </tr>`).join('')}
-        </table>
+
+        <div style="margin-bottom:1rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+            <strong style="font-size:0.88rem">Learner details</strong>
+            <button class="btn btn-outline btn-sm" onclick="toggleEditLearner('${l.id}')">✏️ Edit details</button>
+          </div>
+          <div id="learnerViewMode">
+            <table style="width:100%;font-size:0.9rem;border-collapse:collapse">
+              ${[['Name', l.name||'—'],['Email', l.email||'—'],['GDC', l.gdc||'—'],['Phone', l.phone||'—'],['Workplace', l.workplace||'—'],
+                 ['Status', l.unlocked?'Active':'Pending approval'],
+                 ['Declaration', l.declarationSigned ? '✅ Signed (' + (l.declarationSignedName||'') + ')' : '⏳ Not yet signed'],
+                 ['Enrolled', l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'],
+                 ['Module 1', mp[1]===2?'✅ Passed':mp[1]===1?'In progress':'Not started'],
+                 ['Module 2', mp[2]===2?'✅ Passed':mp[2]===1?'In progress':'Not started'],
+                 ['Module 3', mp[3]===2?'✅ Passed':mp[3]===1?'In progress':'Not started'],
+                 ['Module 4', mp[4]===2?'✅ Passed':mp[4]===1?'In progress':'Not started'],
+                 ['Module 5', mp[5]===2?'✅ Passed':mp[5]===1?'In progress':'Not started'],
+                 ['Written',    l.writtenSubmitted ? (l.writtenPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
+                 ['Practical',  l.practicalSubmitted ? (l.practicalPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
+                 ['Reflection', l.reflectionSubmitted ? (l.reflectionPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
+               ].map(([k,v]) => `<tr style="border-bottom:1px solid var(--border)">
+                <td style="padding:0.55rem 0.75rem;color:var(--ink-light);font-weight:600;width:150px">${k}</td>
+                <td style="padding:0.55rem 0.75rem">${v}</td>
+               </tr>`).join('')}
+            </table>
+          </div>
+          <div id="learnerEditMode" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">
+              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">Full name</label><input type="text" id="edit-name" value="${(l.name||'').replace(/"/g,'&quot;')}"/></div>
+              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">Email address</label><input type="email" id="edit-email" value="${(l.email||'').replace(/"/g,'&quot;')}"/></div>
+              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">GDC number</label><input type="text" id="edit-gdc" value="${(l.gdc||'').replace(/"/g,'&quot;')}"/></div>
+              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">Phone</label><input type="text" id="edit-phone" value="${(l.phone||'').replace(/"/g,'&quot;')}"/></div>
+              <div class="form-group" style="margin:0;grid-column:1/-1"><label style="font-size:0.8rem">Workplace</label><input type="text" id="edit-workplace" value="${(l.workplace||'').replace(/"/g,'&quot;')}"/></div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="saveAdminLearnerEdits('${l.id}')">Save changes</button>
+            <button class="btn btn-outline btn-sm" onclick="toggleEditLearner('${l.id}')">Cancel</button>
+          </div>
+        </div>
+
         ${supSection}
         <div class="form-group" style="margin-top:1.25rem">
           <label>Internal notes (not visible to learner)</label>
@@ -497,6 +518,35 @@
           <button class="btn btn-primary" onclick="closeModal()">Close</button>
         </div>`;
       document.getElementById('learnerModal').classList.remove('hidden');
+    };
+
+    window.toggleEditLearner = (id) => {
+      const view = document.getElementById('learnerViewMode');
+      const edit = document.getElementById('learnerEditMode');
+      const isEditing = edit.style.display !== 'none';
+      view.style.display = isEditing ? '' : 'none';
+      edit.style.display = isEditing ? 'none' : '';
+    };
+
+    window.saveAdminLearnerEdits = async (id) => {
+      const name      = document.getElementById('edit-name').value.trim();
+      const email     = document.getElementById('edit-email').value.trim();
+      const gdc       = document.getElementById('edit-gdc').value.trim();
+      const phone     = document.getElementById('edit-phone').value.trim();
+      const workplace = document.getElementById('edit-workplace').value.trim();
+      const btn = document.querySelector('[onclick="saveAdminLearnerEdits(\'' + id + '\')"]');
+      btn.disabled = true; btn.textContent = 'Saving...';
+      try {
+        await setDoc(doc(db, 'learners', id), { name, email, gdc, phone, workplace }, { merge: true });
+        const l = learners.find(x => x.id === id);
+        if (l) Object.assign(l, { name, email, gdc, phone, workplace });
+        await reloadAndOpenModal(id);
+        showToast('Learner details updated ✅', 'success');
+      } catch(e) {
+        console.error(e);
+        showToast('Could not save changes.', 'error');
+        btn.disabled = false; btn.textContent = 'Save changes';
+      }
     };
 
     window.reloadAndOpenModal = async (id) => {
