@@ -401,18 +401,42 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
       const entries    = learner.logbookEntries || [];
       const approvedSups = (learner.supervisors || []).filter(s => s.approved);
 
+      const pendingSignoff = learner.practicalPendingSignoff && !learner.practicalSubmitted;
+
       let html = '<div class="dash-header"><h1>Practical Portfolio</h1><p>Complete your 10-entry clinical logbook and two case studies directly below.</p></div>';
       if (passed) {
         html += '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Practical portfolio passed! Well done.</div>';
       } else if (submitted) {
         html += '<div class="submission-status status-submitted"><span>📬</span> Submitted. Your assessor will review and provide feedback.</div>';
+      } else if (pendingSignoff) {
+        // Show pending sign-off status
+        const uniqueSups = [];
+        const seenGdc = new Set();
+        for (const e of entries) {
+          if (e.supervisorGdc && !seenGdc.has(e.supervisorGdc)) {
+            seenGdc.add(e.supervisorGdc);
+            uniqueSups.push({ name: e.supervisorName, gdc: e.supervisorGdc, email: e.supervisorEmail || '' });
+          }
+        }
+        html += `<div class="submission-status status-submitted" style="background:#FFF8E7;color:#92400E;border-color:rgba(245,158,11,0.3)"><span>⏳</span> Logbook sent for supervisor sign-off. Waiting for your supervisors to confirm their entries.</div>`;
+        if (uniqueSups.length) {
+          html += `<div class="content-card" style="margin-bottom:1.25rem">
+            <h2 style="font-size:1rem;margin-bottom:0.85rem">Sign-off Status</h2>
+            <div style="display:flex;flex-direction:column;gap:0.6rem">
+              ${uniqueSups.map(s => `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 1rem;background:var(--off-white);border-radius:var(--radius);border:1px solid var(--border);font-size:0.88rem">
+                <div><strong>${esc(s.name)}</strong><span style="color:var(--ink-light);margin-left:0.5rem">GDC: ${esc(s.gdc)}</span></div>
+                <span style="background:#FFF3CD;color:#92400E;font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px">Pending confirmation</span>
+              </div>`).join('')}
+            </div>
+          </div>`;
+        }
       }
 
       // ── Logbook ──
       html += `<div class="content-card" style="margin-bottom:1.25rem">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
           <div><h2 style="margin:0">Clinical Logbook</h2><p style="margin:0.25rem 0 0;font-size:0.88rem;color:var(--ink-light)">${entries.length}/10 entries completed</p></div>
-          ${!submitted && entries.length < 10 ? `<button class="btn btn-primary btn-sm" onclick="addLogbookEntry()">+ Add entry</button>` : ''}
+          ${!submitted && !pendingSignoff && entries.length < 10 ? `<button class="btn btn-primary btn-sm" onclick="addLogbookEntry()">+ Add entry</button>` : ''}
         </div>`;
 
       if (entries.length === 0) {
@@ -422,7 +446,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
           <div style="border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.75rem;background:var(--off-white)">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">
               <strong style="font-size:0.9rem">Entry ${i+1}: ${e.date||'No date'}</strong>
-              ${!submitted ? `<button class="btn btn-outline btn-sm" style="padding:0.2rem 0.6rem;font-size:0.75rem;color:#D32F2F;border-color:#D32F2F" onclick="deleteLogbookEntry(${i})">Remove</button>` : ''}
+              ${!submitted && !pendingSignoff ? `<button class="btn btn-outline btn-sm" style="padding:0.2rem 0.6rem;font-size:0.75rem;color:#D32F2F;border-color:#D32F2F" onclick="deleteLogbookEntry(${i})">Remove</button>` : ''}
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.35rem 1.5rem;font-size:0.85rem;color:var(--ink-mid)">
               <div><span style="color:var(--ink-light)">Patient type:</span> ${e.patientType||'-'}</div>
@@ -469,14 +493,14 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
             </div>
             <span id="wc-${key}" style="font-size:0.82rem;font-weight:600;color:${wcColour};white-space:nowrap">${wc} words</span>
           </div>
-          ${submitted
+          ${(submitted || pendingSignoff)
             ? `<div style="background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.9rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${esc(savedText)||'<em style="color:var(--ink-light)">Not completed</em>'}</div>`
             : `<textarea id="ta-${key}" style="width:100%;box-sizing:border-box;min-height:480px;font-size:0.93rem;line-height:1.85" placeholder="Write your case study here..." oninput="onPracticalInput('${key}')">${esc(savedText)}</textarea>`
           }
         </div>`;
       }).join('');
 
-      if (!submitted) {
+      if (!submitted && !pendingSignoff) {
         const canSubmit = entries.length >= 10 && (learner.caseStudy1||'').trim() && (learner.caseStudy2||'').trim();
         html += `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
           <button class="btn btn-outline" onclick="savePracticalDrafts()">💾 Save drafts</button>
@@ -534,6 +558,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
             </div>` : ''}
             <div class="form-group" style="margin:0"><label>Supervisor name *</label><input type="text" id="le-supName" placeholder="e.g. Dr Jane Smith"/></div>
             <div class="form-group" style="margin:0"><label>Supervisor GDC *</label><input type="text" id="le-supGdc" placeholder="e.g. 123456"/></div>
+            <div class="form-group" style="margin:0;grid-column:1/-1"><label>Supervisor email address *</label><input type="email" id="le-supEmail" placeholder="e.g. dr.smith@practice.com"/></div>
             <div class="form-group" style="margin:0;grid-column:1/-1"><label>Clinical notes / observations</label><textarea id="le-notes" style="min-height:100px" placeholder="Patient response, technique notes, any challenges..."></textarea></div>
           </div>
           <div id="le-err" style="display:none;color:#D32F2F;font-size:0.85rem;margin-top:0.75rem;padding:0.5rem 0.75rem;background:#FFF0F0;border-radius:var(--radius)"></div>
@@ -553,25 +578,32 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
         const [name, gdc] = val.split('|');
         document.getElementById('le-supName').value = name;
         document.getElementById('le-supGdc').value = gdc;
+        // Also populate supervisor email if available
+        const sup = (learner.supervisors || []).find(s => s.name === name && s.gdc === gdc);
+        const emailEl = document.getElementById('le-supEmail');
+        if (emailEl) emailEl.value = (sup && sup.email) ? sup.email : '';
       } else if (val === 'other') {
         document.getElementById('le-supName').value = '';
         document.getElementById('le-supGdc').value = '';
+        const emailEl = document.getElementById('le-supEmail');
+        if (emailEl) emailEl.value = '';
       }
     };
 
     window.saveLogbookEntry = async () => {
-      const date         = document.getElementById('le-date').value;
-      const patientType  = document.getElementById('le-patientType').value;
-      const product      = document.getElementById('le-product').value;
-      const supervisorName = document.getElementById('le-supName').value.trim();
-      const supervisorGdc  = document.getElementById('le-supGdc').value.trim();
-      const notes        = document.getElementById('le-notes').value.trim();
-      const errEl        = document.getElementById('le-err');
-      if (!date || !patientType || !product || !supervisorName || !supervisorGdc) {
+      const date           = document.getElementById('le-date').value;
+      const patientType    = document.getElementById('le-patientType').value;
+      const product        = document.getElementById('le-product').value;
+      const supervisorName  = document.getElementById('le-supName').value.trim();
+      const supervisorGdc   = document.getElementById('le-supGdc').value.trim();
+      const supervisorEmail = document.getElementById('le-supEmail').value.trim();
+      const notes          = document.getElementById('le-notes').value.trim();
+      const errEl          = document.getElementById('le-err');
+      if (!date || !patientType || !product || !supervisorName || !supervisorGdc || !supervisorEmail) {
         errEl.textContent = 'Please complete all required fields.';
         errEl.style.display = 'block'; return;
       }
-      const entry = { date, patientType, product, supervisorName, supervisorGdc, notes };
+      const entry = { date, patientType, product, supervisorName, supervisorGdc, supervisorEmail, notes };
       if (!learner.logbookEntries) learner.logbookEntries = [];
       learner.logbookEntries.push(entry);
       try {
