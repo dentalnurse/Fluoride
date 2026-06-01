@@ -292,9 +292,9 @@
     function renderSubmissionsTab(el) {
       const allRows = learners.flatMap(l => {
         const rows = [];
-        if (l.writtenSubmitted)    rows.push({ l, type:'written',    label:'Written Tasks',       url:l.writtenFileUrl,    feedback:l.writtenFeedback,    passed:l.writtenPassed,    at:l.writtenSubmittedAt });
-        if (l.practicalSubmitted)  rows.push({ l, type:'practical',  label:'Practical Portfolio', url:l.practicalFileUrl,  feedback:l.practicalFeedback,  passed:l.practicalPassed,  at:l.practicalSubmittedAt });
-        if (l.reflectionSubmitted) rows.push({ l, type:'reflection', label:'Final Reflection',    url:l.reflectionFileUrl, feedback:l.reflectionFeedback, passed:l.reflectionPassed, at:l.reflectionSubmittedAt });
+        if (l.writtenSubmitted)    rows.push({ l, type:'written',    label:'Written Tasks',       url:l.writtenFileUrl,    feedback:l.writtenFeedback,    passed:l.writtenPassed,    amended:l.writtenAmendmentRequested,    at:l.writtenSubmittedAt });
+        if (l.practicalSubmitted)  rows.push({ l, type:'practical',  label:'Practical Portfolio', url:l.practicalFileUrl,  feedback:l.practicalFeedback,  passed:l.practicalPassed,  amended:l.practicalAmendmentRequested,  at:l.practicalSubmittedAt });
+        if (l.reflectionSubmitted) rows.push({ l, type:'reflection', label:'Final Reflection',    url:l.reflectionFileUrl, feedback:l.reflectionFeedback, passed:l.reflectionPassed, amended:l.reflectionAmendmentRequested, at:l.reflectionSubmittedAt });
         return rows;
       });
       if (!allRows.length) {
@@ -316,7 +316,7 @@
             <th>Learner</th><th>Submission</th><th>Submitted</th><th>File</th><th>Status</th><th>Actions</th>
           </tr></thead>
           <tbody>
-            ${filtered.length ? filtered.map(({ l, type, label, url, feedback, passed, at }) => `<tr>
+            ${filtered.length ? filtered.map(({ l, type, label, url, feedback, passed, amended, at }) => `<tr>
               <td><div class="td-name">${l.name}</div><div class="td-email">${l.email||'—'}</div></td>
               <td><span class="pill pill-teal">${label}</span></td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${at?.toDate ? at.toDate().toLocaleDateString('en-GB') : '-'}</td>
@@ -326,10 +326,11 @@
                   ? `<button class="btn btn-outline btn-sm" onclick="viewPracticalPortfolio('${l.id}','${l.name.replace(/'/g,"\\'")}')">👁 View portfolio</button>`
                   : url ? url.split(', ').map(u=>`<a href="${u}" target="_blank" class="submission-link" style="display:block;margin-bottom:2px">📥 Download</a>`).join('') : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'
               }</td>
-              <td style="font-size:0.82rem">${passed ? '<span class="pill pill-green">Passed</span>' : feedback ? '<span style="color:var(--teal-dark)">Feedback given</span>' : '<span style="color:var(--ink-light)">Awaiting review</span>'}</td>
+              <td style="font-size:0.82rem">${passed ? '<span class="pill pill-green">Passed</span>' : amended ? '<span style="color:#D97706;font-weight:600">✏ Amendments requested</span>' : feedback ? '<span style="color:var(--teal-dark)">Feedback given</span>' : '<span style="color:var(--ink-light)">Awaiting review</span>'}</td>
               <td>
                 <div class="admin-actions">
                   <button class="btn btn-primary btn-sm" onclick="openFeedbackModal('${l.id}','${type}','${l.name}')">${feedback ? 'Edit feedback' : 'Add feedback'}</button>
+                  ${!passed ? `<button class="btn btn-outline btn-sm" style="color:#D97706;border-color:#D97706" onclick="requestAmendments('${l.id}','${type}','${l.name.replace(/'/g,"\\'")}')">✏ Request amendments</button>` : ''}
                   ${!passed ? `<button class="btn btn-success btn-sm" onclick="markPassed('${l.id}','${type}','${l.name}')">✓ Mark passed</button>` : ''}
                 </div>
               </td>
@@ -905,6 +906,49 @@
           'Hi ' + l.name + ',\n\nI have reviewed your ' + typeLabels[type] + ' and feedback is now available in your course dashboard.\n\nPlease log in to view it:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nIf you have any questions, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
         );
       }
+    };
+
+    window.requestAmendments = async (id, type, name) => {
+      const l = learners.find(x => x.id === id);
+      const existing = l?.[`${type}Feedback`] || '';
+      document.getElementById('learnerModalContent').innerHTML = `
+        <div class="modal-header">
+          <h3>Request Amendments - ${name}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <p style="font-size:0.9rem;color:var(--ink-light);margin-bottom:0.5rem">The learner will be notified that amendments are required. Their work will be unlocked so they can edit and resubmit. Your feedback will be shown prominently on their dashboard.</p>
+        <div style="background:#FFF8E7;border-left:3px solid #D97706;border-radius:0 var(--radius) var(--radius) 0;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:#92400E">Feedback is required before requesting amendments.</div>
+        <div class="form-group">
+          <label>Feedback / what needs to be amended *</label>
+          <textarea id="amendFeedbackText" style="min-height:160px">${existing}</textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" style="background:#D97706;border-color:#D97706" onclick="confirmRequestAmendments('${id}','${type}','${name.replace(/'/g,"\\'")}')">✏ Request amendments &amp; notify learner</button>
+        </div>`;
+      document.getElementById('learnerModal').classList.remove('hidden');
+    };
+
+    window.confirmRequestAmendments = async (id, type, name) => {
+      const text = document.getElementById('amendFeedbackText').value.trim();
+      if (!text) { alert('Please add feedback before requesting amendments.'); return; }
+      const typeLabels = { written: 'Written Tasks', practical: 'Practical Portfolio', reflection: 'Final Reflection' };
+      await updateDoc(doc(db, 'learners', id), {
+        [`${type}Feedback`]: text,
+        [`${type}AmendmentRequested`]: true
+      });
+      const l = learners.find(x => x.id === id);
+      if (l) { l[`${type}Feedback`] = text; l[`${type}AmendmentRequested`] = true; }
+      closeModal();
+      showToast('Amendments requested - learner notified ✅', 'success');
+      if (l) {
+        promptEmail(
+          l.email,
+          'Amendments required: ' + typeLabels[type] + ' - Dental Nurse Training Fluoride Varnish Certificate',
+          'Hi ' + (l.name||name) + ',\n\nThank you for submitting your ' + typeLabels[type] + '. I have reviewed your work and would like you to make some amendments before it can be marked.\n\nPlease log in to your dashboard to view the feedback and resubmit:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nIf you have any questions, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
+        );
+      }
+      renderSubmissionsTab(document.getElementById('tabContent'));
     };
 
     window.markPassed = async (id, type, name) => {

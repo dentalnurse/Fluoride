@@ -295,11 +295,17 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
     }
 
     function renderWritten(el) {
-      const submitted = learner.writtenSubmitted;
+      const amendmentRequested = !!learner.writtenAmendmentRequested;
+      const submitted = learner.writtenSubmitted && !amendmentRequested;
       const passed    = learner.writtenPassed;
       let html = '<div class="dash-header"><h1>Written Tasks</h1><p>Answer all three tasks below. Each response should be 400–600 words. Your work saves automatically as you type.</p></div>';
       if (passed) {
         html += '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Written tasks passed! Well done.</div>';
+      } else if (amendmentRequested) {
+        html += `<div class="submission-status" style="background:#FFF8E7;color:#92400E;border:1px solid rgba(245,158,11,0.4);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;gap:0.75rem;align-items:flex-start"><span style="font-size:1.25rem">✏</span><div><strong>Amendments requested</strong><p style="margin:0.3rem 0 0;font-size:0.9rem">Your assessor has reviewed your work and asked you to make changes. Please read the feedback below, edit your responses, and resubmit.</p></div></div>`;
+        if (learner.writtenFeedback) {
+          html += `<div class="callout" style="margin-bottom:1.5rem;border-left-color:#D97706"><div class="callout-label" style="color:#92400E">Assessor feedback</div><p>${esc(learner.writtenFeedback)}</p></div>`;
+        }
       } else if (submitted) {
         html += '<div class="submission-status status-submitted"><span>📬</span> Submitted. Your assessor will review and provide feedback.</div>';
       }
@@ -317,19 +323,19 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
           </div>
           ${submitted
             ? `<div style="background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.9rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${esc(savedText) || '<em style="color:var(--ink-light)">Not answered</em>'}</div>`
-            : `<textarea id="ta-${key}" style="width:100%;box-sizing:border-box;min-height:380px;font-size:0.93rem;line-height:1.85" placeholder="Write your response here (400–600 words)..." oninput="onWrittenInput('${key}')">${esc(savedText)}</textarea>`
+            : `<textarea id="ta-${key}" style="width:100%;box-sizing:border-box;min-height:380px;font-size:0.93rem;line-height:1.85;${amendmentRequested?'border-color:#D97706':''}" placeholder="Write your response here (400–600 words)..." oninput="onWrittenInput('${key}')">${esc(savedText)}</textarea>`
           }
         </div>`;
       }).join('');
       if (!submitted) {
         html += `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
           <button class="btn btn-outline" onclick="saveWrittenDrafts()">💾 Save drafts</button>
-          <button class="btn btn-primary" id="writtenSubmitBtn" onclick="submitWrittenTasks()">Submit written tasks</button>
+          <button class="btn btn-primary" id="writtenSubmitBtn" onclick="submitWrittenTasks()" ${amendmentRequested?'style="background:#D97706;border-color:#D97706"':''}>${amendmentRequested ? '↩ Resubmit for review' : 'Submit written tasks'}</button>
           <span id="written-save-status" style="font-size:0.82rem;color:var(--ink-light)"></span>
         </div>`;
       }
-      if (learner.writtenFeedback) {
-        html += `<div class="callout"><div class="callout-label">Assessor feedback</div><p>${learner.writtenFeedback}</p></div>`;
+      if (!amendmentRequested && learner.writtenFeedback) {
+        html += `<div class="callout"><div class="callout-label">Assessor feedback</div><p>${esc(learner.writtenFeedback)}</p></div>`;
       }
       el.innerHTML = html;
       if (!submitted) updateWrittenSubmitBtn();
@@ -376,7 +382,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
     window.submitWrittenTasks = async () => {
       const btn = document.getElementById('writtenSubmitBtn');
       btn.disabled = true; btn.textContent = 'Submitting...';
-      const data = { writtenSubmitted: true, writtenSubmittedAt: serverTimestamp() };
+      const data = { writtenSubmitted: true, writtenSubmittedAt: serverTimestamp(), writtenAmendmentRequested: false };
       WRITTEN_TASKS.forEach(({ key }) => {
         const ta = document.getElementById('ta-' + key);
         if (ta) { data[key] = ta.value; learner[key] = ta.value; }
@@ -401,16 +407,22 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
     };
 
     function renderPractical(el) {
-      const submitted  = learner.practicalSubmitted;
+      const amendmentRequested = !!learner.practicalAmendmentRequested;
+      const submitted  = learner.practicalSubmitted && !amendmentRequested;
       const passed     = learner.practicalPassed;
       const entries    = learner.logbookEntries || [];
       const approvedSups = (learner.supervisors || []).filter(s => s.approved);
 
-      const pendingSignoff = learner.practicalPendingSignoff && !learner.practicalSubmitted;
+      const pendingSignoff = learner.practicalPendingSignoff && !learner.practicalSubmitted && !amendmentRequested;
 
       let html = '<div class="dash-header"><h1>Practical Portfolio</h1><p>Complete your 10-entry clinical logbook and two case studies directly below.</p></div>';
       if (passed) {
         html += '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Practical portfolio passed! Well done.</div>';
+      } else if (amendmentRequested) {
+        html += `<div class="submission-status" style="background:#FFF8E7;color:#92400E;border:1px solid rgba(245,158,11,0.4);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;gap:0.75rem;align-items:flex-start"><span style="font-size:1.25rem">✏</span><div><strong>Amendments requested</strong><p style="margin:0.3rem 0 0;font-size:0.9rem">Your assessor has reviewed your portfolio and asked you to make changes. Please read the feedback below, update your work, and resubmit.</p></div></div>`;
+        if (learner.practicalFeedback) {
+          html += `<div class="callout" style="margin-bottom:1.5rem;border-left-color:#D97706"><div class="callout-label" style="color:#92400E">Assessor feedback</div><p>${esc(learner.practicalFeedback)}</p></div>`;
+        }
       } else if (submitted) {
         html += '<div class="submission-status status-submitted"><span>📬</span> Submitted. Your assessor will review and provide feedback.</div>';
       } else if (pendingSignoff) {
@@ -520,14 +532,14 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
         const canSubmit = entries.length >= 10 && (learner.caseStudy1||'').trim() && (learner.caseStudy2||'').trim();
         html += `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
           <button class="btn btn-outline" onclick="savePracticalDrafts()">💾 Save drafts</button>
-          <button class="btn btn-primary" id="practicalSubmitBtn" onclick="submitPractical()" ${canSubmit?'':'disabled'}>Submit practical portfolio</button>
+          <button class="btn btn-primary" id="practicalSubmitBtn" onclick="submitPractical()" ${canSubmit?'':'disabled'} ${amendmentRequested?'style="background:#D97706;border-color:#D97706"':''}>${amendmentRequested ? '↩ Resubmit for review' : 'Submit practical portfolio'}</button>
           <span id="practical-save-status" style="font-size:0.82rem;color:var(--ink-light)"></span>
         </div>
         ${entries.length < 10 ? `<p style="font-size:0.82rem;color:var(--ink-light)">You need ${10-entries.length} more logbook ${10-entries.length===1?'entry':'entries'} before you can submit.</p>` : ''}`;
       }
 
-      if (learner.practicalFeedback) {
-        html += `<div class="callout"><div class="callout-label">Assessor feedback</div><p>${learner.practicalFeedback}</p></div>`;
+      if (!amendmentRequested && learner.practicalFeedback) {
+        html += `<div class="callout"><div class="callout-label">Assessor feedback</div><p>${esc(learner.practicalFeedback)}</p></div>`;
       }
       el.innerHTML = html;
     }
@@ -795,7 +807,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
         }
 
         // Save case studies and set pending signoff flag
-        const data = { practicalPendingSignoff: true, practicalSignoffSentAt: serverTimestamp() };
+        const data = { practicalPendingSignoff: true, practicalSignoffSentAt: serverTimestamp(), practicalAmendmentRequested: false };
         ['caseStudy1','caseStudy2'].forEach(key => {
           const ta = document.getElementById('ta-' + key);
           if (ta) { data[key] = ta.value; learner[key] = ta.value; }
