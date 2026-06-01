@@ -99,13 +99,24 @@
     }
 
     function renderForm() {
-      const rowsHtml = entries.map((e, i) => `<tr>
-        <td>${i + 1}</td>
-        <td>${esc(e.date || '—')}</td>
-        <td>${esc(e.patientType || '—')}</td>
-        <td>${esc(e.product || '—')}</td>
-        <td style="color:var(--ink-light)">${esc(e.notes || '')}</td>
-      </tr>`).join('');
+      const rowsHtml = entries.map((e, i) => {
+        const safeOk = e.safetyChecks && e.safetyChecks.asthma && e.safetyChecks.allergy && e.safetyChecks.ulcer;
+        const poOk   = e.postOpGiven && e.postOpGiven.rinse && e.postOpGiven.food && e.postOpGiven.brush;
+        const consentLabel = e.consent
+          ? (e.consent.type === 'guardian' ? `Guardian${e.consent.guardianName ? ': ' + e.consent.guardianName : ''}` : 'Patient (self)')
+          : '—';
+        return `<tr>
+          <td>${i + 1}</td>
+          <td>${esc(e.date || '—')}</td>
+          <td>${esc(e.patientId || '—')}<br/><span style="color:#6B7280;font-size:0.8rem">${esc(e.patientType || '')}</span></td>
+          <td>${esc(e.rxName || '—')}<br/><span style="color:#6B7280;font-size:0.8rem">GDC: ${esc(e.rxGdc || '—')} &middot; Rx: ${esc(e.rxDate || '—')}</span></td>
+          <td>${esc(e.product || '—')}</td>
+          <td>${safeOk ? '<span style="color:#1A7F4B">Done</span>' : '<span style="color:#D97706">Inc.</span>'}</td>
+          <td>${consentLabel}</td>
+          <td>${poOk ? '<span style="color:#1A7F4B">Given</span>' : '<span style="color:#D97706">Inc.</span>'}</td>
+          <td style="color:#6B7280;font-size:0.82rem">${esc(e.notes || '')}</td>
+        </tr>`;
+      }).join('');
 
       el.innerHTML = `
         <div style="text-align:center;margin-bottom:2rem">
@@ -122,11 +133,11 @@
 
         <div class="content-card" style="margin-bottom:1.25rem">
           <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:0.85rem">Logbook Entries Requiring Your Confirmation</h2>
-          <p style="font-size:0.88rem;color:var(--ink-mid);margin-bottom:1rem">The following ${entries.length} logbook ${entries.length === 1 ? 'entry has' : 'entries have'} been recorded under your supervision. Please review them carefully before signing off.</p>
+          <p style="font-size:0.88rem;color:var(--ink-mid);margin-bottom:1rem">The following ${entries.length} logbook ${entries.length === 1 ? 'entry has' : 'entries have'} been recorded under your supervision. Please review each one carefully before signing off.</p>
           <div style="overflow-x:auto">
             <table class="entries-table">
               <thead><tr>
-                <th>#</th><th>Date</th><th>Patient Type</th><th>Product Used</th><th>Notes</th>
+                <th>#</th><th>Date</th><th>Patient</th><th>Prescribed by</th><th>Product</th><th>Safety</th><th>Consent</th><th>Post-op</th><th>Notes</th>
               </tr></thead>
               <tbody>${rowsHtml}</tbody>
             </table>
