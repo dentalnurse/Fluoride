@@ -75,6 +75,11 @@
         if (!learner.logbookEntries) learner.logbookEntries = [];
         if (learner.casestudyCount === undefined) learner.casestudyCount = 0;
         if (!learner.name) learner.name = user.email;
+        if (!learner.enrolledAt) {
+          const createdAt = user.metadata.creationTime ? new Date(user.metadata.creationTime) : new Date();
+          await setDoc(doc(db, 'learners', uid), { enrolledAt: createdAt }, { merge: true });
+          learner.enrolledAt = { toDate: () => createdAt };
+        }
         document.getElementById('navName').textContent = (learner.name || user.email).split(' ')[0];
 
         // Check course expiry

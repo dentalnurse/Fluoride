@@ -34,7 +34,7 @@ html
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const app  = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
@@ -170,7 +170,10 @@ html
           const mp = learner.moduleProgress || {};
           mp[modNum] = 2;
           learner.moduleProgress = mp;
-          await updateDoc(doc(db, 'learners', uid), { ['moduleProgress.' + modNum]: 2 });
+          await updateDoc(doc(db, 'learners', uid), {
+            ['moduleProgress.' + modNum]: 2,
+            ['quizPassedAt.' + modNum]: serverTimestamp()
+          });
         }
       }
 

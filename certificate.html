@@ -235,6 +235,7 @@
 
     <div class="cert-footer">
       Dental Nurse Training · 21 Angel Hill, Tiverton, Devon EX16 6PE · emily@dentalnurse.training
+      <br/><span id="certNumber" style="font-size:0.65rem;color:#C0C0C0;letter-spacing:0.04em"></span>
     </div>
 
   </div>
@@ -306,7 +307,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const app  = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
@@ -325,11 +326,28 @@
             : new Date();
           const dateStr = completedAt.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
 
+          // Generate cert number if not already assigned
+          let certNumber = learner.certNumber;
+          if (!certNumber) {
+            const counterRef = doc(db, 'counters', 'certificates');
+            certNumber = await runTransaction(db, async (tx) => {
+              const snap = await tx.get(counterRef);
+              const next = (snap.exists() ? snap.data().count : 0) + 1;
+              tx.set(counterRef, { count: next });
+              return 'DNT/FV/' + new Date().getFullYear() + '/' + String(next).padStart(4, '0');
+            });
+            await updateDoc(doc(db, 'learners', user.uid), {
+              certNumber,
+              certIssuedAt: serverTimestamp()
+            });
+          }
+
           document.getElementById('certName').textContent     = name;
           document.getElementById('certNameBack').textContent = name;
           document.getElementById('certGDC').textContent      = 'GDC Registration Number: ' + gdc;
           document.getElementById('certDate').textContent     = dateStr;
           document.getElementById('certDateBack').textContent = dateStr;
+          document.getElementById('certNumber').textContent   = 'Certificate No: ' + certNumber;
         }
       } catch(e) {
         console.error(e);

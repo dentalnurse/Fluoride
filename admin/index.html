@@ -60,6 +60,7 @@
         <div class="admin-tab" onclick="switchAdminTab('all')">👥 All Learners</div>
         <div class="admin-tab" onclick="switchAdminTab('submissions')">📬 Submissions</div>
         <div class="admin-tab" onclick="switchAdminTab('content')">✏️ Course Content</div>
+        <div class="admin-tab" onclick="switchAdminTab('audit')">📋 Audit / QA</div>
       </div>
 
       <!-- Tab content -->
@@ -184,7 +185,7 @@
     window.switchAdminTab = (tab) => {
       currentTab = tab;
       document.querySelectorAll('.admin-tab').forEach((t, i) => {
-        t.classList.toggle('active', ['pending','all','submissions','content'][i] === tab);
+        t.classList.toggle('active', ['pending','all','submissions','content','audit'][i] === tab);
       });
       renderTab(tab);
     };
@@ -195,6 +196,7 @@
       if (tab === 'all')         { renderAllTab(el); return; }
       if (tab === 'submissions') { renderSubmissionsTab(el); return; }
       if (tab === 'content')     { renderContentTab(el); return; }
+      if (tab === 'audit')       { renderAuditTab(el); return; }
     }
 
     // ── Pending tab ────────────────────────────────────────────────────────
@@ -403,6 +405,147 @@
 
       drawEditor();
     }
+
+    // ── Audit / QA tab ────────────────────────────────────────────────────
+    function renderAuditTab(el) {
+      const fmt = (ts) => {
+        if (!ts) return '-';
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleDateString('en-GB');
+      };
+
+      const rows = learners.map(l => {
+        const mp = l.moduleProgress || {};
+        const qp = l.quizPassedAt || {};
+        const status = l.certNumber ? 'Certificate issued'
+          : l.writtenPassed && l.practicalPassed ? 'Awaiting certificate'
+          : l.practicalSubmitted ? 'Practical under review'
+          : l.practicalPendingSignoff ? 'Awaiting supervisor sign-off'
+          : l.writtenSubmitted ? 'Written under review'
+          : l.unlocked ? 'In progress'
+          : 'Awaiting approval';
+
+        return {
+          certNumber:   l.certNumber || '-',
+          name:         l.name || '-',
+          email:        l.email || '-',
+          gdc:          l.gdc || '-',
+          workplace:    l.workplace || '-',
+          enrolled:     fmt(l.enrolledAt || l.approvedAt),
+          approved:     fmt(l.approvedAt),
+          m1: mp[1] === 2 ? fmt(qp[1]) || '✓' : '-',
+          m2: mp[2] === 2 ? fmt(qp[2]) || '✓' : '-',
+          m3: mp[3] === 2 ? fmt(qp[3]) || '✓' : '-',
+          m4: mp[4] === 2 ? fmt(qp[4]) || '✓' : '-',
+          m5: mp[5] === 2 ? fmt(qp[5]) || '✓' : '-',
+          written:      l.writtenSubmitted ? fmt(l.writtenSubmittedAt) || '✓' : '-',
+          writtenPassed:l.writtenPassed ? '✓ Passed' : l.writtenSubmitted ? 'Awaiting' : '-',
+          practical:    l.practicalSubmitted ? fmt(l.practicalSubmittedAt) || '✓' : l.practicalPendingSignoff ? 'Signoff pending' : '-',
+          practicalPassed: l.practicalPassed ? '✓ Passed' : l.practicalSubmitted ? 'Awaiting' : '-',
+          certIssued:   fmt(l.certIssuedAt),
+          status
+        };
+      });
+
+      const thStyle = 'padding:0.45rem 0.6rem;background:var(--teal-pale);color:var(--teal-dark);font-size:0.78rem;text-align:left;white-space:nowrap;border-bottom:2px solid var(--border)';
+      const tdStyle = 'padding:0.4rem 0.6rem;font-size:0.8rem;border-bottom:1px solid var(--border);vertical-align:top';
+
+      el.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+          <div>
+            <strong>${rows.length} learner${rows.length !== 1 ? 's' : ''} total</strong>
+            <span style="font-size:0.82rem;color:var(--ink-light);margin-left:1rem">${rows.filter(r=>r.certNumber!=='-').length} certificates issued · ${rows.filter(r=>r.status==='In progress').length} in progress · ${rows.filter(r=>r.status==='Awaiting approval').length} awaiting approval</span>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="exportAuditCSV()">⬇ Export CSV</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;min-width:1200px">
+            <thead><tr>
+              <th style="${thStyle}">Cert No.</th>
+              <th style="${thStyle}">Name</th>
+              <th style="${thStyle}">Email</th>
+              <th style="${thStyle}">GDC</th>
+              <th style="${thStyle}">Workplace</th>
+              <th style="${thStyle}">Enrolled</th>
+              <th style="${thStyle}">Approved</th>
+              <th style="${thStyle}">M1</th>
+              <th style="${thStyle}">M2</th>
+              <th style="${thStyle}">M3</th>
+              <th style="${thStyle}">M4</th>
+              <th style="${thStyle}">M5</th>
+              <th style="${thStyle}">Written</th>
+              <th style="${thStyle}">Practical</th>
+              <th style="${thStyle}">Cert Issued</th>
+              <th style="${thStyle}">Status</th>
+            </tr></thead>
+            <tbody>
+              ${rows.map(r => `<tr>
+                <td style="${tdStyle};font-family:monospace;font-size:0.75rem;color:var(--teal-dark)">${r.certNumber}</td>
+                <td style="${tdStyle};font-weight:600">${r.name}</td>
+                <td style="${tdStyle};color:var(--ink-mid)">${r.email}</td>
+                <td style="${tdStyle}">${r.gdc}</td>
+                <td style="${tdStyle};color:var(--ink-mid)">${r.workplace}</td>
+                <td style="${tdStyle}">${r.enrolled}</td>
+                <td style="${tdStyle}">${r.approved}</td>
+                <td style="${tdStyle};text-align:center;color:${r.m1!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m1}</td>
+                <td style="${tdStyle};text-align:center;color:${r.m2!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m2}</td>
+                <td style="${tdStyle};text-align:center;color:${r.m3!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m3}</td>
+                <td style="${tdStyle};text-align:center;color:${r.m4!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m4}</td>
+                <td style="${tdStyle};text-align:center;color:${r.m5!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m5}</td>
+                <td style="${tdStyle};color:${r.writtenPassed.includes('Passed')?'#1A7F4B':r.written!=='-'?'var(--warn)':'var(--ink-light)'}">${r.written}<br/><span style="font-size:0.73rem">${r.writtenPassed!=='-'?r.writtenPassed:''}</span></td>
+                <td style="${tdStyle};color:${r.practicalPassed.includes('Passed')?'#1A7F4B':r.practical!=='-'?'var(--warn)':'var(--ink-light)'}">${r.practical}<br/><span style="font-size:0.73rem">${r.practicalPassed!=='-'?r.practicalPassed:''}</span></td>
+                <td style="${tdStyle};font-family:monospace;font-size:0.75rem;color:${r.certIssued!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.certIssued}</td>
+                <td style="${tdStyle}"><span style="font-size:0.78rem;padding:0.2rem 0.5rem;border-radius:100px;background:${r.certNumber!=='-'?'#D1FAE5':r.status==='In progress'?'#FEF3C7':r.status.includes('review')||r.status.includes('sign-off')?'#DBEAFE':'#F3F4F6'};color:${r.certNumber!=='-'?'#065F46':r.status==='In progress'?'#92400E':r.status.includes('review')||r.status.includes('sign-off')?'#1E40AF':'#374151'}">${r.status}</span></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    window.exportAuditCSV = () => {
+      const headers = ['Cert No','Name','Email','GDC','Workplace','Enrolled','Approved','M1','M2','M3','M4','M5','Written Submitted','Written Status','Practical Submitted','Practical Status','Cert Issued','Status'];
+      const fmt = (ts) => {
+        if (!ts) return '';
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleDateString('en-GB');
+      };
+      const rows = learners.map(l => {
+        const mp = l.moduleProgress || {};
+        const qp = l.quizPassedAt || {};
+        const status = l.certNumber ? 'Certificate issued'
+          : l.writtenPassed && l.practicalPassed ? 'Awaiting certificate'
+          : l.practicalSubmitted ? 'Practical under review'
+          : l.practicalPendingSignoff ? 'Awaiting supervisor sign-off'
+          : l.writtenSubmitted ? 'Written under review'
+          : l.unlocked ? 'In progress'
+          : 'Awaiting approval';
+        return [
+          l.certNumber || '',
+          l.name || '',
+          l.email || '',
+          l.gdc || '',
+          l.workplace || '',
+          fmt(l.enrolledAt || l.approvedAt),
+          fmt(l.approvedAt),
+          mp[1]===2 ? fmt(qp[1]) || 'Passed' : '',
+          mp[2]===2 ? fmt(qp[2]) || 'Passed' : '',
+          mp[3]===2 ? fmt(qp[3]) || 'Passed' : '',
+          mp[4]===2 ? fmt(qp[4]) || 'Passed' : '',
+          mp[5]===2 ? fmt(qp[5]) || 'Passed' : '',
+          l.writtenSubmitted ? fmt(l.writtenSubmittedAt) || 'Yes' : '',
+          l.writtenPassed ? 'Passed' : l.writtenSubmitted ? 'Awaiting' : '',
+          l.practicalSubmitted ? fmt(l.practicalSubmittedAt) || 'Yes' : l.practicalPendingSignoff ? 'Signoff pending' : '',
+          l.practicalPassed ? 'Passed' : l.practicalSubmitted ? 'Awaiting' : '',
+          fmt(l.certIssuedAt),
+          status
+        ].map(v => '"' + String(v).replace(/"/g, '""') + '"');
+      });
+      const csv = [headers.map(h => '"'+h+'"').join(','), ...rows.map(r => r.join(','))].join('\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+      a.download = 'DNT_FluorideVarnish_AuditLog_' + new Date().toISOString().slice(0,10) + '.csv';
+      a.click();
+    };
 
     // ── Approve learner ──────────────────────────────────────────────────
       window.approveLearner = async (id, name) => {
