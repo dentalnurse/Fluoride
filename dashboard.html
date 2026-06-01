@@ -312,7 +312,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
           </div>
           ${submitted
             ? `<div style="background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.9rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${esc(savedText) || '<em style="color:var(--ink-light)">Not answered</em>'}</div>`
-            : `<textarea id="ta-${key}" style="min-height:380px;font-size:0.93rem;line-height:1.85" placeholder="Write your response here (400–600 words)..." oninput="onWrittenInput('${key}')">${esc(savedText)}</textarea>`
+            : `<textarea id="ta-${key}" style="width:100%;box-sizing:border-box;min-height:380px;font-size:0.93rem;line-height:1.85" placeholder="Write your response here (400–600 words)..." oninput="onWrittenInput('${key}')">${esc(savedText)}</textarea>`
           }
         </div>`;
       }).join('');
@@ -436,10 +436,27 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
       html += `</div>`;
 
       // ── Case studies ──
+      const CASE_STUDY_GUIDANCE = `<div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.25rem;overflow:hidden">
+        <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.cs-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="width:100%;text-align:left;padding:0.85rem 1rem;background:var(--teal-pale);border:none;cursor:pointer;font-size:0.9rem;font-weight:600;color:var(--teal-dark);display:flex;justify-content:space-between;align-items:center">
+          📋 How to structure your case study <span class="cs-arrow">▼</span>
+        </button>
+        <div style="display:none;padding:1.25rem;font-size:0.88rem;line-height:1.8;color:var(--ink-mid)">
+          <p style="margin-bottom:0.75rem">Use the following structure for each case study. You do not need to use subheadings — you can write it as flowing paragraphs — but make sure you cover each section.</p>
+          <ol style="padding-left:1.25rem;margin:0">
+            <li style="margin-bottom:0.85rem"><strong>Patient Profile</strong><br/>Patient age, gender, and general health. Note that a dentist's or therapist's prescription was obtained and that informed consent was given (or parent/guardian if a minor). State the caries risk level (High/Moderate/Low) with justification based on diet, brushing habits, and dental history.</li>
+            <li style="margin-bottom:0.85rem"><strong>Clinical Assessment (Pre-Application)</strong><br/>Confirm checks for allergies (e.g. colophony/pine resin). Describe the intraoral examination — condition of teeth and gums, any signs of demineralisation, plaque, or existing restorations.</li>
+            <li style="margin-bottom:0.85rem"><strong>The Procedure</strong><br/>Specify the fluoride product used (e.g. 5% Sodium Fluoride varnish). Describe the isolation method, drying technique, and quadrant-by-quadrant application (buccal, lingual, occlusal surfaces). Mention PPE and infection control.</li>
+            <li style="margin-bottom:0.85rem"><strong>Post-Treatment Advice</strong><br/>State the dietary and aftercare instructions given — avoiding hot drinks, alcohol-based mouthwashes, sticky or hard foods for 24 hours, and not brushing until the following morning.</li>
+            <li style="margin-bottom:0"><strong>Reflective Notes &amp; Learning</strong><br/>Why was topical fluoride indicated for this patient? What did you learn? How did you manage patient communication or any clinical challenges (e.g. nervous patient, excessive saliva)? Reference GDC Standards and relevant evidence such as the Cochrane Fluoride Reviews or AAPD guidelines where appropriate.</li>
+          </ol>
+        </div>
+      </div>`;
+
       const CASE_STUDIES = [
-        { key: 'caseStudy1', label: 'Case Study 1', prompt: 'Describe a patient case where you applied fluoride varnish. Include patient background, your assessment, the application process, and the outcome.' },
-        { key: 'caseStudy2', label: 'Case Study 2', prompt: 'Describe a second patient case, ideally one that presented a different challenge or patient type to your first case study.' },
+        { key: 'caseStudy1', label: 'Case Study 1', prompt: 'Describe a patient case where you applied fluoride varnish. Follow the structure in the guidance above.' },
+        { key: 'caseStudy2', label: 'Case Study 2', prompt: 'Describe a second patient case — ideally one that presented a different challenge or patient type to your first.' },
       ];
+      html += CASE_STUDY_GUIDANCE;
       html += CASE_STUDIES.map(({ key, label, prompt }) => {
         const savedText = learner[key] || '';
         const wc = wordCount(savedText);
@@ -454,7 +471,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
           </div>
           ${submitted
             ? `<div style="background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.9rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${esc(savedText)||'<em style="color:var(--ink-light)">Not completed</em>'}</div>`
-            : `<textarea id="ta-${key}" style="min-height:380px;font-size:0.93rem;line-height:1.85" placeholder="Write your case study here..." oninput="onPracticalInput('${key}')">${esc(savedText)}</textarea>`
+            : `<textarea id="ta-${key}" style="width:100%;box-sizing:border-box;min-height:480px;font-size:0.93rem;line-height:1.85" placeholder="Write your case study here..." oninput="onPracticalInput('${key}')">${esc(savedText)}</textarea>`
           }
         </div>`;
       }).join('');
@@ -635,7 +652,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
         + (learner.reflectionPassed ? '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Reflective account passed! Well done.</div>' : learner.reflectionSubmitted ? '<div class="submission-status status-submitted"><span>📬</span> Reflective account submitted - your assessor will review and provide feedback.</div>' : '')
         + '<div class="content-card"><h2>Reflective account</h2>'
         + '<div class="callout" style="margin-bottom:1.5rem"><div class="callout-label">Example structure</div><p>What I knew before starting · What the course taught me · How my practice has changed · Challenges I encountered · What I would do differently</p></div>'
-        + (!learner.reflectionSubmitted ? '<div class="form-group"><label for="reflectionText">Your reflective account (300-500 words)</label><textarea id="reflectionText" style="min-height:280px" placeholder="Write your reflective account here, or upload a document below...">' + (learner.reflectionDraft||'') + '</textarea></div><div class="upload-zone" id="reflectionUpload" onclick="document.getElementById(\'reflectionFile\').click()"><div class="uz-icon">📎</div><h4>Or upload as a document</h4><p>PDF or Word</p></div><input type="file" id="reflectionFile" accept=".pdf,.doc,.docx" style="display:none" onchange="uploadSubmission(\'reflection\', this)"/><div id="reflectionFileList" class="upload-file-list"></div><div style="display:flex;gap:0.75rem;margin-top:1rem;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="saveReflectionDraft()">Save draft</button><button class="btn btn-primary" id="reflectionSubmitBtn" onclick="submitWork(\'reflection\')">Submit reflective account</button></div>' : '<div style="background:var(--off-white);border-radius:var(--radius);padding:1.25rem">' + (learner.reflectionText||'Submitted via document upload.') + '</div>')
+        + (!learner.reflectionSubmitted ? '<div class="form-group"><label for="reflectionText">Your reflective account (300-500 words)</label><textarea id="reflectionText" style="width:100%;box-sizing:border-box;min-height:380px" placeholder="Write your reflective account here, or upload a document below...">' + (learner.reflectionDraft||'') + '</textarea></div><div class="upload-zone" id="reflectionUpload" onclick="document.getElementById(\'reflectionFile\').click()"><div class="uz-icon">📎</div><h4>Or upload as a document</h4><p>PDF or Word</p></div><input type="file" id="reflectionFile" accept=".pdf,.doc,.docx" style="display:none" onchange="uploadSubmission(\'reflection\', this)"/><div id="reflectionFileList" class="upload-file-list"></div><div style="display:flex;gap:0.75rem;margin-top:1rem;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="saveReflectionDraft()">Save draft</button><button class="btn btn-primary" id="reflectionSubmitBtn" onclick="submitWork(\'reflection\')">Submit reflective account</button></div>' : '<div style="background:var(--off-white);border-radius:var(--radius);padding:1.25rem">' + (learner.reflectionText||'Submitted via document upload.') + '</div>')
         + '</div>';
       setupUploadZone('reflectionUpload', 'reflectionFile');
     }
