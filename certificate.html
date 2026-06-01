@@ -191,7 +191,7 @@
 
     <hr class="cert-divider"/>
 
-    <div class="cert-type">Certificate of Completion — Verifiable Continuing Professional Development</div>
+    <div class="cert-type">Certificate of Completion: Verifiable Continuing Professional Development</div>
     <div class="cert-title">Certificate of Achievement</div>
     <div class="cert-provider">Dental Nurse Training</div>
 
@@ -199,7 +199,7 @@
 
     <p class="cert-certifies">This is to certify that</p>
     <div class="cert-name" id="certName">Loading...</div>
-    <div class="cert-gdc" id="certGDC">GDC Registration Number: —</div>
+    <div class="cert-gdc" id="certGDC">GDC Registration Number:</div>
     <p class="cert-completed">has successfully completed</p>
     <div class="cert-course">Dental Nurse Training Certificate in Fluoride Varnish Application</div>
 
@@ -229,7 +229,7 @@
       </div>
       <div class="cert-date-block">
         <div class="date-label">Date of Completion</div>
-        <div class="date-value" id="certDate">—</div>
+        <div class="date-value" id="certDate">-</div>
       </div>
     </div>
 
@@ -242,9 +242,9 @@
   <!-- ══ PAGE 2: BACK ═══════════════════════════════════ -->
   <div class="cert-page cert-back">
 
-    <div class="back-heading">CPD Activity Record — Supporting Information</div>
+    <div class="back-heading">CPD Activity Record: Supporting Information</div>
     <div style="font-size:0.82rem;color:#6B6B6B;margin-bottom:1.25rem">
-      The following information supports the certificate issued to <strong id="certNameBack">—</strong> for the
+      The following information supports the certificate issued to <strong id="certNameBack">-</strong> for the
       <strong>Dental Nurse Training Certificate in Fluoride Varnish Application</strong>.
     </div>
 
@@ -279,7 +279,7 @@
         </tr>
         <tr>
           <td>Date of Completion</td>
-          <td id="certDateBack">—</td>
+          <td id="certDateBack">-</td>
         </tr>
         <tr>
           <td>Total CPD Hours</td>
@@ -319,7 +319,7 @@
         const learner = snap.exists() ? snap.data() : null;
         if (learner) {
           const name = learner.name || user.email;
-          const gdc  = learner.gdc  || '—';
+          const gdc  = learner.gdc  || '-';
           const completedAt = learner.reflectionSubmittedAt?.toDate
             ? learner.reflectionSubmittedAt.toDate()
             : new Date();
