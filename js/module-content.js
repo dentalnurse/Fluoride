@@ -98,8 +98,8 @@ const MODULE_CONTENT = {
 
 <h3>Contraindications to fluoride varnish</h3>
 <ul>
-  <li><strong>Known allergy to colophony (rosin)</strong> - a constituent of most fluoride varnishes; check before every application</li>
-  <li><strong>Severe or poorly controlled asthma</strong> - assess individually; discuss with the dentist if in doubt</li>
+  <li><strong>Known allergy to colophony (rosin)</strong> - present in some fluoride varnishes (not all). Check the specific product used in your practice before every application.</li>
+  <li><strong>Severe or poorly controlled asthma</strong> - historically associated with alcohol-containing varnishes; most modern formulations do not contain alcohol. Assess individually and discuss with the dentist if in doubt.</li>
   <li><strong>Active stomatitis or ulceration in the area to be treated</strong> - defer until resolved</li>
   <li><strong>Active gingival bleeding</strong> - consider deferring or applying with additional care</li>
   <li><strong>Patient declines consent</strong> - always an absolute contraindication</li>
@@ -126,6 +126,7 @@ const MODULE_CONTENT = {
 <h3>Consent for children</h3>
 <p><strong>Children under 16:</strong> Parental or guardian consent is usually required. However, a child assessed as having sufficient understanding and maturity may consent independently - this is <strong>Gillick competence</strong> (Gillick v West Norfolk AHA [1985]).</p>
 <p>Assessing Gillick competence requires genuine evaluation of whether the individual child understands the nature of the treatment, its effects and risks, and can communicate a clear decision. When in doubt, involve the prescribing dentist.</p>
+<p><strong>Note:</strong> The <strong>Fraser guidelines</strong> are sometimes confused with Gillick competence. The Fraser guidelines specifically relate to contraception and sexual health advice; Gillick competence is the broader principle that applies to all treatment decisions, including fluoride varnish.</p>
 
 <h3>Adults who lack capacity</h3>
 <p>The <strong>Mental Capacity Act 2005</strong> applies. Key principles:</p>
@@ -144,7 +145,7 @@ const MODULE_CONTENT = {
   <li><strong>Adults:</strong> Full history review, clear communication, time for questions</li>
   <li><strong>Elderly:</strong> Xerostomia is common - these patients are often at high caries risk and benefit significantly. Adapt for sensory or cognitive limitations, allow more time.</li>
   <li><strong>Special care needs:</strong> Understand individual communication preferences, involve carers appropriately, refer to DBOH special care guidance</li>
-  <li><strong>Language barriers:</strong> Use professional interpreter services - do not rely on family members as this can compromise confidentiality and accuracy</li>
+  <li><strong>Language barriers:</strong> Use professional interpreter services - do not rely on family members as this can compromise confidentiality and accuracy. Telephone interpreter services are available in most NHS settings and can be arranged at short notice.</li>
 </ul>
 
 <h3>Documenting consent and assessment</h3>
@@ -199,7 +200,7 @@ const MODULE_CONTENT = {
   <li><strong>Wash hands and don PPE.</strong> WHO 6-step hand hygiene. Gloves, FRSM and eye protection.</li>
   <li><strong>Seat and prepare the patient.</strong> Position comfortably. Apply bib and patient eye protection. For very young children, use the knee-to-knee position with the parent.</li>
   <li><strong>Carry out intra-oral assessment.</strong> Systematic soft tissue and dental examination. Document findings. Confirm no contraindications.</li>
-  <li><strong>Obtain consent.</strong> Re-confirm consent with patient or parent/carer. Explain the procedure. Document in the record.</li>
+  <li><strong>Obtain consent.</strong> Re-confirm consent with patient or parent/carer. Explain the procedure and any relevant findings from your assessment. Document in the record. <em>Consent follows assessment because the assessment confirms there are no contraindications and informs what is explained to the patient.</em></li>
   <li><strong>Isolate.</strong> Retract cheek, place cotton wool rolls in buccal sulci, position saliva ejector. The aim is to keep teeth as dry as possible.</li>
   <li><strong>Dry the teeth.</strong> Use the three-in-one syringe or cotton pledgets. This is essential - varnish adheres poorly to wet surfaces.</li>
   <li><strong>Load the brush.</strong> Total dose is 0.25-0.5 ml per patient. Do not overload.</li>
@@ -223,7 +224,7 @@ const MODULE_CONTENT = {
 <ul>
   <li>No eating or drinking for <strong>30 minutes</strong></li>
   <li>Avoid hard, sticky or crunchy foods for the rest of the day</li>
-  <li>Do not brush teeth until <strong>the following morning</strong> - maximises fluoride contact time</li>
+  <li>Do not brush teeth until <strong>the following morning</strong> - maximises fluoride contact time. Note: aftercare advice may vary by product; always follow the manufacturer's instructions for the specific varnish used in your practice.</li>
   <li>Yellow or orange tint on teeth is normal and wears off in 24-48 hours</li>
   <li>Different texture on teeth is temporary and normal</li>
   <li>Continue with normal fluoride toothpaste twice daily as usual</li>
@@ -237,7 +238,7 @@ const MODULE_CONTENT = {
   <li><strong>PPE:</strong> Non-sterile gloves, FRSM, and eye protection for every patient. Change gloves between patients. Never touch non-clinical surfaces with gloved hands.</li>
   <li><strong>Single-use items:</strong> Application brushes and pledgets are single-use. Dispose in clinical waste after each patient. Never reuse.</li>
   <li><strong>Decontamination cycle:</strong> Reusable instruments must be cleaned, disinfected and sterilised. Cleaning must occur before sterilisation - organic matter prevents effective sterilisation.</li>
-  <li><strong>Sterilisation:</strong> HTM 01-05 requires a <strong>Class B autoclave</strong> for wrapped instruments. Class N autoclaves are not suitable for wrapped loads.</li>
+  <li><strong>Sterilisation:</strong> In primary care dental settings, <strong>HTM 01-05 (2013)</strong> requires a <strong>Class B autoclave</strong> for wrapped instruments. Class N autoclaves are not suitable for wrapped loads. Dental nurses working in community or hospital settings should refer to the decontamination protocols applicable in that environment.</li>
   <li><strong>Surface decontamination:</strong> Wipe all clinical contact surfaces between patients. Replace any surface barriers.</li>
   <li><strong>Clinical waste:</strong> Dispose in the correct coloured bags per your practice waste management policy.</li>
 </ul>
@@ -284,7 +285,7 @@ const MODULE_CONTENT = {
 </ol>
 
 <h3>Scope of practice and extended duties</h3>
-<p>The GDC's <strong>Scope of Practice</strong> (updated November 2025) identifies fluoride varnish application as an additional skill that dental nurses may develop with appropriate training. To apply fluoride varnish as an extended duty, you must be:</p>
+<p>The GDC's <strong>Scope of Practice</strong> identifies fluoride varnish application as an additional skill that dental nurses may develop with appropriate training. Always check the current version of the GDC Scope of Practice document on the GDC website, as guidance is updated periodically. To apply fluoride varnish as an extended duty, you must be:</p>
 <ul>
   <li><strong>Trained</strong> - you have completed appropriate training (such as this qualification)</li>
   <li><strong>Competent</strong> - you have demonstrated clinical competence through supervised practice</li>
@@ -295,11 +296,11 @@ const MODULE_CONTENT = {
   <p>Check with your indemnity provider before applying fluoride varnish independently. Some policies automatically cover extended duties; others require notification. This is your responsibility - not your employer's. Applying without appropriate indemnity cover leaves you personally liable if something goes wrong.</p>
 </div>
 
-<h3>The NHS Amendment Regulations 2026</h3>
-<p>The <strong>NHS (Primary Dental Services) Amendment Regulations 2026</strong> (in force 1 April 2026) formally recognise standalone fluoride varnish application by a trained dental nurse as an NHS course of treatment, attracting <strong>0.5 UDAs</strong>. Dental nurses can now deliver fluoride varnish as a standalone NHS service - a significant development for the profession. This qualification positions you to take on that role.</p>
+<h3>NHS recognition of fluoride varnish by dental nurses</h3>
+<p>NHS dental contract arrangements are evolving to formally recognise standalone fluoride varnish application by trained dental nurses as an NHS course of treatment. This is a significant development for the profession. Check with your practice manager or NHS England for the current position in your area, as arrangements may vary by setting and are subject to ongoing update.</p>
 
 <h3>Prescription and clinical direction</h3>
-<p>22,600 ppm fluoride varnish must be prescribed by a dentist (or in some settings, a therapist or hygienist with prescribing authority). You must have a valid prescription or written clinical direction before applying. In practice this is often managed through a patient-specific direction (PSD) or patient group direction (PGD) in community settings. Understand the prescribing arrangements in your workplace and ensure you are operating within them.</p>
+<p>22,600 ppm fluoride varnish must be prescribed by a dentist (or in some settings, a therapist or hygienist with prescribing authority). You must have a valid prescription or written clinical direction before applying. In practice this is often managed through a <strong>patient-specific direction (PSD)</strong> - a written instruction for a named individual patient - or a <strong>patient group direction (PGD)</strong>, which allows a registered professional to administer a medicine to patients meeting defined criteria without an individual prescription. PSDs are more common in general practice; PGDs are more common in community or public health settings. Understand the prescribing arrangements in your workplace and ensure you are operating within them.</p>
 
 <h3>Key legislation</h3>
 <ul>
@@ -378,7 +379,7 @@ const MODULE_CONTENT = {
 <p>When a parent declines fluoride for their child:</p>
 <ul>
   <li>Parents have the right to make healthcare decisions for their child, provided those decisions do not place the child at serious risk of harm</li>
-  <li>Declining fluoride varnish, while not in the child's best clinical interests, is within the range of reasonable parental decisions</li>
+  <li>Declining fluoride varnish, while not in the child's best clinical interests, is within the range of reasonable parental decisions. Declining fluoride varnish alone would never in itself constitute grounds for a safeguarding referral.</li>
   <li>Your role is to provide accurate information, acknowledge the concern, and document the outcome - not to override or pressure</li>
   <li>If you have serious safeguarding concerns as part of a wider pattern of neglect, follow your practice safeguarding procedure</li>
 </ul>
