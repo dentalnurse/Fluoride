@@ -95,7 +95,14 @@ html
 
     function startQuiz() {
       const quiz = QUIZ_DATA[modNum];
-      const questions = quiz.questions;
+      // Randomly select 15 questions from the full bank
+      const QUIZ_SIZE = 15;
+      const bank = [...quiz.questions];
+      for (let i = bank.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bank[i], bank[j]] = [bank[j], bank[i]];
+      }
+      const questions = bank.slice(0, Math.min(QUIZ_SIZE, bank.length));
       let current = 0, score = 0, answered = false;
 
       function draw() {
@@ -190,8 +197,9 @@ html
   <script src="js/quizdata.js"></script>
   <footer style="background:var(--teal-dark);padding:1.25rem 0;margin-top:2rem">
     <div class="container">
-      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center;margin:0">© 2025 Dental Nurse Training Ltd · <a href="privacy-policy.html" style="color:rgba(255,255,255,0.4)">Privacy Policy</a></p>
+      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center;margin:0">© 2025 Dental Nurse Training Ltd · <a href="privacy-policy.html" style="color:rgba(255,255,255,0.4)">Privacy Policy</a> &middot; <a href="terms.html" style="color:rgba(255,255,255,0.4)">Terms</a></p>
     </div>
   </footer>
+  <script src="js/cookies.js"></script>
 </body>
 </html>

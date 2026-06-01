@@ -42,6 +42,7 @@
       <button class="sidebar-item locked" id="sb-certificate" onclick="showSection('certificate')"><span class="si-icon">🏆</span><span style="flex:1;text-align:left;font-size:0.82rem">My Certificate</span><span class="si-badge badge-lock" id="badge-certificate">🔒</span></button>
       <div class="sidebar-section-title">Resources</div>
       <button class="sidebar-item" id="sb-handbooks" onclick="window.open('handbook.html','_blank')"><span class="si-icon">📖</span><span style="flex:1;text-align:left;font-size:0.82rem">Handbooks</span></button>
+      <button class="sidebar-item" id="sb-resources" onclick="window.open('resources.html','_blank')"><span class="si-icon">🗂️</span><span style="flex:1;text-align:left;font-size:0.82rem">Quick Reference</span></button>
       <button class="sidebar-item" id="sb-profile" onclick="showSection('profile')"><span class="si-icon">👤</span><span style="flex:1;text-align:left;font-size:0.82rem">My Details</span></button>
     </aside>
     <main class="dash-main" id="dashMain"></main>
@@ -440,10 +441,16 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
           html += `<div class="content-card" style="margin-bottom:1.25rem">
             <h2 style="font-size:1rem;margin-bottom:0.85rem">Sign-off Status</h2>
             <div style="display:flex;flex-direction:column;gap:0.6rem">
-              ${uniqueSups.map(s => `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 1rem;background:var(--off-white);border-radius:var(--radius);border:1px solid var(--border);font-size:0.88rem">
-                <div><strong>${esc(s.name)}</strong><span style="color:var(--ink-light);margin-left:0.5rem">GDC: ${esc(s.gdc)}</span></div>
-                <span style="background:#FFF3CD;color:#92400E;font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px">Pending confirmation</span>
-              </div>`).join('')}
+              ${uniqueSups.map(s => {
+                const token = (learner.logbookSignoffTokens || {})[s.gdc] || '';
+                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 1rem;background:var(--off-white);border-radius:var(--radius);border:1px solid var(--border);font-size:0.88rem;flex-wrap:wrap;gap:0.5rem">
+                  <div><strong>${esc(s.name)}</strong><span style="color:var(--ink-light);margin-left:0.5rem">GDC: ${esc(s.gdc)}</span>${s.email ? `<span style="color:var(--ink-light);margin-left:0.5rem;font-size:0.8rem">${esc(s.email)}</span>` : ''}</div>
+                  <div style="display:flex;gap:0.5rem;align-items:center">
+                    <span style="background:#FFF3CD;color:#92400E;font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px">Pending confirmation</span>
+                    ${token ? `<button class="btn btn-outline btn-sm" style="font-size:0.75rem;padding:0.2rem 0.6rem" onclick="resendSignoffEmail('${token}','${esc(s.email)}','${esc(s.name)}')">↩ Resend email</button>` : ''}
+                  </div>
+                </div>`;
+              }).join('')}
             </div>
           </div>`;
         }
@@ -544,6 +551,31 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
       el.innerHTML = html;
     }
 
+    window.resendSignoffEmail = async (token, supervisorEmail, supervisorName) => {
+      if (!supervisorEmail) { showToast('No email address on record for this supervisor.', 'error'); return; }
+      try {
+        if (typeof emailjs !== 'undefined') {
+          await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+            to_email: supervisorEmail,
+            to_name: supervisorName,
+            learner_name: learner.name || '',
+            learner_email: learner.email || '',
+            learner_gdc: learner.gdc || '',
+            submission_type: 'Logbook Sign-off Request (Resent)',
+            file_url: 'https://dentalnurse.github.io/Fluoride/logbook-signoff.html?t=' + token,
+            submitted_at: new Date().toLocaleString('en-GB'),
+            message: supervisorName + ',\n\nThis is a reminder that ' + (learner.name||'your learner') + ' has asked you to confirm their clinical logbook entries.\n\nPlease click the link below to review and sign off:\n\nhttps://dentalnurse.github.io/Fluoride/logbook-signoff.html?t=' + token + '\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
+          });
+          showToast('Sign-off email resent to ' + supervisorEmail + ' ✅', 'success');
+        } else {
+          showToast('Email service not loaded. Please try again.', 'error');
+        }
+      } catch(e) {
+        console.error(e);
+        showToast('Could not resend email. Please try again.', 'error');
+      }
+    };
+
     window.addLogbookEntry = () => {
       const approvedSups = (learner.supervisors || []).filter(s => s.approved);
       const supOptions = approvedSups.length
@@ -554,16 +586,16 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
       formDiv.id = 'logbookEntryForm';
       formDiv.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem';
       formDiv.innerHTML = `
-        <div style="background:#fff;border-radius:var(--radius-lg);padding:2rem;max-width:600px;width:100%;max-height:90vh;overflow-y:auto">
+        <div class="lb-form-wrap">
           <h3 style="margin:0 0 1.25rem;color:var(--teal-dark)">Add Logbook Entry</h3>
 
           <p style="font-size:0.82rem;color:var(--ink-light);margin:0 0 1.25rem">All fields marked * are required for a GDC-compliant record.</p>
 
           <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Patient Details</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.25rem">
+          <div class="lb-grid-2">
             <div class="form-group" style="margin:0"><label>Date of application *</label><input type="date" id="le-date" max="${new Date().toISOString().split('T')[0]}"/></div>
             <div class="form-group" style="margin:0"><label>Patient identifier * <span style="font-weight:400;color:var(--ink-light)">(initials or log no.)</span></label><input type="text" id="le-patientId" placeholder="e.g. J.S. or P001"/></div>
-            <div class="form-group" style="margin:0;grid-column:1/-1"><label>Patient age group *</label>
+            <div class="form-group span-2" style="margin:0"><label>Patient age group *</label>
               <select id="le-patientType">
                 <option value="">Select...</option>
                 <option>Child (under 16)</option>
@@ -574,7 +606,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
           </div>
 
           <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Prescription</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.25rem">
+          <div class="lb-grid-2">
             <div class="form-group" style="margin:0"><label>Prescribing clinician name *</label><input type="text" id="le-rxName" placeholder="e.g. Dr A. Patel"/></div>
             <div class="form-group" style="margin:0"><label>Prescribing clinician GDC *</label><input type="text" id="le-rxGdc" placeholder="e.g. 123456"/></div>
             <div class="form-group" style="margin:0"><label>Date of prescription *</label><input type="date" id="le-rxDate" max="${new Date().toISOString().split('T')[0]}"/></div>
@@ -609,9 +641,9 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
           </div>
 
           <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Supervising Clinician</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.25rem">
+          <div class="lb-grid-2">
             ${approvedSups.length ? `
-            <div class="form-group" style="margin:0;grid-column:1/-1"><label>Select from approved supervisors</label>
+            <div class="form-group span-2" style="margin:0"><label>Select from approved supervisors</label>
               <select id="le-supSelect" onchange="onSupSelect()">
                 <option value="">Select supervisor...</option>
                 ${supOptions}
@@ -620,8 +652,8 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
             </div>` : ''}
             <div class="form-group" style="margin:0"><label>Supervisor name *</label><input type="text" id="le-supName" placeholder="e.g. Dr Jane Smith"/></div>
             <div class="form-group" style="margin:0"><label>Supervisor GDC *</label><input type="text" id="le-supGdc" placeholder="e.g. 123456"/></div>
-            <div class="form-group" style="margin:0;grid-column:1/-1"><label>Supervisor email address *</label><input type="email" id="le-supEmail" placeholder="e.g. dr.smith@practice.com"/></div>
-            <div class="form-group" style="margin:0;grid-column:1/-1"><label>Clinical notes / observations</label><textarea id="le-notes" style="min-height:90px" placeholder="Patient response, technique notes, any challenges..."></textarea></div>
+            <div class="form-group span-2" style="margin:0"><label>Supervisor email address *</label><input type="email" id="le-supEmail" placeholder="e.g. dr.smith@practice.com"/></div>
+            <div class="form-group span-2" style="margin:0"><label>Clinical notes / observations</label><textarea id="le-notes" style="min-height:90px" placeholder="Patient response, technique notes, any challenges..."></textarea></div>
           </div>
 
           <div id="le-err" style="display:none;color:#D32F2F;font-size:0.85rem;margin-top:0.75rem;padding:0.5rem 0.75rem;background:#FFF0F0;border-radius:var(--radius)"></div>
@@ -773,6 +805,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
           supMap[gdc].push(e);
         }
         const uniqueSupervisors = Object.keys(supMap);
+        const tokenMap = {};
 
         // For each unique supervisor, generate a token and write a signoff doc + send email
         for (const supervisorGdc of uniqueSupervisors) {
@@ -780,6 +813,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
           const supervisorName  = supEntries[0].supervisorName  || '';
           const supervisorEmail = supEntries[0].supervisorEmail || '';
           const token = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,'0')).join('');
+          tokenMap[supervisorGdc] = token;
           await setDoc(doc(db, 'logbookSignoffs', token), {
             token,
             learnerUid: uid,
@@ -806,8 +840,8 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
           }
         }
 
-        // Save case studies and set pending signoff flag
-        const data = { practicalPendingSignoff: true, practicalSignoffSentAt: serverTimestamp(), practicalAmendmentRequested: false };
+        // Save case studies, set pending signoff flag, and store tokens for resend
+        const data = { practicalPendingSignoff: true, practicalSignoffSentAt: serverTimestamp(), practicalAmendmentRequested: false, logbookSignoffTokens: tokenMap };
         ['caseStudy1','caseStudy2'].forEach(key => {
           const ta = document.getElementById('ta-' + key);
           if (ta) { data[key] = ta.value; learner[key] = ta.value; }
@@ -823,10 +857,29 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
     };
 
     function renderReflection(el) {
-      el.innerHTML = '<div class="dash-header"><h1>End-of-Course Reflective Account</h1><p>300-500 words reflecting on your learning throughout this course.</p></div>'
-        + (learner.reflectionPassed ? '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Reflective account passed! Well done.</div>' : learner.reflectionSubmitted ? '<div class="submission-status status-submitted"><span>📬</span> Reflective account submitted - your assessor will review and provide feedback.</div>' : '')
-        + '<div class="content-card"><h2>Reflective account</h2>'
-        + '<div class="callout" style="margin-bottom:1.5rem"><div class="callout-label">Example structure</div><p>What I knew before starting · What the course taught me · How my practice has changed · Challenges I encountered · What I would do differently</p></div>'
+      const REFLECTION_GUIDANCE = `<div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.25rem;overflow:hidden">
+        <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.rf-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="width:100%;text-align:left;padding:0.85rem 1rem;background:var(--teal-pale);border:none;cursor:pointer;font-size:0.9rem;font-weight:600;color:var(--teal-dark);display:flex;justify-content:space-between;align-items:center">
+          🪞 How to write your reflective account <span class="rf-arrow">▼</span>
+        </button>
+        <div style="display:none;padding:1.25rem;font-size:0.88rem;line-height:1.8;color:var(--ink-mid)">
+          <p style="margin-bottom:0.75rem">Your reflective account should be <strong>300-500 words</strong>. It is not a summary of the course content — it is a personal reflection on your learning experience and how it will change your practice. Your assessor is looking for genuine insight, not a list of facts.</p>
+          <p style="margin-bottom:0.6rem"><strong>Use these headings to structure your response:</strong></p>
+          <ol style="padding-left:1.25rem;margin:0">
+            <li style="margin-bottom:0.85rem"><strong>Prior knowledge and starting point</strong><br/>What did you already know about fluoride varnish before starting this course? Were there any gaps in your understanding or areas of uncertainty?</li>
+            <li style="margin-bottom:0.85rem"><strong>Key learning points</strong><br/>What were the most significant things you learned? Focus on two or three specific points — for example, aspects of the GDC scope of practice, contraindication screening, or the consent process — and explain why they were meaningful to you.</li>
+            <li style="margin-bottom:0.85rem"><strong>Impact on clinical practice</strong><br/>How will this course change the way you work? Be specific. Reference GDC Standards for the Dental Team or DBOH guidance where relevant to demonstrate that your reflection is evidence-based.</li>
+            <li style="margin-bottom:0.85rem"><strong>Challenges encountered</strong><br/>Were there any aspects of the course you found difficult or that raised questions for you? How did you address them?</li>
+            <li style="margin-bottom:0"><strong>CPD development outcomes</strong><br/>This course contributes to GDC Development Outcomes C (Patient Safety) and D (Clinical and Professional Knowledge). Explain briefly how your learning maps to these outcomes.</li>
+          </ol>
+          <div style="margin-top:1rem;padding:0.75rem 1rem;background:#FFF8E7;border-radius:var(--radius);border-left:3px solid #D97706;font-size:0.85rem;color:#92400E">
+            <strong>Important:</strong> Your reflective account must be your own work. Do not copy from course materials or other sources. Your assessor is looking for your personal voice and genuine reflection.
+          </div>
+        </div>
+      </div>`;
+      el.innerHTML = '<div class="dash-header"><h1>End-of-Course Reflective Account</h1><p>300-500 words reflecting on your learning throughout this course. This unlocks once your written tasks and practical portfolio have both been marked as passed.</p></div>'
+        + (learner.reflectionPassed ? '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Reflective account passed! Well done.</div>' : learner.reflectionAmendmentRequested ? '<div class="submission-status" style="background:#FFF8E7;color:#92400E;border:1px solid rgba(245,158,11,0.4);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;gap:0.75rem"><span style="font-size:1.25rem">✏</span><div><strong>Amendments requested</strong><p style="margin:0.3rem 0 0;font-size:0.9rem">Please read the feedback below, update your reflection, and resubmit.</p></div></div>' + (learner.reflectionFeedback ? `<div class="callout" style="margin-bottom:1.5rem;border-left-color:#D97706"><div class="callout-label" style="color:#92400E">Assessor feedback</div><p>${esc(learner.reflectionFeedback)}</p></div>` : '') : learner.reflectionSubmitted ? '<div class="submission-status status-submitted"><span>📬</span> Reflective account submitted - your assessor will review and provide feedback.</div>' : '')
+        + '<div class="content-card">'
+        + REFLECTION_GUIDANCE
         + (!learner.reflectionSubmitted ? '<div class="form-group"><label for="reflectionText">Your reflective account (300-500 words)</label><textarea id="reflectionText" style="width:100%;box-sizing:border-box;min-height:380px" placeholder="Write your reflective account here, or upload a document below...">' + (learner.reflectionDraft||'') + '</textarea></div><div class="upload-zone" id="reflectionUpload" onclick="document.getElementById(\'reflectionFile\').click()"><div class="uz-icon">📎</div><h4>Or upload as a document</h4><p>PDF or Word</p></div><input type="file" id="reflectionFile" accept=".pdf,.doc,.docx" style="display:none" onchange="uploadSubmission(\'reflection\', this)"/><div id="reflectionFileList" class="upload-file-list"></div><div style="display:flex;gap:0.75rem;margin-top:1rem;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="saveReflectionDraft()">Save draft</button><button class="btn btn-primary" id="reflectionSubmitBtn" onclick="submitWork(\'reflection\')">Submit reflective account</button></div>' : '<div style="background:var(--off-white);border-radius:var(--radius);padding:1.25rem">' + (learner.reflectionText||'Submitted via document upload.') + '</div>')
         + '</div>';
       setupUploadZone('reflectionUpload', 'reflectionFile');
@@ -1242,8 +1295,9 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
   </script>
   <footer style="background:var(--teal-dark);padding:1.25rem 0;margin-top:2rem">
     <div class="container">
-      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center;margin:0">© 2025 Dental Nurse Training Ltd · <a href="privacy-policy.html" style="color:rgba(255,255,255,0.4)">Privacy Policy</a></p>
+      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center;margin:0">© 2025 Dental Nurse Training Ltd · <a href="privacy-policy.html" style="color:rgba(255,255,255,0.4)">Privacy Policy</a> &middot; <a href="terms.html" style="color:rgba(255,255,255,0.4)">Terms</a></p>
     </div>
   </footer>
+  <script src="js/cookies.js"></script>
 </body>
 </html>

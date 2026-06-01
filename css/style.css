@@ -429,6 +429,39 @@ p  { color: var(--ink-mid); line-height: 1.75; }
   .admin-stat-row { grid-template-columns: 1fr 1fr; }
 }
 
+/* ── Logbook entry form (modal) ──────────────────────────────────────────── */
+.lb-form-wrap {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.lb-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.lb-grid-2 .span-2 { grid-column: 1 / -1; }
+@media (max-width: 500px) {
+  .lb-form-wrap { padding: 1.25rem 1rem; }
+  .lb-grid-2 { grid-template-columns: 1fr; }
+  .lb-grid-2 .span-2 { grid-column: 1; }
+  .lb-checkbox label,
+  .lb-form-wrap label[style*="display:flex"],
+  .lb-form-wrap label[style*="display:inline-flex"] {
+    font-size: 0.9rem;
+  }
+  .lb-form-wrap input[type="checkbox"],
+  .lb-form-wrap input[type="radio"] {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+
 /* ── Stripe button ────────────────────────────────────────────────────────── */
 .stripe-btn {
   display: inline-flex; align-items: center; gap: 0.75rem;

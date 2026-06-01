@@ -228,6 +228,35 @@
         </table>`;
     }
 
+    // Returns a communication action flag for a learner, or null
+    function getCommFlag(l) {
+      const mp = l.moduleProgress || {};
+      const allQuizzesPassed = [1,2,3,4,5].every(i => mp[i] === 2 || mp[i] === '2');
+      const anyAssessmentStarted = l.writtenSubmitted || l.practicalSubmitted || l.reflectionSubmitted;
+      const allPassed = l.writtenPassed && l.practicalPassed && l.reflectionPassed;
+      const certIssued = !!l.certNumber;
+      const amendmentPending = (l.writtenAmendmentRequested || l.practicalAmendmentRequested || l.reflectionAmendmentRequested);
+
+      if (!l.unlocked) return null;
+      if (certIssued) return null;
+      if (allPassed) return {
+        colour: '#1A7F4B', bg: '#D1FAE5', label: '🎉 All passed',
+        emailSubject: 'Congratulations - Fluoride Varnish Certificate ready',
+        emailBody: (n, e) => `Hi ${n},\n\nFantastic news! You have successfully completed all elements of the Dental Nurse Training Certificate in Fluoride Varnish Application.\n\nYour certificate is now available in your course dashboard. Please log in to view and download it:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nWell done - this is a great achievement and will be a valuable addition to your GDC CPD record.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
+      };
+      if (allQuizzesPassed && !anyAssessmentStarted) return {
+        colour: '#1D4ED8', bg: '#DBEAFE', label: '📝 Ready for assessments',
+        emailSubject: 'Great progress - time to start your assessments',
+        emailBody: (n, e) => `Hi ${n},\n\nWell done for completing all five theory modules and quizzes - that is a great achievement!\n\nYou can now begin your written assessments and practical portfolio. Both sections are available in your course dashboard:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nThe written tasks ask you to write 400-600 words on each of three topics. The practical portfolio requires 10 supervised logbook entries and two case studies. You can work on both at the same time.\n\nDo get in touch if you have any questions.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
+      };
+      if (amendmentPending) return {
+        colour: '#D97706', bg: '#FEF3C7', label: '✏ Awaiting amendment',
+        emailSubject: 'Gentle reminder - amendments outstanding',
+        emailBody: (n, e) => `Hi ${n},\n\nI just wanted to send a gentle reminder that I have requested some amendments on your submitted work. The feedback is visible in your course dashboard and your work has been unlocked for editing.\n\nPlease log in when you get a chance and resubmit your updated response:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nDo let me know if you have any questions about the feedback.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
+      };
+      return null;
+    }
+
     // ── All learners tab ──────────────────────────────────────────────────
     function renderAllTab(el) {
       if (!learners.length) {
@@ -255,8 +284,15 @@
         const days = daysUntilExpiry(l);
         const rowStyle = expiryRowStyle(days);
         const expBadge = expiryBadge(days);
+        const flag = getCommFlag(l);
         return `<tr style="${rowStyle}">
-          <td><div class="td-name">${l.name}</div></td>
+          <td>
+            <div class="td-name" style="${flag ? 'color:'+flag.colour+';font-weight:700' : ''}">${l.name}</div>
+            ${flag ? `<div style="margin-top:0.25rem;display:flex;align-items:center;gap:0.4rem">
+              <span style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:9999px;background:${flag.bg};color:${flag.colour};font-weight:600">${flag.label}</span>
+              <button onclick="showEmailTemplate('${l.id}')" style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:9999px;background:#F3F4F6;border:1px solid var(--border);cursor:pointer;color:var(--ink-mid)">📧 Email</button>
+            </div>` : ''}
+          </td>
           <td><div style="font-size:0.82rem">${l.email||'—'}</div><div class="td-email">GDC: ${l.gdc||'—'}</div></td>
           <td style="display:flex;flex-wrap:wrap;gap:0.3rem;align-items:center;padding-top:0.6rem">
             ${l.unlocked ? '<span class="pill pill-green">Active</span>' : '<span class="pill pill-orange">Pending</span>'}
@@ -284,6 +320,43 @@
       );
       const body = document.getElementById('allLearnersBody');
       if (body) body.innerHTML = renderAllRows(filtered);
+    };
+
+    window.showEmailTemplate = (id) => {
+      const l = learners.find(x => x.id === id);
+      if (!l) return;
+      const flag = getCommFlag(l);
+      if (!flag) return;
+      const subject = flag.emailSubject;
+      const body = flag.emailBody(l.name || 'there', l.email || '');
+      document.getElementById('learnerModalContent').innerHTML = `
+        <div class="modal-header">
+          <h3>📧 Email template — ${l.name}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <p style="font-size:0.85rem;color:var(--ink-light);margin-bottom:1rem">Copy and send via your email client to <strong>${l.email||'learner'}</strong>.</p>
+        <div class="form-group">
+          <label>Subject</label>
+          <input type="text" id="etSubject" value="${subject.replace(/"/g,'&quot;')}" readonly style="background:var(--off-white)"/>
+        </div>
+        <div class="form-group">
+          <label>Body</label>
+          <textarea id="etBody" style="min-height:220px;font-size:0.85rem;line-height:1.7" readonly>${body}</textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline btn-sm" onclick="copyToClip('etSubject','Subject copied!')">Copy subject</button>
+          <button class="btn btn-primary btn-sm" onclick="copyToClip('etBody','Email body copied!')">Copy email body</button>
+          <button class="btn btn-outline btn-sm" onclick="closeModal()">Close</button>
+        </div>`;
+      document.getElementById('learnerModal').classList.remove('hidden');
+    };
+
+    window.copyToClip = (elId, msg) => {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      navigator.clipboard.writeText(el.value).then(() => showToast(msg, 'success')).catch(() => {
+        el.select(); document.execCommand('copy'); showToast(msg, 'success');
+      });
     };
 
     // ── Submissions tab ──────────────────────────────────────────────────
