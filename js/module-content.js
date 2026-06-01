@@ -5,7 +5,7 @@ const MODULE_CONTENT = {
 <h2>Module 1 - Fluoride Science and Caries Prevention</h2>
 
 <h3>What is fluoride?</h3>
-<p>Fluoride is a naturally occurring mineral - a negatively charged ion of the element fluorine - found in soil, water, food and the human body. It is not a synthetic chemical; it occurs naturally in varying concentrations across the world. In dental practice, fluoride concentration is measured in parts per million (ppm). Standard UK fluoride varnish contains <strong>22,600 ppm (2.26% sodium fluoride)</strong>.</p>
+<p>Fluoride is a naturally occurring mineral - a negatively charged ion of the element fluorine - found in soil, water, food and the human body. It is not a synthetic chemical; it occurs naturally in varying concentrations across the world. In the dental practice, fluoride concentration is measured in parts per million (ppm). Standard UK fluoride varnish contains <strong>22,600 ppm (2.26% sodium fluoride)</strong>.</p>
 <p>Fluoride is found naturally in: drinking water, tea, fish eaten with bones, and some mineral waters. Some areas of the UK have water fluoridation programmes that bring natural levels up to around 1 ppm.</p>
 
 <h3>Understanding dental caries</h3>

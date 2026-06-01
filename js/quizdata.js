@@ -17,7 +17,7 @@ const QUIZ_DATA = {
       { q: "Which of the following is a natural source of fluoride?", options: ["Processed sugar", "Tea and fish", "Dairy products only", "Vitamin C supplements"], correct: 1 },
       { q: "Fluoride varnish is recommended for which of the following groups?", options: ["Adults at low caries risk only", "Children only", "Patients at moderate or high caries risk", "Patients with no dental history"], correct: 2 },
       { q: "What does remineralisation mean in the context of caries prevention?", options: ["Removal of existing fillings", "Re-deposition of minerals into demineralised enamel", "Replacement of fluoride after brushing", "Hardening of dentine"], correct: 1 },
-      { q: "Systematic reviews have shown fluoride varnish reduces caries in the permanent dentition by approximately:", options: ["10%", "20%", "43%", "80%"], correct: 2 },
+      { q: "Systematic reviews have shown fluoride varnish reduces caries in the permanent dentition by approximately:", options: ["18%", "43%", "67%", "82%"], correct: 1 },
     ]
   },
 
