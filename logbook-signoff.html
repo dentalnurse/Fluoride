@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Logbook Sign-off - Dental Nurse Training Fluoride Varnish Certificate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .info-box  { background:#F0F9FA; border:1px solid #B2D8DB; border-left:4px solid #00747A; border-radius:8px; padding:1.1rem 1.25rem; margin-bottom:1.25rem; }
+    .check-row { display:flex; align-items:flex-start; gap:0.75rem; margin-bottom:0.85rem; font-size:0.9rem; line-height:1.55; cursor:pointer; }
+    .check-row input[type=checkbox] { width:18px; height:18px; flex-shrink:0; margin-top:0.18rem; accent-color:#005A5F; }
+    .entries-table { width:100%; border-collapse:collapse; font-size:0.85rem; margin:0.75rem 0 1rem; }
+    .entries-table th { background:var(--teal-pale,#EAF6F7); color:var(--teal-dark,#005A5F); padding:0.5rem 0.75rem; text-align:left; font-weight:700; }
+    .entries-table td { padding:0.45rem 0.75rem; border-bottom:1px solid var(--border,#E5E7EB); color:var(--ink-mid,#374151); }
+    .entries-table tr:last-child td { border-bottom:none; }
+  </style>
+</head>
+<body>
+  <div id="app" style="max-width:780px;margin:0 auto;padding:2rem 1rem 4rem">
+    <div style="text-align:center;padding:4rem 1rem">
+      <div style="font-size:2rem;margin-bottom:1rem">⏳</div>
+      <p style="color:var(--ink-light)">Loading sign-off request...</p>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script type="module">
+    import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp }
+                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const app = initializeApp(FIREBASE_CONFIG);
+    const db  = getFirestore(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const token  = params.get('t') || '';
+
+    const el = document.getElementById('app');
+
+    let learnerName = '', supervisorName = '', supervisorGdc = '', entries = [];
+
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    (async () => {
+      if (!token) {
+        el.innerHTML = `<div style="text-align:center;padding:4rem 1rem">
+          <div style="font-size:2.5rem;margin-bottom:1rem">⚠️</div>
+          <h2 style="color:#D32F2F;margin-bottom:0.75rem">Invalid link</h2>
+          <p style="color:var(--ink-light);max-width:440px;margin:0 auto">This logbook sign-off link is invalid or has expired. Please ask the learner to contact their assessor at <a href="mailto:emily@dentalnurse.training">emily@dentalnurse.training</a> for assistance.</p>
+        </div>`;
+        return;
+      }
+
+      try {
+        const snap = await getDoc(doc(db, 'logbookSignoffs', token));
+        if (!snap.exists()) {
+          el.innerHTML = `<div style="text-align:center;padding:4rem 1rem">
+            <div style="font-size:2.5rem;margin-bottom:1rem">⚠️</div>
+            <h2 style="color:#D32F2F;margin-bottom:0.75rem">Link not found</h2>
+            <p style="color:var(--ink-light);max-width:440px;margin:0 auto">This logbook sign-off link is invalid or has expired. Please ask the learner to contact their assessor at <a href="mailto:emily@dentalnurse.training">emily@dentalnurse.training</a> for assistance.</p>
+          </div>`;
+          return;
+        }
+
+        const d = snap.data();
+        if (d.signedAt) {
+          el.innerHTML = alreadySignedHtml(d);
+          return;
+        }
+
+        learnerName    = d.learnerName    || 'the learner';
+        supervisorName = d.supervisorName || '';
+        supervisorGdc  = d.supervisorGdc  || '';
+        entries        = d.entries        || [];
+
+        renderForm();
+      } catch(e) {
+        console.error(e);
+        el.innerHTML = `<div style="text-align:center;padding:4rem 1rem">
+          <div style="font-size:2.5rem;margin-bottom:1rem">⚠️</div>
+          <h2 style="color:#D32F2F;margin-bottom:0.75rem">Could not load sign-off request</h2>
+          <p style="color:var(--ink-light);max-width:440px;margin:0 auto">Please try refreshing the page. If the problem persists, contact <a href="mailto:emily@dentalnurse.training">emily@dentalnurse.training</a>.</p>
+        </div>`;
+      }
+    })();
+
+    function alreadySignedHtml(d) {
+      return `<div style="text-align:center;padding:3rem 1rem">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="Dental Nurse Training" style="height:56px;margin-bottom:1.5rem;display:block;margin-left:auto;margin-right:auto" onerror="this.style.display='none'"/>
+        <div style="font-size:3rem;margin-bottom:1rem">✅</div>
+        <h2 style="color:#1A7F4B;margin-bottom:0.75rem">Logbook already confirmed</h2>
+        <p style="color:var(--ink-light);max-width:440px;margin:0 auto">You have already confirmed these logbook entries. Your sign-off has been recorded and the learner's assessor has been notified. You may close this page.</p>
+        <p style="font-size:0.85rem;color:#9B9B9B;margin-top:1rem">Confirmed by: <strong>${esc(d.signedName || '')}</strong></p>
+      </div>`;
+    }
+
+    function renderForm() {
+      const rowsHtml = entries.map((e, i) => `<tr>
+        <td>${i + 1}</td>
+        <td>${esc(e.date || '—')}</td>
+        <td>${esc(e.patientType || '—')}</td>
+        <td>${esc(e.product || '—')}</td>
+        <td style="color:var(--ink-light)">${esc(e.notes || '')}</td>
+      </tr>`).join('');
+
+      el.innerHTML = `
+        <div style="text-align:center;margin-bottom:2rem">
+          <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
+               alt="Dental Nurse Training" style="height:64px;display:block;margin:0 auto 1rem" onerror="this.style.display='none'"/>
+          <h1 style="color:#005A5F;margin-bottom:0.25rem">Clinical Logbook Sign-off</h1>
+          <p style="color:var(--ink-light)">Dental Nurse Training Certificate in Fluoride Varnish Application</p>
+        </div>
+
+        <div class="info-box">
+          <p style="margin-bottom:0.4rem"><strong>${esc(learnerName)}</strong> has completed their clinical logbook and is requesting your confirmation that the entries you supervised are accurate.</p>
+          <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:0">Your details on record: <strong>${esc(supervisorName)}</strong> &middot; GDC: <strong>${esc(supervisorGdc)}</strong></p>
+        </div>
+
+        <div class="content-card" style="margin-bottom:1.25rem">
+          <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:0.85rem">Logbook Entries Requiring Your Confirmation</h2>
+          <p style="font-size:0.88rem;color:var(--ink-mid);margin-bottom:1rem">The following ${entries.length} logbook ${entries.length === 1 ? 'entry has' : 'entries have'} been recorded under your supervision. Please review them carefully before signing off.</p>
+          <div style="overflow-x:auto">
+            <table class="entries-table">
+              <thead><tr>
+                <th>#</th><th>Date</th><th>Patient Type</th><th>Product Used</th><th>Notes</th>
+              </tr></thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:0.5rem">Supervisor Confirmation &amp; Digital Signature</h2>
+          <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:1.25rem">Please tick the confirmation below, verify your details, and sign to confirm these entries.</p>
+
+          <label class="check-row">
+            <input type="checkbox" id="confirmCheck" onchange="checkReady()"/>
+            <span>I confirm that I was physically present for each of the applications listed above and that the details recorded are accurate and complete.</span>
+          </label>
+
+          <div class="form-group" style="margin-top:1.25rem;margin-bottom:1rem">
+            <label for="signName">Your full name *</label>
+            <input type="text" id="signName" value="${esc(supervisorName)}" oninput="checkReady()"/>
+          </div>
+          <div class="form-group" style="margin-bottom:1.5rem">
+            <label for="signGdc">Your GDC registration number *</label>
+            <input type="text" id="signGdc" value="${esc(supervisorGdc)}" oninput="checkReady()" style="max-width:220px"/>
+          </div>
+
+          <div id="signErr" style="display:none;color:#D32F2F;font-size:0.88rem;margin-bottom:0.75rem;padding:0.6rem 0.9rem;background:#FFF0F0;border-radius:var(--radius)"></div>
+
+          <button id="signBtn" class="btn btn-primary" style="width:100%;font-size:1rem;padding:0.9rem" onclick="submitSignoff()" disabled>
+            ✅ Confirm and sign off logbook entries
+          </button>
+          <p style="font-size:0.78rem;color:#9B9B9B;margin-top:0.75rem;text-align:center">This confirmation is recorded with a timestamp and is legally equivalent to a handwritten signature</p>
+        </div>`;
+    }
+
+    window.checkReady = () => {
+      const checked = document.getElementById('confirmCheck')?.checked;
+      const name    = document.getElementById('signName')?.value.trim();
+      const gdc     = document.getElementById('signGdc')?.value.trim();
+      const btn     = document.getElementById('signBtn');
+      if (btn) btn.disabled = !(checked && name && gdc);
+    };
+
+    window.submitSignoff = async () => {
+      const signedName = document.getElementById('signName').value.trim();
+      const signedGdc  = document.getElementById('signGdc').value.trim();
+      if (!signedName || !signedGdc) return;
+      const btn    = document.getElementById('signBtn');
+      const errEl  = document.getElementById('signErr');
+      btn.disabled = true; btn.textContent = 'Saving...';
+      try {
+        await setDoc(doc(db, 'logbookSignoffs', token), {
+          signedName, signedGdc, signedAt: serverTimestamp(),
+        }, { merge: true });
+
+        // Notify Emily
+        if (typeof emailjs !== 'undefined') {
+          emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+            to_email: 'emily@dentalnurse.training', to_name: 'Emily',
+            learner_name: learnerName,
+            learner_email: '', learner_gdc: '',
+            submission_type: 'Logbook Sign-off Completed',
+            file_url: 'Admin panel',
+            submitted_at: new Date().toLocaleString('en-GB'),
+            message: supervisorName + ' (GDC: ' + signedGdc + ') has confirmed the logbook entries for ' + learnerName + '.\n\nLog in to the admin panel to check sign-off status:\nhttps://dentalnurse.github.io/Fluoride/admin/index.html',
+          });
+        }
+
+        el.innerHTML = `
+          <div style="text-align:center;padding:3rem 1rem">
+            <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="Dental Nurse Training" style="height:56px;display:block;margin:0 auto 1.5rem" onerror="this.style.display='none'"/>
+            <div style="font-size:3rem;margin-bottom:1rem">✅</div>
+            <h2 style="color:#1A7F4B;margin-bottom:0.75rem">Logbook confirmed — thank you!</h2>
+            <p style="max-width:480px;margin:0 auto 1rem;color:var(--ink-light)">Your confirmation has been recorded and ${esc(learnerName)}'s assessor has been notified. You may now close this page.</p>
+            <p style="font-size:0.85rem;color:#9B9B9B">Confirmed by: <strong>${esc(signedName)}</strong> &middot; GDC: <strong>${esc(signedGdc)}</strong></p>
+          </div>`;
+      } catch(e) {
+        console.error(e);
+        errEl.textContent = 'Could not save your confirmation. Please try again or contact emily@dentalnurse.training';
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = '✅ Confirm and sign off logbook entries';
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>if(typeof emailjs!=='undefined')emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
+  <footer style="background:var(--teal-dark);padding:1.25rem 0;margin-top:2rem">
+    <div class="container">
+      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center;margin:0">© 2025 Dental Nurse Training Ltd · <a href="privacy-policy.html" style="color:rgba(255,255,255,0.4)">Privacy Policy</a></p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -113,6 +113,7 @@
     let learners            = [];
     let currentTab          = 'pending';
     let supervisorAgreements = {};
+    let logbookSignoffs      = {};
 
     // ── Auth ───────────────────────────────────────────────────────────────
     onAuthStateChanged(auth, (user) => {
@@ -152,6 +153,12 @@
         agrSnap.docs.forEach(d => { supervisorAgreements[d.id] = d.data(); });
       } catch(e) {
         console.warn('Could not load supervisor agreements — check Firestore rules allow authenticated reads on supervisorAgreements:', e.message);
+      }
+      try {
+        const lsSnap = await getDocs(collection(db, 'logbookSignoffs'));
+        lsSnap.docs.forEach(d => { logbookSignoffs[d.id] = d.data(); });
+      } catch(e) {
+        console.warn('Could not load logbook signoffs:', e.message);
       }
       updateStats();
       renderTab(currentTab);
@@ -511,6 +518,37 @@
         </div>
 
         ${supSection}
+        ${(() => {
+          if (!l.practicalPendingSignoff || l.practicalPassed) return '';
+          const lbEntries = l.logbookEntries || [];
+          const seenGdc = new Set();
+          const uniqueSups = [];
+          for (const e of lbEntries) {
+            if (e.supervisorGdc && !seenGdc.has(e.supervisorGdc)) {
+              seenGdc.add(e.supervisorGdc);
+              uniqueSups.push({ name: e.supervisorName, gdc: e.supervisorGdc });
+            }
+          }
+          if (!uniqueSups.length) return '';
+          const allConfirmed = uniqueSups.every(s =>
+            Object.values(logbookSignoffs).some(a => a.learnerUid === l.id && a.supervisorGdc === s.gdc && a.signedAt)
+          );
+          return `<div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border)">
+            <h4 style="margin:0 0 0.85rem;font-size:0.95rem">Logbook Sign-off Status</h4>
+            <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.85rem">
+              ${uniqueSups.map(s => {
+                const confirmed = Object.values(logbookSignoffs).some(a => a.learnerUid === l.id && a.supervisorGdc === s.gdc && a.signedAt);
+                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1rem;background:var(--off-white);border-radius:var(--radius);border:1px solid var(--border);font-size:0.88rem">
+                  <div><strong>${s.name}</strong> <span style="color:var(--ink-light)">&middot; GDC: ${s.gdc}</span></div>
+                  ${confirmed
+                    ? '<span style="background:#D1FAE5;color:#065F46;font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px">Confirmed</span>'
+                    : '<span style="background:#FFF3CD;color:#92400E;font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px">Awaiting confirmation</span>'}
+                </div>`;
+              }).join('')}
+            </div>
+            ${allConfirmed && !l.practicalSubmitted ? `<button class="btn btn-success btn-sm" onclick="submitPracticalForReview('${l.id}')">✓ All confirmed - submit for Emily's review</button>` : ''}
+          </div>`;
+        })()}
         <div class="form-group" style="margin-top:1.25rem">
           <label>Internal notes (not visible to learner)</label>
           <textarea id="adminNotes" style="min-height:80px">${l.notes||''}</textarea>
@@ -557,6 +595,14 @@
     window.reloadAndOpenModal = async (id) => {
       await loadLearners();
       openLearnerModal(id);
+    };
+
+    window.submitPracticalForReview = async (id) => {
+      await setDoc(doc(db, 'learners', id), { practicalSubmitted: true, practicalSubmittedAt: serverTimestamp() }, { merge: true });
+      const l = learners.find(x => x.id === id);
+      if (l) l.practicalSubmitted = true;
+      showToast('Portfolio marked as submitted for review ✅', 'success');
+      reloadAndOpenModal(id);
     };
 
     window.closeModal = () => document.getElementById('learnerModal').classList.add('hidden');

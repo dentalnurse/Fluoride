@@ -655,24 +655,59 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
     window.submitPractical = async () => {
       const btn = document.getElementById('practicalSubmitBtn');
       btn.disabled = true; btn.textContent = 'Submitting...';
-      const data = { practicalSubmitted: true, practicalSubmittedAt: serverTimestamp() };
-      ['caseStudy1','caseStudy2'].forEach(key => {
-        const ta = document.getElementById('ta-' + key);
-        if (ta) { data[key] = ta.value; learner[key] = ta.value; }
-      });
       try {
-        await setDoc(doc(db, 'learners', uid), data, { merge: true });
-        learner.practicalSubmitted = true;
-        if (typeof emailjs !== 'undefined') {
-          emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
-            to_email: 'emily@dentalnurse.training',
-            learner_name: learner.name||'Unknown', learner_email: learner.email||'', learner_gdc: learner.gdc||'',
-            submission_type: 'Practical Portfolio', file_url: 'View in admin panel', submitted_at: new Date().toLocaleString('en-GB'),
-            message: 'Practical portfolio submitted by ' + (learner.name||'Unknown') + '. Log in to the admin panel to review:\nhttps://dentalnurse.github.io/Fluoride/admin/index.html',
-          });
+        const entries = learner.logbookEntries || [];
+        // Group entries by unique supervisorGdc
+        const supMap = {};
+        for (const e of entries) {
+          const gdc = e.supervisorGdc || '';
+          if (!supMap[gdc]) supMap[gdc] = [];
+          supMap[gdc].push(e);
         }
+        const uniqueSupervisors = Object.keys(supMap);
+
+        // For each unique supervisor, generate a token and write a signoff doc + send email
+        for (const supervisorGdc of uniqueSupervisors) {
+          const supEntries = supMap[supervisorGdc];
+          const supervisorName  = supEntries[0].supervisorName  || '';
+          const supervisorEmail = supEntries[0].supervisorEmail || '';
+          const token = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,'0')).join('');
+          await setDoc(doc(db, 'logbookSignoffs', token), {
+            token,
+            learnerUid: uid,
+            learnerName: learner.name || '',
+            supervisorName,
+            supervisorGdc,
+            supervisorEmail,
+            entries: supEntries,
+            totalSupervisors: uniqueSupervisors.length,
+            pending: true,
+          });
+          if (typeof emailjs !== 'undefined') {
+            emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+              to_email: supervisorEmail,
+              to_name: supervisorName,
+              learner_name: learner.name,
+              learner_email: learner.email || '',
+              learner_gdc: learner.gdc || '',
+              submission_type: 'Logbook Sign-off Request',
+              file_url: 'https://dentalnurse.github.io/Fluoride/logbook-signoff.html?t=' + token,
+              submitted_at: new Date().toLocaleString('en-GB'),
+              message: supervisorName + ',\n\n' + (learner.name||'Your learner') + ' has completed their clinical logbook and requires your confirmation that the entries you supervised are accurate.\n\nPlease click the link below to review your entries and sign off the logbook:\n\nhttps://dentalnurse.github.io/Fluoride/logbook-signoff.html?t=' + token + '\n\nThis should only take a few minutes. You will be asked to confirm that you were physically present for each application and that the details recorded are accurate.\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
+            });
+          }
+        }
+
+        // Save case studies and set pending signoff flag
+        const data = { practicalPendingSignoff: true, practicalSignoffSentAt: serverTimestamp() };
+        ['caseStudy1','caseStudy2'].forEach(key => {
+          const ta = document.getElementById('ta-' + key);
+          if (ta) { data[key] = ta.value; learner[key] = ta.value; }
+        });
+        await setDoc(doc(db, 'learners', uid), data, { merge: true });
+        learner.practicalPendingSignoff = true;
         renderSidebar(); showSection('practical');
-        showToast('Practical portfolio submitted! ✅', 'success');
+        showToast('Portfolio submitted for sign-off! Your supervisors have been emailed. ✅', 'success');
       } catch(e) {
         console.error(e); showToast('Could not submit. Please try again.', 'error');
         btn.disabled = false; btn.textContent = 'Submit practical portfolio';
