@@ -285,7 +285,7 @@ const MODULE_CONTENT = {
 </ol>
 
 <h3>Scope of practice and extended duties</h3>
-<p>The GDC's <strong>Scope of Practice</strong> identifies fluoride varnish application as an additional skill that dental nurses may develop with appropriate training. Always check the current version of the GDC Scope of Practice document on the GDC website, as guidance is updated periodically. To apply fluoride varnish as an extended duty, you must be:</p>
+<p>The GDC's <strong>Scope of Practice guidance</strong> (effective <strong>1 November 2025</strong>) confirms that dental nurses can gain additional skills relating to fluoride varnish application. If appropriately trained, competent, and indemnified or insured, dental nurses may apply fluoride varnish under the prescription or patient specific direction of a dentist. To apply fluoride varnish as an extended duty, you must be:</p>
 <ul>
   <li><strong>Trained</strong> - you have completed appropriate training (such as this qualification)</li>
   <li><strong>Competent</strong> - you have demonstrated clinical competence through supervised practice</li>
@@ -297,7 +297,8 @@ const MODULE_CONTENT = {
 </div>
 
 <h3>NHS recognition of fluoride varnish by dental nurses</h3>
-<p>NHS dental contract arrangements are evolving to formally recognise standalone fluoride varnish application by trained dental nurses as an NHS course of treatment. This is a significant development for the profession. Check with your practice manager or NHS England for the current position in your area, as arrangements may vary by setting and are subject to ongoing update.</p>
+<p>From <strong>1 April 2026</strong>, suitably competent dental nurses are able to apply fluoride varnish without a dental examination, introduced as a new <strong>Band 1 standalone fluoride varnish course of treatment</strong> under prescription, paid at <strong>0.5 UDAs</strong>. This is a significant development for the profession and this qualification positions you to take on that role.</p>
+<p><strong>Important:</strong> This standalone 0.5 UDA course of treatment currently applies to <strong>patients aged 16 and under only</strong>. It does not apply to adult appointments. Claiming 0.5 UDAs for fluoride varnish applied to adult patients would not be correct under current NHS contract arrangements.</p>
 
 <h3>Prescription and clinical direction</h3>
 <p>22,600 ppm fluoride varnish must be prescribed by a dentist (or in some settings, a therapist or hygienist with prescribing authority). You must have a valid prescription or written clinical direction before applying. In practice this is often managed through a <strong>patient-specific direction (PSD)</strong> - a written instruction for a named individual patient - or a <strong>patient group direction (PGD)</strong>, which allows a registered professional to administer a medicine to patients meeting defined criteria without an individual prescription. PSDs are more common in general practice; PGDs are more common in community or public health settings. Understand the prescribing arrangements in your workplace and ensure you are operating within them.</p>
