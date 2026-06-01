@@ -188,7 +188,7 @@ const MODULE_CONTENT = {
 <h3>Watch - Fluoride Varnish Application Technique</h3>
 <p>Watch the video below before reading the step-by-step guide. This demonstrates the full application technique as you will be expected to perform it in clinical practice.</p>
 <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:var(--radius);margin:1rem 0 1.5rem">
-  <iframe src="https://www.youtube.com/embed/1tH8UzIMSIs" title="Dental Nurse Training Fluoride Varnish Application Technique" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:var(--radius)"></iframe>
+  <iframe src="https://www.youtube.com/embed/NbUCyEo3AmQ" title="Dental Nurse Training Fluoride Varnish Application Technique" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:var(--radius)"></iframe>
 </div>
 
 <h3>Step-by-step application</h3>
