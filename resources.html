@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quick Reference Resources - Dental Nurse Training</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    /* ── Page layout ── */
+    .res-wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+    .res-wrap h1 { color: var(--teal-dark); margin-bottom: 0.3rem; }
+    .res-wrap .subtitle { color: var(--ink-light); font-size: 0.95rem; margin-bottom: 2.5rem; }
+
+    /* ── Section cards ── */
+    .res-section {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow);
+      page-break-inside: avoid;
+    }
+    .res-section h2 {
+      color: var(--teal-dark);
+      font-size: 1.05rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .res-section h2 .sec-icon {
+      background: var(--teal-light);
+      color: var(--teal-dark);
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Patient aftercare card ── */
+    .aftercare-card {
+      border: 2px dashed var(--teal);
+      border-radius: var(--radius);
+      padding: 1.5rem 1.75rem;
+      background: var(--teal-pale);
+      max-width: 540px;
+    }
+    .aftercare-card .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.1rem;
+      border-bottom: 2px solid var(--teal-light);
+      padding-bottom: 0.85rem;
+    }
+    .aftercare-card .card-header .card-logo {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: var(--teal);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .aftercare-card .card-header h3 {
+      color: var(--teal-dark);
+      font-size: 1rem;
+      margin: 0;
+      line-height: 1.3;
+    }
+    .aftercare-card .card-header p {
+      font-size: 0.78rem;
+      color: var(--ink-light);
+      margin: 0.15rem 0 0;
+    }
+    .aftercare-card ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .aftercare-card ul li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.45rem 0;
+      border-bottom: 1px solid var(--teal-light);
+      font-size: 0.88rem;
+      color: var(--ink-mid);
+      line-height: 1.5;
+    }
+    .aftercare-card ul li:last-child { border-bottom: none; }
+    .aftercare-card ul li .tick {
+      color: var(--teal);
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+    .aftercare-card .card-footer {
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      color: var(--ink-light);
+      border-top: 1px solid var(--teal-light);
+      padding-top: 0.75rem;
+    }
+    .aftercare-card .highlight-inst {
+      background: var(--teal);
+      color: white;
+      border-radius: 6px;
+      padding: 0.5rem 0.85rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 0.85rem;
+      display: inline-block;
+    }
+
+    /* ── Logbook checklist ── */
+    .checklist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 0.6rem;
+    }
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.55rem;
+      background: var(--off-white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.85rem;
+      color: var(--ink-mid);
+      line-height: 1.4;
+    }
+    .checklist-item .ci-box {
+      width: 1.1rem;
+      height: 1.1rem;
+      border: 2px solid var(--teal);
+      border-radius: 3px;
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+    }
+
+    /* ── DBOH table ── */
+    .dboh-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.87rem;
+    }
+    .dboh-table thead tr {
+      background: var(--teal-dark);
+      color: white;
+    }
+    .dboh-table thead th {
+      padding: 0.7rem 0.9rem;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+    }
+    .dboh-table tbody tr:nth-child(even) { background: var(--teal-pale); }
+    .dboh-table tbody tr:nth-child(odd)  { background: var(--white); }
+    .dboh-table tbody td {
+      padding: 0.65rem 0.9rem;
+      color: var(--ink-mid);
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    .dboh-table .badge-freq {
+      display: inline-block;
+      background: var(--teal);
+      color: white;
+      border-radius: 20px;
+      padding: 0.15rem 0.65rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    /* ── Contraindications ── */
+    .contra-list {
+      columns: 2;
+      column-gap: 2rem;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .contra-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      padding: 0.4rem 0;
+      font-size: 0.88rem;
+      color: var(--ink-mid);
+      line-height: 1.5;
+      break-inside: avoid;
+    }
+    .contra-list .warn-dot {
+      width: 0.55rem;
+      height: 0.55rem;
+      background: var(--warn);
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 0.42rem;
+    }
+    .contra-note {
+      margin-top: 1rem;
+      background: var(--warn-light);
+      border-left: 4px solid var(--warn);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      font-size: 0.83rem;
+      color: var(--ink-mid);
+      line-height: 1.6;
+    }
+
+    /* ── Print button ── */
+    .print-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 1.5rem;
+    }
+    .btn-print {
+      background: var(--teal);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.65rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.15s;
+    }
+    .btn-print:hover { background: var(--teal-dark); }
+
+    /* ── Print styles ── */
+    @media print {
+      .nav, .print-bar, footer { display: none !important; }
+      .res-wrap { padding: 0.5rem; }
+      .res-section { box-shadow: none; border: 1px solid #ccc; margin-bottom: 1.5rem; }
+      body { font-size: 11pt; }
+      .contra-list { columns: 2; }
+    }
+
+    @media (max-width: 600px) {
+      .contra-list { columns: 1; }
+      .checklist-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
+             alt="Dental Nurse Training" style="height:56px"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+        <span class="nav-logo-text" style="display:none">Dental Nurse Training</span>
+      </a>
+      <div class="nav-right">
+        <a href="login.html" class="btn btn-outline btn-sm">Log in</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="res-wrap">
+    <h1>Quick Reference Resources</h1>
+    <p class="subtitle">Printable reference cards and checklists for everyday fluoride varnish practice.</p>
+
+    <div class="print-bar">
+      <button class="btn-print" onclick="window.print()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M9 21h6a1 1 0 0 0 1-1v-4H8v4a1 1 0 0 0 1 1z"/></svg>
+        Print this page
+      </button>
+    </div>
+
+    <!-- ── 1. Patient Aftercare Card ── -->
+    <div class="res-section">
+      <h2>
+        <span class="sec-icon">1</span>
+        Patient Aftercare Card
+      </h2>
+      <p style="font-size:0.85rem;color:var(--ink-light);margin-bottom:1.25rem">
+        Print and hand to the patient (or parent/carer) immediately after fluoride varnish application.
+      </p>
+
+      <div class="aftercare-card">
+        <div class="card-header">
+          <div class="card-logo">&#x1F9B7;</div>
+          <div>
+            <h3>Fluoride Varnish Aftercare</h3>
+            <p>Dental Nurse Training Ltd &mdash; dentalnurse.training</p>
+          </div>
+        </div>
+
+        <div class="highlight-inst">Important instructions to follow today</div>
+
+        <ul>
+          <li>
+            <span class="tick">&#10003;</span>
+            <span><strong>Do not eat or drink for 30 minutes</strong> after treatment. This allows the varnish to absorb into the tooth surface.</span>
+          </li>
+          <li>
+            <span class="tick">&#10003;</span>
+            <span><strong>Do not brush your teeth until tomorrow morning.</strong> Brushing too soon removes the varnish before it has had chance to work fully.</span>
+          </li>
+          <li>
+            <span class="tick">&#10003;</span>
+            <span><strong>Do not rinse your mouth</strong> for the rest of the day. Rinsing washes away the fluoride.</span>
+          </li>
+          <li>
+            <span class="tick">&#10003;</span>
+            <span><strong>Avoid hard, sticky or crunchy foods</strong> for the rest of the day (e.g. toffee, crusty bread, hard sweets). Soft foods and drinks are fine after 30 minutes.</span>
+          </li>
+          <li>
+            <span class="tick">&#10003;</span>
+            <span><strong>A slight yellow tint</strong> on the teeth is completely normal and temporary. It will disappear when you brush tomorrow morning.</span>
+          </li>
+          <li>
+            <span class="tick">&#10003;</span>
+            <span><strong>Continue your normal routine from tomorrow:</strong> brush twice daily with fluoride toothpaste, spit &mdash; do not rinse.</span>
+          </li>
+        </ul>
+
+        <div class="card-footer">
+          Any concerns? Contact your dental practice.<br/>
+          Dental Nurse Training Ltd &bull; 21 Angel Hill, Tiverton, Devon EX16 6PE &bull; emily@dentalnurse.training
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 2. Logbook Entry Checklist ── -->
+    <div class="res-section">
+      <h2>
+        <span class="sec-icon">2</span>
+        Logbook Entry Checklist
+      </h2>
+      <p style="font-size:0.85rem;color:var(--ink-light);margin-bottom:1.25rem">
+        Every GDC-compliant fluoride varnish logbook entry must include all of the following. Tick each item off before submitting your logbook for supervisor sign-off.
+      </p>
+
+      <div class="checklist-grid">
+        <div class="checklist-item">
+          <div class="ci-box"></div>
+          <span>Patient identifier (initials or case number &mdash; never full name in a portable logbook)</span>
+        </div>
+        <div class="checklist-item">
+          <div class="ci-box"></div>
+          <span>Age group or date of birth (e.g. child under 3 / adult)</span>
+        </div>
+        <div class="checklist-item">
+          <div class="ci-box"></div>
+          <span>Date of application</span>
+        </div>
+        <div class="checklist-item">
+          <div class="ci-box"></div>
+          <span>Prescription details: prescribing dentist's name &amp; GDC number</span>
+        </div>
+        <div class="checklist-item">
+          <div class="ci-box"></div>
+          <span>Product name and concentration (e.g. Duraphat 22,600 ppm)</span>
+        </div>
+        <div class="checklist-item">
+          <div class="ci-box"></div>
+          <span>Surfaces treated (e.g. all surfaces / occlusal only / upper arch)</span>
+        </div>
+        <div class="checklist-item">
+          <div class="ci-box"></div>
+          <span>Safety screening completed: asthma, allergy to colophony, oral ulceration</span>
+        </div>
+        <div class="checklist-item">
+          <div class="ci-box"></div>
+          <span>Consent type: patient's own verbal consent OR parent/guardian consent with patient's name</span>
+        </div>
+        <div class="checklist-item">
+          <div class="ci-box"></div>
+          <span>Post-operative instructions given (verbal and/or written aftercare card)</span>
+        </div>
+        <div class="checklist-item">
+          <div class="ci-box"></div>
+          <span>Any adverse events or deferred surfaces (e.g. ulcer present UR1 area &mdash; deferred)</span>
+        </div>
+        <div class="checklist-item">
+          <div class="ci-box"></div>
+          <span>Supervisor name and GDC registration number</span>
+        </div>
+        <div class="checklist-item">
+          <div class="ci-box"></div>
+          <span>Supervisor signature confirming attendance and supervision</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 3. DBOH Fluoride Varnish Recommendations ── -->
+    <div class="res-section">
+      <h2>
+        <span class="sec-icon">3</span>
+        Quick Reference: DBOH Fluoride Varnish Recommendations
+      </h2>
+      <p style="font-size:0.85rem;color:var(--ink-light);margin-bottom:1.25rem">
+        Based on <em>Delivering Better Oral Health</em> (4th edition). Always verify against the current edition.
+      </p>
+
+      <div style="overflow-x:auto">
+        <table class="dboh-table">
+          <thead>
+            <tr>
+              <th>Age Group</th>
+              <th>Caries Risk</th>
+              <th>Recommended Frequency</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Under 3 years</strong></td>
+              <td>High risk only</td>
+              <td><span class="badge-freq">2&times; per year</span></td>
+              <td>Apply only under supervision of a dentist; parental/carer consent required; use knee-to-knee technique for very young children</td>
+            </tr>
+            <tr>
+              <td><strong>3 years and over</strong></td>
+              <td>All patients<br/>(regardless of risk)</td>
+              <td><span class="badge-freq">2&times; per year</span></td>
+              <td>Applies to all children aged 3+ irrespective of caries risk; high-risk patients may receive more frequent applications</td>
+            </tr>
+            <tr>
+              <td><strong>3 years and over</strong></td>
+              <td>Moderate or high risk</td>
+              <td><span class="badge-freq">2&ndash;4&times; per year</span></td>
+              <td>Increased frequency for patients with active caries, high sugar intake, compromised saliva or previous restorations</td>
+            </tr>
+            <tr>
+              <td><strong>Adults</strong></td>
+              <td>Moderate or high risk</td>
+              <td><span class="badge-freq">2&times; per year</span></td>
+              <td>Particularly important for patients with xerostomia, root surface exposure, orthodontic appliances or high caries experience</td>
+            </tr>
+            <tr>
+              <td><strong>Older adults</strong></td>
+              <td>High risk (e.g. dry mouth, polypharmacy)</td>
+              <td><span class="badge-freq">2&ndash;4&times; per year</span></td>
+              <td>Root caries risk is high in this group; ensure safe seating position and manage xerostomia as a primary risk factor</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="font-size:0.78rem;color:var(--ink-light);margin-top:0.85rem;margin-bottom:0">
+        DBOH = Delivering Better Oral Health (Public Health England / UKHSA, NHS England, Health Education England). Standard UK varnish concentration: 22,600 ppm (2.26% NaF). Varnish sets on contact with saliva.
+      </p>
+    </div>
+
+    <!-- ── 4. Contraindications at a Glance ── -->
+    <div class="res-section">
+      <h2>
+        <span class="sec-icon">4</span>
+        Contraindications at a Glance
+      </h2>
+      <p style="font-size:0.85rem;color:var(--ink-light);margin-bottom:1.25rem">
+        Check ALL of these before every application. If any are present, defer the relevant area or the full appointment and document.
+      </p>
+
+      <ul class="contra-list">
+        <li>
+          <span class="warn-dot"></span>
+          <span><strong>Known allergy to colophony</strong> (a resin present in most fluoride varnishes) &mdash; full contraindication</span>
+        </li>
+        <li>
+          <span class="warn-dot"></span>
+          <span><strong>Known allergy to any component</strong> of the specific varnish product being used</span>
+        </li>
+        <li>
+          <span class="warn-dot"></span>
+          <span><strong>Active oral ulceration</strong> in the area to be treated &mdash; defer that area; treat unaffected areas</span>
+        </li>
+        <li>
+          <span class="warn-dot"></span>
+          <span><strong>Stomatitis or painful oral mucosal lesions</strong> &mdash; full deferral until resolved</span>
+        </li>
+        <li>
+          <span class="warn-dot"></span>
+          <span><strong>Acute asthma attack</strong> at time of appointment &mdash; defer until asthma is stable</span>
+        </li>
+        <li>
+          <span class="warn-dot"></span>
+          <span><strong>Severe or brittle asthma</strong> not under control &mdash; seek prescriber guidance; some varnishes contain solvents</span>
+        </li>
+        <li>
+          <span class="warn-dot"></span>
+          <span><strong>No valid prescription or PSD</strong> in place from a registered prescriber</span>
+        </li>
+        <li>
+          <span class="warn-dot"></span>
+          <span><strong>Patient or guardian refusal</strong> &mdash; document and inform the supervising dentist</span>
+        </li>
+        <li>
+          <span class="warn-dot"></span>
+          <span><strong>Expired or recalled product</strong> &mdash; do not use; dispose of as clinical waste</span>
+        </li>
+        <li>
+          <span class="warn-dot"></span>
+          <span><strong>Gingival bleeding or significant gingival inflammation</strong> throughout the mouth &mdash; consider deferral and refer</span>
+        </li>
+      </ul>
+
+      <div class="contra-note">
+        <strong>Remember:</strong> Anxiety about the procedure, the presence of fillings, crowns or other restorations, and use of fluoride toothpaste at home are <em>not</em> contraindications. If in any doubt, seek advice from your supervising dentist before proceeding.
+      </div>
+    </div>
+  </div>
+
+  <footer style="background:var(--teal-dark);color:rgba(255,255,255,0.7);padding:2rem 0 1.5rem">
+    <div class="container">
+      <p style="font-size:0.76rem;color:rgba(255,255,255,0.4);text-align:center">
+        &copy; 2025 Dental Nurse Training Ltd &middot; <a href="privacy-policy.html" style="color:rgba(255,255,255,0.5)">Privacy Policy</a>
+      </p>
+    </div>
+  </footer>
+</body>
+</html>
