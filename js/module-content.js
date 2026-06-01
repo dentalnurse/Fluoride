@@ -5,7 +5,7 @@ const MODULE_CONTENT = {
 <h2>Module 1 - Fluoride Science and Caries Prevention</h2>
 
 <h3>What is fluoride?</h3>
-<p>Fluoride is a naturally occurring mineral - a negatively charged ion of the element fluorine - found in soil, water, food and the human body. It is not a synthetic chemical; it occurs naturally in varying concentrations across the world. In the dental practice, fluoride concentration is measured in parts per million (ppm). Standard UK fluoride varnish contains <strong>22,600 ppm (2.26% sodium fluoride)</strong>.</p>
+<p>Fluoride is a naturally occurring ion - a negatively charged ion of the element fluorine - found in soil, water, food and the human body. It is not a synthetic chemical; it occurs naturally in varying concentrations across the world. In the dental practice, fluoride concentration is measured in parts per million (ppm). Standard UK fluoride varnish contains <strong>22,600 ppm (2.26% sodium fluoride)</strong>.</p>
 <p>Fluoride is found naturally in: drinking water, tea, fish eaten with bones, and some mineral waters. Some areas of the UK have water fluoridation programmes that bring natural levels up to around 1 ppm.</p>
 
 <h3>Understanding dental caries</h3>
@@ -34,10 +34,12 @@ const MODULE_CONTENT = {
 <p><strong>Delivering Better Oral Health (DBOH)</strong>, published by NHS England, is the primary evidence-based preventive guidance for UK dental practice. Current recommendations:</p>
 <ul>
   <li><strong>Children aged 3+</strong> at moderate/high caries risk: 22,600 ppm varnish at least twice a year</li>
-  <li><strong>Children under 3</strong> with particular risk factors: at clinical judgement of the prescribing dentist</li>
+  <li><strong>Children under 3:</strong> only where there is a clear clinical need, such as early caries signs or significant risk factors, at the clinical decision of the dentist. This should be documented.</li>
   <li><strong>Adults</strong> at moderate/high risk: 22,600 ppm varnish at least twice a year; consider every 3 months for high risk</li>
 </ul>
-<p>Systematic reviews show fluoride varnish reduces caries by approximately <strong>37% in the primary dentition</strong> and <strong>43% in the permanent dentition</strong>.</p>
+<p>Systematic reviews suggest fluoride varnish reduces caries by approximately <strong>37% in the primary dentition</strong> and <strong>43% in the permanent dentition</strong>, though the evidence base shows some variation across studies.</p>
+
+<p>Fluoride varnish application by a dental nurse must be carried out under a dentist's prescription. The dentist makes the clinical decision and delegates the procedure to a suitably trained dental nurse. Completing this course demonstrates that training has been undertaken, but application must always follow a dentist's written or recorded prescription. This is a requirement of GDC Scope of Practice guidance.</p>
 
 <h3>Caries risk assessment</h3>
 <p>Fluoride varnish should be targeted at those who will benefit most. Risk factors include:</p>
@@ -49,7 +51,7 @@ const MODULE_CONTENT = {
 <h3>Fluoride safety and toxicity</h3>
 <ul>
   <li><strong>Probable toxic dose:</strong> 5 mg/kg body weight</li>
-  <li><strong>A standard application</strong> (0.25-0.5 ml of 22,600 ppm) contains approximately 5-11 mg of fluoride</li>
+  <li><strong>A standard application</strong> (0.25-0.5 ml of 22,600 ppm) contains approximately 5-11 mg of fluoride. The exact volume varies by product and applicator, so always check the manufacturer's instructions for the specific varnish used in your practice.</li>
   <li>The varnish sets rapidly on contact with saliva - ingestion is negligible in normal circumstances</li>
   <li>For a 10 kg child, the probable toxic dose is 50 mg - so even full ingestion would not reach the toxic threshold</li>
 </ul>
