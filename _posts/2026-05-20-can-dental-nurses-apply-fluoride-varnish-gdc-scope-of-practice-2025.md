@@ -1,124 +1,181 @@
 ---
-title: "Can Dental Nurses Apply Fluoride Varnish? GDC Scope of Practice Explained (2025)"
-description: "A clear explanation of the GDC Scope of Practice for dental nurses applying fluoride varnish independently - what is required, what changed in 2025, and how to ensure you are working lawfully."
+title: "Can Dental Nurses Apply Fluoride Varnish? GDC Scope of 
+Practice Explained (2025)"
 date: 2026-05-20
-category: "GDC & Law"
-read_time: 6
-author: "Emily Bremner"
+description: "Yes, registered dental nurses can apply fluoride varnish 
+independently. But there are important conditions. Here is what the 
+GDC requires and what the NHS changes mean for practice."
 ---
 
-Yes - registered dental nurses can apply fluoride varnish independently. But the answer comes with important conditions. This article explains exactly what the GDC requires, what changed in November 2025, and what the NHS changes mean for practice.
-
-<!--more-->
+Yes. Registered dental nurses can apply fluoride varnish independently. 
+But the answer comes with important conditions, and it is worth 
+understanding exactly what those are before you start.
 
 ## The Short Answer
 
-A registered dental nurse may apply fluoride varnish independently provided they are:
+A registered dental nurse may apply fluoride varnish independently 
+provided they are:
 
-- **Trained** in fluoride varnish application (a recognised qualification, not just observation)
-- **Competent** to carry out the procedure safely
-- **Indemnified** for the task (your indemnity policy must specifically cover extended duties including fluoride varnish)
-- **Working under a prescription** (patient-specific direction) from a GDC-registered prescriber
+- Appropriately trained in fluoride varnish application, with assessed 
+  competence
+- Confident they are competent to carry out the procedure safely, with 
+  agreement from their dentist, employer or supervisor
+- Indemnified for the task (your indemnity policy must specifically 
+  cover extended duties including fluoride varnish)
+- Working under a prescription or patient-specific direction (PSD) 
+  from a GDC-registered dentist
 
-All four conditions must be met. Meeting three out of four is not sufficient.
-
----
+All four conditions must be met. Three out of four is not enough.
 
 ## What the GDC Scope of Practice Says
 
-The GDC published an updated *Scope of Practice* document in **November 2025**. This document clarified the extended duties that qualified dental nurses may perform. Fluoride varnish application appears explicitly as an extended duty that requires:
+The GDC published an updated Scope of Practice in November 2025. 
+Rather than listing specific tasks, the guidance sets out a framework 
+for professional accountability. It places the responsibility firmly 
+on the individual registrant to be satisfied they are trained, 
+competent and appropriately indemnified before carrying out any 
+extended duty.
 
-> *"Additional training, assessed competence, and appropriate arrangements for professional indemnity."*
+For fluoride varnish specifically, the GDC states that dental nurses 
+may apply fluoride varnish under the prescription or patient-specific 
+direction of a dentist. The guidance does not specify which 
+qualification or training provider must be used. What it does require 
+is that the training results in genuine, assessed competence. There 
+should also be mutual agreement between the dental nurse and their 
+dentist, employer or supervisor that they are ready to practise 
+independently.
 
-The GDC does not specify which qualification or training provider must be used - but the training must result in assessed, demonstrated competence. Watching a video or shadowing a colleague is not sufficient.
-
-**GDC Principle 1** requires you to put patients' interests first; **Principle 5** requires you to have a clear and justifiable reason for every clinical decision you make. If you are applying fluoride varnish without training or indemnity, you are in breach of both.
-
----
+If you are assigned a task you do not feel adequately trained or 
+competent to perform, the GDC is clear that you should not be 
+pressured into accepting it.
 
 ## What Changed in November 2025?
 
-The November 2025 update to the Scope of Practice formalised language around extended duties that had previously been somewhat ambiguous. Specifically, it:
+The November 2025 update moved away from the task-list approach of 
+the previous 2013 guidance. Instead of telling registrants exactly 
+what they can and cannot do, it sets out the principles they should 
+use to make those decisions themselves.
 
-- Explicitly listed fluoride varnish application as an extended duty for dental nurses
-- Clarified that "working under prescription" means a written patient-specific direction (PSD) - not merely working in the same building as a dentist
-- Emphasised that competence must be **assessed**, not self-declared
-
-For dental nurses already qualified and practising, the practical impact is limited - but the updated wording has made the professional and legal framework clearer.
-
----
+For dental nurses, this means more professional accountability rather 
+than a checklist to follow. The practical implication is that you 
+need to be able to justify every clinical decision you make, including 
+the decision to apply fluoride varnish, by reference to your training, 
+competence and indemnity.
 
 ## What Is a Patient-Specific Direction (PSD)?
 
-A **patient-specific direction (PSD)** is a written instruction from a GDC-registered prescriber (dentist, hygienist or therapist) to apply a specific treatment to a specific named patient. It is the most common authorisation route for dental nurse extended duties.
+A patient-specific direction is a written instruction from a 
+GDC-registered dentist to apply a specific treatment to a specific 
+named patient. It is the most common authorisation route for dental 
+nurse extended duties.
 
 A PSD typically includes:
 
-- Patient's name and date of birth
-- Name and concentration of the product (e.g. *Duraphat 22,600 ppm fluoride varnish*)
+- Patient name and date of birth
+- Name and concentration of the product (for example Duraphat 
+  22,600 ppm fluoride varnish)
 - Tooth surfaces to be treated
-- Prescribing clinician's name and GDC number
+- Prescribing clinician name and GDC number
 - Date of prescription
-- Prescribing clinician's signature
+- Prescribing clinician signature
 
-A PSD is **not**:
-- A verbal instruction ("just put some fluoride on while I'm in the other room")
-- A standing instruction that covers all patients without individual review
+A PSD is not:
+
+- A verbal instruction from a dentist in the next room
+- A standing instruction covering all patients without individual 
+  review
 - An entry in a protocol document not linked to a specific patient
 
-A **Patient Group Direction (PGD)** is an alternative authorisation route that allows a dental nurse to supply and administer a medicine to a group of patients sharing defined characteristics, without a prescription for each individual. PGDs must be formally approved and implemented - they are less common in general dental practice and require specific governance processes.
-
----
+A Patient Group Direction (PGD) is a separate authorisation route 
+that allows a dental nurse to administer a medicine to a group of 
+patients sharing defined characteristics, without an individual 
+prescription for each. PGDs must be formally approved and 
+implemented. They are less common in general dental practice and 
+require specific governance processes.
 
 ## NHS Changes: 1 April 2026
 
-From **1 April 2026**, NHS England updated the dental contract to formally recognise standalone fluoride varnish application by a dental nurse as a separately claimable NHS course of treatment (Band 1) carrying **0.5 UDA**.
+From 1 April 2026, NHS England updated the dental contract to 
+formally recognise standalone fluoride varnish application by a 
+dental nurse as a separately claimable NHS course of treatment. 
+This applies to NHS dental contracts in England only.
 
 Key points:
 
-- This applies to patients **aged 16 and under** (the group for whom NHS-funded preventive care is prioritised)
-- The dental nurse must hold a recognised fluoride varnish qualification
-- A PSD from the responsible dentist is required
-- The dental nurse must be named on the NHS contract
+- This applies to patients aged 16 and under
+- It is a new sub-band 1 course of treatment, payable at 0.5 UDAs
+- Treatment is delivered under prescription and in accordance with 
+  a care plan, with applications no less than 3 months apart
+- The dental nurse must be registered with the GDC, trained and 
+  competent, covered by adequate indemnity, and in possession of 
+  a PIN
+- The dental nurse must be named on the NHS contract in the NHS 
+  BSA contract management and payment system, with the addition 
+  approved by the relevant ICB
 
-This change represents a significant recognition of dental nurses as independent preventive care practitioners within the NHS, and brings additional financial justification for practices to invest in training.
+This is a significant recognition of the dental nurse role within 
+NHS preventive care. It also gives practices a clear financial 
+structure for investing in nurse training.
 
----
+## What Does "Appropriately Indemnified" Mean in Practice?
 
-## What Does "Appropriately Indemnified" Mean?
+Your indemnity provider must know that you are carrying out extended 
+duties including fluoride varnish application. Many standard dental 
+nurse policies do not include this automatically.
 
-Your indemnity provider must be explicitly told that you are carrying out extended duties including fluoride varnish application. Many standard dental nurse policies do not include this automatically.
-
-Before you apply fluoride varnish for the first time, contact your indemnity provider (Dental Protection, MDDUS, MDDU, DDU, or your employer's insurer) and confirm in writing that:
+Before you apply fluoride varnish for the first time, contact your 
+indemnity provider and confirm in writing that:
 
 1. You are a registered dental nurse
-2. You hold a fluoride varnish qualification
+2. You have completed appropriate training in fluoride varnish 
+   application
 3. You intend to apply fluoride varnish as an extended duty
-4. You need confirmation that this is covered under your current policy
+4. This is covered under your current policy
 
-Keep a record of this correspondence. If you are ever the subject of a complaint, being able to show you checked your indemnity in advance is important evidence of responsible practice.
+Keep a record of that correspondence. If you are ever the subject 
+of a complaint, being able to show you checked your indemnity in 
+advance is important evidence of responsible practice.
+
+## Do I Need to Tell the GDC?
+
+You do not need to separately notify the GDC that you are carrying 
+out extended duties. Your CPD record should however reflect the 
+training you have undertaken, recorded against the relevant GDC 
+outcomes.
+
+## Your Four Conditions at a Glance
+
+Before applying fluoride varnish independently, make sure all four 
+are in place:
+
+**Trained and competent** -- you have completed appropriate training 
+in fluoride varnish application with assessed competence, and your 
+dentist, employer or supervisor agrees you are ready to practise 
+independently.
+
+**Indemnified** -- your indemnity policy is confirmed in writing to 
+cover fluoride varnish as an extended duty.
+
+**Prescription in place** -- a written patient-specific direction 
+from a GDC-registered dentist is in place for each patient you treat.
+
+**NHS requirements met (if applicable)** -- you are named on the 
+contract in the NHS BSA system and your addition has been authorised 
+by the ICB.
+
+If all four are in place, you are practising in line with GDC 
+expectations. If any is missing, pause and address it before you 
+go ahead.
+
+Completing a structured fluoride varnish course is one of the 
+clearest ways to demonstrate that your training has resulted in 
+assessed competence, and to give yourself and your employer 
+confidence that you are ready to take on this extended duty. 
+[Find out more about the Dental Nurse Training Certificate in 
+Fluoride Varnish Application here.](https://dentalnurse.github.io/Fluoride/enrol.html)
 
 ---
 
-## Do I Need to Tell My GDC?
-
-You do not need to separately notify the GDC that you are carrying out extended duties. However, your GDC CPD record should reflect the training you have undertaken. The Dental Nurse Training Certificate in Fluoride Varnish Application records **10 hours of verifiable CPD** against GDC outcomes **C** (clinical patient care) and **D** (supporting patients' health and wellbeing) - exactly the categories where this qualification belongs.
-
----
-
-## Summary: Your Four Conditions Checklist
-
-Before applying fluoride varnish independently, confirm all four:
-
-| Condition | What it means |
-|-----------|--------------|
-| **Trained** | Completed a recognised fluoride varnish qualification with assessed competence |
-| **Competent** | You feel confident and your supervisor agrees you are ready to practise independently |
-| **Indemnified** | Your indemnity policy is confirmed in writing to cover fluoride varnish extended duties |
-| **Prescribing PSD** | A written patient-specific direction is in place for each patient you treat |
-
-If all four are in place, you are practising lawfully and in line with GDC expectations. If any is missing, pause and address it before proceeding.
-
-<div class="blog-callout">
-<strong>Get all four conditions in place.</strong> The Dental Nurse Training Certificate in Fluoride Varnish Application gives you the training and verified competence. We also provide guidance on checking your indemnity and working with your practice team on PSDs. <a href="{{ site.baseurl }}/enrol.html">Find out more.</a>
-</div>
+*About the author: Emily Bremner is a dental nurse educator at Dental Nurse Training Ltd. All articles are reviewed 
+for clinical accuracy against current DBOH, GDC and HTM 01-05 
+guidance.*
