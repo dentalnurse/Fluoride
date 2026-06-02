@@ -7,6 +7,11 @@ permalink: /blog/:title/
 future: false
 excerpt_separator: "<!--more-->"
 
+plugins:
+  - jekyll-sitemap
+  - jekyll-feed
+  - jekyll-seo-tag
+
 defaults:
   - scope:
       path: "_posts"
