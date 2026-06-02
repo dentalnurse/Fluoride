@@ -18,9 +18,13 @@
       <div class="nav-right">
         <span class="nav-user">Logged in as <strong id="navName">Loading...</strong></span>
         <button class="btn btn-outline btn-sm" onclick="handleLogout()">Log out</button>
+        <button class="nav-menu-btn" id="menuBtn" onclick="toggleSidebar()" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
       </div>
     </div>
   </nav>
+  <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="closeSidebar()"></div>
   <div class="dash-layout">
     <aside class="dash-sidebar" id="sidebar">
       <div class="sidebar-section-title">My Course</div>
@@ -173,7 +177,19 @@
       }
     }
 
+    window.toggleSidebar = () => {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      const open = sidebar.classList.toggle('mobile-open');
+      backdrop.classList.toggle('visible', open);
+    };
+    window.closeSidebar = () => {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+      document.getElementById('sidebarBackdrop').classList.remove('visible');
+    };
+
     window.showSection = (id) => {
+      closeSidebar();
       document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
       const sb = document.getElementById('sb-' + (id === 'home' ? 'home' : id));
       if (sb) sb.classList.add('active');
