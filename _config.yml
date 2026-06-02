@@ -1,1 +1,16 @@
-theme: null
+title: Dental Nurse Training
+description: GDC-compliant blended-learning certificate in fluoride varnish application for registered dental nurses.
+baseurl: "/Fluoride"
+url: "https://dentalnurse.github.io"
+
+permalink: /blog/:title/
+future: false
+excerpt_separator: "<!--more-->"
+
+defaults:
+  - scope:
+      path: "_posts"
+      type: "posts"
+    values:
+      layout: "post"
+      author: "Emily Bremner"

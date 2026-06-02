@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% if page.title %}{{ page.title }} - Dental Nurse Training{% else %}{{ site.title }}{% endif %}</title>
+  <meta name="description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}"/>
+  {% if page.canonical %}<link rel="canonical" href="{{ page.canonical }}"/>{% endif %}
+  <!-- Open Graph -->
+  <meta property="og:title" content="{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}"/>
+  <meta property="og:description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}"/>
+  <meta property="og:type" content="{% if page.layout == 'post' %}article{% else %}website{% endif %}"/>
+  <meta property="og:url" content="{{ site.url }}{{ site.baseurl }}{{ page.url }}"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ site.baseurl }}/css/style.css"/>
+  <style>
+    /* Blog-specific styles */
+    .blog-hero {
+      background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 100%);
+      padding: 3rem 0 2.5rem;
+    }
+    .blog-hero h1 { color: #fff; font-size: clamp(1.6rem, 3.5vw, 2.4rem); margin-bottom: 0.5rem; }
+    .blog-hero .meta { color: rgba(255,255,255,0.7); font-size: 0.88rem; }
+    .blog-hero .meta a { color: rgba(255,255,255,0.85); text-decoration: underline; }
+
+    .blog-body { max-width: 740px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+    .blog-body h2 { color: var(--teal-dark); font-size: 1.25rem; margin: 2rem 0 0.6rem; }
+    .blog-body h3 { color: var(--ink); font-size: 1.05rem; margin: 1.5rem 0 0.5rem; }
+    .blog-body p  { line-height: 1.8; color: var(--ink-mid); margin-bottom: 1rem; }
+    .blog-body ul, .blog-body ol { margin: 0 0 1rem 1.5rem; line-height: 1.9; color: var(--ink-mid); }
+    .blog-body li { margin-bottom: 0.3rem; }
+    .blog-body strong { color: var(--ink); }
+    .blog-body a { color: var(--teal); }
+    .blog-body blockquote {
+      border-left: 4px solid var(--teal);
+      margin: 1.5rem 0; padding: 0.85rem 1.25rem;
+      background: var(--teal-pale); border-radius: 0 var(--radius) var(--radius) 0;
+      font-style: italic; color: var(--ink-mid);
+    }
+    .blog-body blockquote p { margin: 0; }
+    .blog-callout {
+      background: var(--teal-pale); border: 1px solid var(--teal-light);
+      border-radius: var(--radius); padding: 1rem 1.25rem; margin: 1.5rem 0;
+    }
+    .blog-callout strong { color: var(--teal-dark); }
+
+    .blog-index { max-width: 800px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+    .blog-index h1 { color: var(--teal-dark); margin-bottom: 0.4rem; }
+    .blog-index .subtitle { color: var(--ink-light); margin-bottom: 2.5rem; }
+    .post-card {
+      background: var(--white); border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1.75rem 2rem;
+      margin-bottom: 1.5rem; transition: all 0.2s;
+      text-decoration: none; display: block; color: inherit;
+    }
+    .post-card:hover { border-color: var(--teal); box-shadow: var(--shadow); }
+    .post-card .post-date { font-size: 0.8rem; color: var(--ink-light); margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .post-card h2 { color: var(--teal-dark); font-size: 1.15rem; margin: 0 0 0.6rem; line-height: 1.35; }
+    .post-card .excerpt { color: var(--ink-mid); font-size: 0.92rem; line-height: 1.7; margin: 0 0 1rem; }
+    .post-card .read-more { color: var(--teal); font-size: 0.88rem; font-weight: 700; }
+
+    .cta-box {
+      background: var(--teal-dark); color: #fff;
+      border-radius: var(--radius-lg); padding: 2rem;
+      margin-top: 3rem; text-align: center;
+    }
+    .cta-box h3 { color: #fff; margin-bottom: 0.5rem; }
+    .cta-box p  { color: rgba(255,255,255,0.8); margin-bottom: 1.25rem; font-size: 0.95rem; }
+
+    @media (max-width: 600px) {
+      .blog-body { padding: 2rem 1rem 3rem; }
+      .blog-index { padding: 2rem 1rem 3rem; }
+      .post-card { padding: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="{{ site.baseurl }}/" class="nav-logo">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
+             alt="Dental Nurse Training" style="height:56px"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+        <span class="nav-logo-text" style="display:none">Dental Nurse Training</span>
+      </a>
+      <div class="nav-right">
+        <a href="{{ site.baseurl }}/blog/" class="btn btn-outline btn-sm" style="{% if page.url contains '/blog' %}font-weight:700{% endif %}">Blog</a>
+        <a href="{{ site.baseurl }}/login.html" class="btn btn-outline btn-sm">Log in</a>
+        <a href="{{ site.baseurl }}/enrol.html" class="btn btn-primary btn-sm">Enrol</a>
+      </div>
+    </div>
+  </nav>
+
+  {{ content }}
+
+  <footer style="background:var(--teal-dark);padding:1.5rem 0;margin-top:0">
+    <div class="container">
+      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center;margin:0">
+        &copy; 2025 Dental Nurse Training Ltd &middot;
+        <a href="{{ site.baseurl }}/privacy-policy.html" style="color:rgba(255,255,255,0.45)">Privacy Policy</a> &middot;
+        <a href="{{ site.baseurl }}/terms.html" style="color:rgba(255,255,255,0.45)">Terms</a> &middot;
+        <a href="{{ site.baseurl }}/blog/" style="color:rgba(255,255,255,0.45)">Blog</a>
+      </p>
+    </div>
+  </footer>
+  <script src="{{ site.baseurl }}/js/cookies.js"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+---
+layout: default
+title: Blog - Clinical Guidance for Dental Nurses
+description: Practical clinical guidance, GDC updates and fluoride varnish advice for registered dental nurses.
+---
+<div style="background:linear-gradient(135deg,var(--teal-dark) 0%,var(--teal) 100%);padding:3rem 0 2.5rem">
+  <div class="container">
+    <span style="font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.6)">Dental Nurse Training</span>
+    <h1 style="color:#fff;font-size:clamp(1.8rem,3.5vw,2.5rem);margin:0.4rem 0 0.5rem">Clinical Guidance Blog</h1>
+    <p style="color:rgba(255,255,255,0.75);max-width:520px;margin:0">
+      Practical articles on fluoride varnish, GDC standards and extended duties for registered dental nurses.
+    </p>
+  </div>
+</div>
+
+<div class="blog-index">
+  {% if site.posts.size > 0 %}
+    {% for post in site.posts %}
+    <a href="{{ site.baseurl }}{{ post.url }}" class="post-card">
+      <div class="post-date">{{ post.date | date: "%-d %B %Y" }}{% if post.category %} &middot; {{ post.category }}{% endif %}</div>
+      <h2>{{ post.title }}</h2>
+      {% if post.excerpt %}
+      <p class="excerpt">{{ post.excerpt | strip_html | truncatewords: 40 }}</p>
+      {% endif %}
+      <span class="read-more">Read article &rsaquo;</span>
+    </a>
+    {% endfor %}
+  {% else %}
+    <p style="color:var(--ink-light)">No posts yet - check back soon.</p>
+  {% endif %}
+</div>

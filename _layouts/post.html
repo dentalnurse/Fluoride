@@ -1,0 +1,31 @@
+---
+layout: default
+---
+<div class="blog-hero">
+  <div class="container">
+    <p class="meta" style="margin-bottom:0.75rem">
+      <a href="{{ site.baseurl }}/blog/">Blog</a> &rsaquo; {{ page.category | default: "Clinical Guidance" }}
+    </p>
+    <h1>{{ page.title }}</h1>
+    <p class="meta">
+      {{ page.date | date: "%-d %B %Y" }}
+      {% if page.author %} &middot; {{ page.author }}{% endif %}
+      {% if page.read_time %} &middot; {{ page.read_time }} min read{% endif %}
+    </p>
+  </div>
+</div>
+
+<div class="blog-body">
+  {{ content }}
+
+  <div class="cta-box">
+    <h3>Ready to get qualified?</h3>
+    <p>The Dental Nurse Training Certificate in Fluoride Varnish Application is a fully online, GDC-compliant course covering everything in this article and more.</p>
+    <a href="{{ site.baseurl }}/enrol.html" class="btn btn-white btn-lg">Enrol now</a>
+  </div>
+
+  <p style="margin-top:2rem;font-size:0.82rem;color:var(--ink-light);border-top:1px solid var(--border);padding-top:1rem">
+    <strong>About the author:</strong> {{ page.author | default: "Emily Bremner" }} is a dental nurse educator and the course lead at Dental Nurse Training Ltd.
+    All articles are reviewed for clinical accuracy against current DBOH, GDC and HTM 01-05 guidance.
+  </p>
+</div>
