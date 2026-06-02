@@ -125,7 +125,8 @@ This risk-based framework is directly relevant to fluoride varnish
 application. When you assess a patient's caries risk before 
 treatment, review their care plan, and decide on the frequency 
 of application, you are applying the DBOH risk-based approach 
-in practice.
+in practice. For a full guide to the clinical steps involved, 
+read our post on [how to apply fluoride varnish](https://dentalnurse.github.io/Fluoride/blog/how-to-apply-fluoride-varnish-step-by-step-guide-dental-nurses/).
 
 ## Why Dental Nurses Should Know It
 
@@ -152,7 +153,9 @@ practical assessments.
 
 **It is a living document.** DBOH is updated regularly as new 
 evidence emerges. Keeping up with changes is part of your 
-professional development as a dental nurse.
+professional development as a dental nurse and contributes to your 
+GDC CPD requirements. For a full guide to what CPD requires, read 
+our post on [CPD requirements for dental nurses](https://dentalnurse.github.io/Fluoride/blog/cpd-requirements-for-dental-nurses/).
 
 ## Where to Find It
 
