@@ -25,7 +25,9 @@ provided they are:
 - Working under a prescription or patient-specific direction (PSD) 
   from a GDC-registered dentist
 
-All four conditions must be met. Three out of four is not enough.
+All four conditions must be met. Three out of four is not enough. For 
+a detailed guide to indemnity requirements, read our post on 
+[understanding indemnity as a dental nurse](https://dentalnurse.github.io/Fluoride/blog/understanding-indemnity-dental-nurse/).
 
 ## What the GDC Scope of Practice Says
 
@@ -113,9 +115,8 @@ Key points:
   BSA contract management and payment system, with the addition 
   approved by the relevant ICB
 
-This is a significant recognition of the dental nurse role within 
-NHS preventive care. It also gives practices a clear financial 
-structure for investing in nurse training.
+For a full breakdown of what these changes mean in practice, read 
+our post on [NHS fluoride varnish changes 2026](https://dentalnurse.github.io/Fluoride/blog/nhs-fluoride-varnish-changes-2026/).
 
 ## What Does "Appropriately Indemnified" Mean in Practice?
 
@@ -141,7 +142,8 @@ advance is important evidence of responsible practice.
 You do not need to separately notify the GDC that you are carrying 
 out extended duties. Your CPD record should however reflect the 
 training you have undertaken, recorded against the relevant GDC 
-outcomes.
+outcomes. For a full guide to CPD requirements for dental nurses, 
+read our post on [CPD requirements for dental nurses](https://dentalnurse.github.io/Fluoride/blog/cpd-requirements-for-dental-nurses/).
 
 ## Your Four Conditions at a Glance
 
@@ -176,6 +178,6 @@ Fluoride Varnish Application here.](https://dentalnurse.github.io/Fluoride/enrol
 
 ---
 
-*About the author: Emily Bremner is a dental nurse educator at Dental Nurse Training Ltd. All articles are reviewed 
-for clinical accuracy against current DBOH, GDC and HTM 01-05 
-guidance.*
+*About the author: Emily Bremner is a dental nurse educator at 
+Dental Nurse Training Ltd. All articles are reviewed for clinical 
+accuracy against current DBOH, GDC and HTM 01-05 guidance.*
