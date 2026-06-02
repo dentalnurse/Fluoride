@@ -32,7 +32,8 @@ Before you carry out the procedure you need:
 
 If you are unsure whether your indemnity covers you, contact your 
 provider before carrying out the procedure. It is always better to 
-check first.
+check first. For a detailed guide to what indemnity means in practice, 
+read our post on [understanding indemnity as a dental nurse](https://dentalnurse.github.io/Fluoride/blog/understanding-indemnity-dental-nurse/).
 
 ## The Key Stages
 
@@ -45,7 +46,8 @@ documentation, creates clinical and professional risk.
 Before every appointment you need to screen for contraindications, 
 review the patient's caries risk using DBOH guidance, and carry out 
 a brief soft tissue check. This is not a one-off at the first visit. 
-It needs to happen every single time.
+It needs to happen every single time. For a full guide to what to 
+look for, read our post on [fluoride varnish contraindications](https://dentalnurse.github.io/Fluoride/blog/fluoride-varnish-contraindications-dental-nurse-guide/).
 
 **Consent**
 
@@ -53,7 +55,8 @@ Informed consent must be obtained at every appointment, even for
 patients you have seen before. For children this means consent from 
 a parent or legal guardian, unless the child is Gillick competent. 
 Aftercare instructions should be covered as part of that same 
-conversation.
+conversation. For guidance on what to do if a patient refuses, 
+read our post on [managing fluoride varnish refusal](https://dentalnurse.github.io/Fluoride/blog/managing-fluoride-varnish-refusal/).
 
 **Application**
 
@@ -83,11 +86,14 @@ Delivering Better Oral Health (DBOH) recommends fluoride varnish at
 least twice a year for patients where there is clinical concern or 
 elevated caries risk. This includes children and adults at moderate 
 or high caries risk, and older adults with xerostomia or root 
-exposure.
+exposure. For a plain-English guide to what DBOH actually covers, 
+read our post on [what Delivering Better Oral Health means for dental 
+nurses](https://dentalnurse.github.io/Fluoride/blog/what-is-delivering-better-oral-health/).
 
 For children receiving fluoride varnish under the NHS sub-band 1 
 course of treatment introduced in April 2026, the schedule is set 
-by the care plan and must be no less than 3 months apart.
+by the care plan and must be no less than 3 months apart. Read more 
+about the [NHS fluoride varnish changes 2026](https://dentalnurse.github.io/Fluoride/blog/nhs-fluoride-varnish-changes-2026/).
 
 ## Competence Takes More Than Reading
 
@@ -105,5 +111,6 @@ documentation, with assessor feedback at every stage.
 
 ---
 
-*About the author: Emily Bremner is a dental nurse educator at Dental Nurse Training Ltd. All articles are reviewed for 
-clinical accuracy against current DBOH, GDC and HTM 01-05 guidance.*
+*About the author: Emily Bremner is a dental nurse educator at Dental 
+Nurse Training Ltd. All articles are reviewed for clinical accuracy 
+against current DBOH, GDC and HTM 01-05 guidance.*
