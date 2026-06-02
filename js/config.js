@@ -20,7 +20,7 @@ const EMAILJS_CONFIG = {
 
 // ── Admin identities ─────────────────────────────────────────────────────
 // Add email addresses here for anyone who should have admin access.
-// Passwords are managed entirely by Firebase Authentication — never stored here.
+// Passwords are managed entirely by Firebase Authentication - never stored here.
 const ADMIN_EMAILS = [
   "emily@dentalnurse.training",
   "erica@dentalnurse.training",

@@ -60,7 +60,7 @@
           supName     = d.supName     || '';
           supGdc      = d.supGdc      || '';
         } else {
-          // Fallback for links generated before short-URL update — read from URL params
+          // Fallback for links generated before short-URL update - read from URL params
           learnerUid  = params.get('l') || '';
           supIndex    = parseInt(params.get('s') || '0', 10);
           learnerName = decodeURIComponent(params.get('ln') || 'the learner');

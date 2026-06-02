@@ -104,13 +104,13 @@
         const poOk   = e.postOpGiven && e.postOpGiven.rinse && e.postOpGiven.food && e.postOpGiven.brush;
         const consentLabel = e.consent
           ? (e.consent.type === 'guardian' ? `Guardian${e.consent.guardianName ? ': ' + e.consent.guardianName : ''}` : 'Patient (self)')
-          : '—';
+          : '-';
         return `<tr>
           <td>${i + 1}</td>
-          <td>${esc(e.date || '—')}</td>
-          <td>${esc(e.patientId || '—')}<br/><span style="color:#6B7280;font-size:0.8rem">${esc(e.patientType || '')}</span></td>
-          <td>${esc(e.rxName || '—')}<br/><span style="color:#6B7280;font-size:0.8rem">GDC: ${esc(e.rxGdc || '—')} &middot; Rx: ${esc(e.rxDate || '—')}</span></td>
-          <td>${esc(e.product || '—')}</td>
+          <td>${esc(e.date || '-')}</td>
+          <td>${esc(e.patientId || '-')}<br/><span style="color:#6B7280;font-size:0.8rem">${esc(e.patientType || '')}</span></td>
+          <td>${esc(e.rxName || '-')}<br/><span style="color:#6B7280;font-size:0.8rem">GDC: ${esc(e.rxGdc || '-')} &middot; Rx: ${esc(e.rxDate || '-')}</span></td>
+          <td>${esc(e.product || '-')}</td>
           <td>${safeOk ? '<span style="color:#1A7F4B">Done</span>' : '<span style="color:#D97706">Inc.</span>'}</td>
           <td>${consentLabel}</td>
           <td>${poOk ? '<span style="color:#1A7F4B">Given</span>' : '<span style="color:#D97706">Inc.</span>'}</td>
@@ -208,7 +208,7 @@
           <div style="text-align:center;padding:3rem 1rem">
             <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="Dental Nurse Training" style="height:56px;display:block;margin:0 auto 1.5rem" onerror="this.style.display='none'"/>
             <div style="font-size:3rem;margin-bottom:1rem">✅</div>
-            <h2 style="color:#1A7F4B;margin-bottom:0.75rem">Logbook confirmed — thank you!</h2>
+            <h2 style="color:#1A7F4B;margin-bottom:0.75rem">Logbook confirmed - thank you!</h2>
             <p style="max-width:480px;margin:0 auto 1rem;color:var(--ink-light)">Your confirmation has been recorded and ${esc(learnerName)}'s assessor has been notified. You may now close this page.</p>
             <p style="font-size:0.85rem;color:#9B9B9B">Confirmed by: <strong>${esc(signedName)}</strong> &middot; GDC: <strong>${esc(signedGdc)}</strong></p>
           </div>`;

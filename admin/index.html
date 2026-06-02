@@ -86,7 +86,7 @@
         <h3>📧 Send email notification</h3>
         <button class="modal-close" onclick="dismissEmailPrompt()">×</button>
       </div>
-      <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:1.25rem">Click the button below to open this email in your email app. Everything is pre-filled — just review and hit send.</p>
+      <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:1.25rem">Click the button below to open this email in your email app. Everything is pre-filled - just review and hit send.</p>
       <div style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:1.25rem;font-size:0.85rem">
         <div style="margin-bottom:0.4rem"><strong>To:</strong> <span id="epTo" style="color:var(--teal-dark)"></span></div>
         <div style="margin-bottom:0.4rem"><strong>Subject:</strong> <span id="epSubject"></span></div>
@@ -157,7 +157,7 @@
         const agrSnap = await getDocs(collection(db, 'supervisorAgreements'));
         agrSnap.docs.forEach(d => { supervisorAgreements[d.id] = d.data(); });
       } catch(e) {
-        console.warn('Could not load supervisor agreements — check Firestore rules allow authenticated reads on supervisorAgreements:', e.message);
+        console.warn('Could not load supervisor agreements - check Firestore rules allow authenticated reads on supervisorAgreements:', e.message);
       }
       try {
         const lsSnap = await getDocs(collection(db, 'logbookSignoffs'));
@@ -215,7 +215,7 @@
           <tbody>
             ${pending.map(l => `<tr>
               <td><div class="td-name">${l.name}</div></td>
-              <td><div>${l.email||'—'}</div><div class="td-email">GDC: ${l.gdc||'—'}</div></td>
+              <td><div>${l.email||'-'}</div><div class="td-email">GDC: ${l.gdc||'-'}</div></td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'}</td>
               <td>
                 <div class="admin-actions">
@@ -293,7 +293,7 @@
               <button onclick="showEmailTemplate('${l.id}')" style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:9999px;background:#F3F4F6;border:1px solid var(--border);cursor:pointer;color:var(--ink-mid)">📧 Email</button>
             </div>` : ''}
           </td>
-          <td><div style="font-size:0.82rem">${l.email||'—'}</div><div class="td-email">GDC: ${l.gdc||'—'}</div></td>
+          <td><div style="font-size:0.82rem">${l.email||'-'}</div><div class="td-email">GDC: ${l.gdc||'-'}</div></td>
           <td style="display:flex;flex-wrap:wrap;gap:0.3rem;align-items:center;padding-top:0.6rem">
             ${l.unlocked ? '<span class="pill pill-green">Active</span>' : '<span class="pill pill-orange">Pending</span>'}
             ${expBadge}
@@ -331,7 +331,7 @@
       const body = flag.emailBody(l.name || 'there', l.email || '');
       document.getElementById('learnerModalContent').innerHTML = `
         <div class="modal-header">
-          <h3>📧 Email template — ${l.name}</h3>
+          <h3>📧 Email template - ${l.name}</h3>
           <button class="modal-close" onclick="closeModal()">×</button>
         </div>
         <p style="font-size:0.85rem;color:var(--ink-light);margin-bottom:1rem">Copy and send via your email client to <strong>${l.email||'learner'}</strong>.</p>
@@ -390,7 +390,7 @@
           </tr></thead>
           <tbody>
             ${filtered.length ? filtered.map(({ l, type, label, url, feedback, passed, amended, at }) => `<tr>
-              <td><div class="td-name">${l.name}</div><div class="td-email">${l.email||'—'}</div></td>
+              <td><div class="td-name">${l.name}</div><div class="td-email">${l.email||'-'}</div></td>
               <td><span class="pill pill-teal">${label}</span></td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${at?.toDate ? at.toDate().toLocaleDateString('en-GB') : '-'}</td>
               <td>${type === 'written'
@@ -661,7 +661,7 @@
               const badge = {
                 approved: '<span class="pill pill-green">✓ Approved</span>',
                 signed:   '<span class="pill pill-teal">✍️ Signed - awaiting approval</span>',
-                sent:     '<span class="pill pill-orange">📧 Guidance sent — awaiting signature</span>',
+                sent:     '<span class="pill pill-orange">📧 Guidance sent - awaiting signature</span>',
                 pending:  '<span class="pill pill-grey">Not contacted</span>',
               }[status];
               const actionBtn = status === 'approved' ? ''
@@ -674,9 +674,9 @@
                 <div style="margin-top:0.75rem;background:#F0FAF5;border:1px solid #A7D7C5;border-radius:6px;padding:0.75rem 1rem;font-size:0.82rem">
                   <div style="font-weight:700;color:#1A7F4B;margin-bottom:0.4rem">✍️ Signed agreement</div>
                   <div style="display:grid;grid-template-columns:auto 1fr;gap:0.2rem 0.75rem;color:var(--ink-mid)">
-                    <span style="color:var(--ink-light)">Name:</span><span>${agr.signedName || '—'}</span>
-                    <span style="color:var(--ink-light)">GDC:</span><span>${agr.signedGdc || '—'}</span>
-                    <span style="color:var(--ink-light)">Signed:</span><span>${agr.signedAt?.toDate ? agr.signedAt.toDate().toLocaleString('en-GB') : '—'}</span>
+                    <span style="color:var(--ink-light)">Name:</span><span>${agr.signedName || '-'}</span>
+                    <span style="color:var(--ink-light)">GDC:</span><span>${agr.signedGdc || '-'}</span>
+                    <span style="color:var(--ink-light)">Signed:</span><span>${agr.signedAt?.toDate ? agr.signedAt.toDate().toLocaleString('en-GB') : '-'}</span>
                   </div>
                   <div style="margin-top:0.5rem;color:var(--ink-light)">Confirmed: physical presence, GDC registration, countersigning responsibilities, authenticity declaration, availability to supervise.</div>
                 </div>` : '';
@@ -707,7 +707,7 @@
           </div>
           <div id="learnerViewMode">
             <table style="width:100%;font-size:0.9rem;border-collapse:collapse">
-              ${[['Name', l.name||'—'],['Email', l.email||'—'],['GDC', l.gdc||'—'],['Phone', l.phone||'—'],['Workplace', l.workplace||'—'],
+              ${[['Name', l.name||'-'],['Email', l.email||'-'],['GDC', l.gdc||'-'],['Phone', l.phone||'-'],['Workplace', l.workplace||'-'],
                  ['Status', l.unlocked?'Active':'Pending approval'],
                  ['Declaration', l.declarationSigned ? '✅ Signed (' + (l.declarationSignedName||'') + ')' : '⏳ Not yet signed'],
                  ['Enrolled', l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'],
@@ -834,7 +834,7 @@
       promptEmail(
         l.email,
         'Welcome to your Dental Nurse Training Fluoride Varnish Application Certificate',
-        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Certificate in Fluoride Varnish Application!\n\nYour course is now active. You can log in at any time here:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks, clinical logbook, and case studies\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 3 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck — we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Certificate in Fluoride Varnish Application!\n\nYour course is now active. You can log in at any time here:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks, clinical logbook, and case studies\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 3 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck - we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
       );
     };
 
@@ -872,14 +872,14 @@
       const snap = await getDoc(doc(db, 'learners', id));
       const d = snap.exists() ? snap.data() : {};
       const tasks = [
-        { label: 'Task 1 — Consent process', key: 'writtenTask1' },
-        { label: 'Task 2 — GDC responsibilities', key: 'writtenTask2' },
-        { label: 'Task 3 — Fluoride science', key: 'writtenTask3' },
+        { label: 'Task 1 - Consent process', key: 'writtenTask1' },
+        { label: 'Task 2 - GDC responsibilities', key: 'writtenTask2' },
+        { label: 'Task 3 - Fluoride science', key: 'writtenTask3' },
       ];
       const modal = document.getElementById('feedbackModal');
       document.getElementById('feedbackModalContent').innerHTML = `
         <div class="modal-header">
-          <h3>Written Tasks — ${name}</h3>
+          <h3>Written Tasks - ${name}</h3>
           <button class="modal-close" onclick="document.getElementById('feedbackModal').classList.add('hidden')">×</button>
         </div>
         <div style="max-height:60vh;overflow-y:auto;padding-right:0.5rem">
@@ -904,7 +904,7 @@
       const modal = document.getElementById('feedbackModal');
       document.getElementById('feedbackModalContent').innerHTML = `
         <div class="modal-header">
-          <h3>Practical Portfolio — ${name}</h3>
+          <h3>Practical Portfolio - ${name}</h3>
           <button class="modal-close" onclick="document.getElementById('feedbackModal').classList.add('hidden')">×</button>
         </div>
         <div style="max-height:65vh;overflow-y:auto;padding-right:0.5rem">
@@ -921,11 +921,11 @@
             </tr></thead>
             <tbody>${entries.map((e,i)=>`<tr style="border-bottom:1px solid var(--border)">
               <td style="padding:0.4rem 0.5rem">${i+1}</td>
-              <td style="padding:0.4rem 0.5rem">${e.date||'—'}</td>
-              <td style="padding:0.4rem 0.5rem">${e.patientType||'—'}</td>
-              <td style="padding:0.4rem 0.5rem">${e.product||'—'}</td>
-              <td style="padding:0.4rem 0.5rem">${e.supervisorName||'—'}</td>
-              <td style="padding:0.4rem 0.5rem">${e.supervisorGdc||'—'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.date||'-'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.patientType||'-'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.product||'-'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.supervisorName||'-'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.supervisorGdc||'-'}</td>
               <td style="padding:0.4rem 0.5rem;color:var(--ink-light)">${e.notes||''}</td>
             </tr>`).join('')}</tbody>
           </table>` : `<p style="font-size:0.85rem;color:var(--ink-light);margin:0.5rem 0 1.5rem">No logbook entries recorded.</p>`}
@@ -1037,7 +1037,7 @@
           promptEmail(
             l.email,
             'Congratulations - You have completed the Dental Nurse Training Fluoride Varnish Application Certificate!',
-            'Congratulations ' + l.name + '!\n\nWhat an achievement! You have successfully passed all three assessments for the Dental Nurse Training Certificate in Fluoride Varnish Application.\n\nYour certificate is now available to view and download from your course dashboard:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nThis certificate records 10 hours of verifiable CPD against GDC Outcomes C and D. You can use it as evidence of your CPD in your GDC Enhanced CPD record.\n\nAs a final request — it would mean a great deal to us if you could take 2 minutes to share your feedback on the course. Your thoughts help us improve the experience for future learners:\nhttps://forms.gle/SS25kq76yMiAPKiJA\n\nThank you for choosing Dental Nurse Training. It has been a pleasure supporting you through this qualification.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+            'Congratulations ' + l.name + '!\n\nWhat an achievement! You have successfully passed all three assessments for the Dental Nurse Training Certificate in Fluoride Varnish Application.\n\nYour certificate is now available to view and download from your course dashboard:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nThis certificate records 10 hours of verifiable CPD against GDC Outcomes C and D. You can use it as evidence of your CPD in your GDC Enhanced CPD record.\n\nAs a final request - it would mean a great deal to us if you could take 2 minutes to share your feedback on the course. Your thoughts help us improve the experience for future learners:\nhttps://forms.gle/SS25kq76yMiAPKiJA\n\nThank you for choosing Dental Nurse Training. It has been a pleasure supporting you through this qualification.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
           );
         } else {
           promptEmail(
