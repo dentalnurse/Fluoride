@@ -19,6 +19,10 @@ qualifications since 1995. Alongside the Certificate in Fluoride
 Varnish Application, there is a full range of post-registration 
 qualifications available for dental nurses who want to keep developing.
 
+Before taking on any extended duty, make sure you have the right 
+training, competence and indemnity in place. Read our post on [GDC 
+scope of practice for dental nurses](https://dentalnurse.github.io/Fluoride/blog/can-dental-nurses-apply-fluoride-varnish-gdc-scope-of-practice-2025/) for a full explanation of what is required.
+
 ## Not Yet Qualified?
 
 If you have landed here and you are not yet a registered dental nurse, 
@@ -55,11 +59,10 @@ Training.](https://dentalnurse.training)
 
 ## Oral Health Education
 
-Oral health education is another brilliant route for dental nurses 
-who enjoy the patient-facing, preventive side of dentistry. It 
-builds directly on the kind of work you are already doing when you 
-apply fluoride varnish and give aftercare advice, but takes it much 
-further.
+Oral health education is another great route for dental nurses who 
+enjoy the patient-facing, preventive side of dentistry. It builds 
+directly on the kind of work you are already doing when you apply 
+fluoride varnish and give aftercare advice, but takes it much further.
 
 Again there are two routes:
 
@@ -89,7 +92,8 @@ more time with patients, working on behaviour change and prevention,
 or who are interested in community or public health settings.
 
 Both are well regarded by employers and both count towards your 
-GDC CPD requirements.
+GDC CPD requirements. For a full guide to CPD, read our post on 
+[CPD requirements for dental nurses](https://dentalnurse.github.io/Fluoride/blog/cpd-requirements-for-dental-nurses/).
 
 If you are not sure which direction to go, the team at Dental Nurse 
 Training are happy to talk it through with you.
@@ -99,6 +103,6 @@ qualifications.](https://dentalnurse.training)
 
 ---
 
-*About the author: Emily Bremner is a dental nurse educator at Dental 
-Nurse Training Ltd. All articles are reviewed for clinical accuracy 
-against current GDC guidance.*
+*About the author: Emily Bremner is a dental nurse educator at 
+Dental Nurse Training Ltd. All articles are reviewed for clinical 
+accuracy against current GDC guidance.*
