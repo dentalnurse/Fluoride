@@ -41,7 +41,9 @@ payment reforms, published by NHS England in March 2026.
 
 - Treatment is delivered under prescription and according to a care 
   plan and treatment schedule that follows the recommendations in 
-  Delivering Better Oral Health
+  Delivering Better Oral Health. For a plain-English guide to what 
+  DBOH covers, read our post on [what Delivering Better Oral Health 
+  means for dental nurses](https://dentalnurse.github.io/Fluoride/blog/what-is-delivering-better-oral-health/)
 - Treatment intervals within the care plan should be at least 3 
   months apart, in line with contractual guidance and preventative 
   recommendations
@@ -72,7 +74,9 @@ the dental nurse is:
 
 - Registered with the General Dental Council (GDC)
 - Trained and competent in fluoride varnish application
-- Covered by adequate indemnity arrangements
+- Covered by adequate indemnity arrangements. For a full guide to 
+  what this means in practice, read our post on [understanding 
+  indemnity as a dental nurse](https://dentalnurse.github.io/Fluoride/blog/understanding-indemnity-dental-nurse/)
 - In possession of a personal identity number (PIN)
 - Added to the list of clinicians on the contract in the NHS BSA 
   contract management and payment system, with the addition 
@@ -85,7 +89,9 @@ The GDC position is that dental nurses may apply fluoride varnish
 provided they are appropriately trained, competent and indemnified. 
 The NHS contract changes create a new route for it to be delivered 
 and paid for as a standalone treatment, but the professional 
-requirements remain the same.
+requirements remain the same. For a full explanation of the GDC 
+requirements, read our post on [GDC scope of practice for dental 
+nurses](https://dentalnurse.github.io/Fluoride/blog/can-dental-nurses-apply-fluoride-varnish-gdc-scope-of-practice-2025/).
 
 ## What This Means for Your Career
 
