@@ -14,7 +14,9 @@ handle that moment matters both clinically and professionally.
 
 This post covers what the GDC expects when a patient refuses 
 treatment, how to have that conversation well, and why your 
-documentation is so important.
+documentation is so important. For a full guide to the GDC 
+requirements around applying fluoride varnish independently, 
+read our post on [GDC scope of practice for dental nurses](https://dentalnurse.github.io/Fluoride/blog/can-dental-nurses-apply-fluoride-varnish-gdc-scope-of-practice-2025/).
 
 ## What the GDC Says About Refusal
 
@@ -66,11 +68,9 @@ This is one of the most common reasons, often driven by
 misinformation online. You can explain calmly that fluoride 
 varnish has been used safely for decades and is recommended by 
 the UK Chief Dental Officers in Delivering Better Oral Health, 
-the evidence-based guidance used across the UK. The 
-concentration used in varnish is applied topically in small 
-amounts and is not the same as ingesting large quantities of 
-fluoride.
-
+the evidence-based guidance used across the UK. For a plain-English 
+guide to what DBOH says, read our post on [what Delivering Better 
+Oral Health means for dental nurses](https://dentalnurse.github.io/Fluoride/blog/what-is-delivering-better-oral-health/). 
 Do not argue or dismiss the concern. Acknowledge it, give 
 accurate information, and leave the decision with the patient.
 
@@ -146,7 +146,8 @@ course of treatment introduced in April 2026, refusal has an
 additional administrative dimension. If a patient declines 
 treatment at an appointment, you will need to follow your 
 practice's process for managing the course of treatment in 
-the NHS BSA system accordingly.
+the NHS BSA system accordingly. For a full guide to the NHS 
+changes, read our post on [NHS fluoride varnish changes 2026](https://dentalnurse.github.io/Fluoride/blog/nhs-fluoride-varnish-changes-2026/).
 
 This is a practice-level process and your practice lead or 
 prescribing clinician should be able to advise on the correct 
@@ -174,5 +175,5 @@ here.](https://dentalnurse.github.io/Fluoride/enrol.html)
 ---
 
 *About the author: Emily Bremner is a dental nurse educator at 
-Dental Nurse Training Ltd. All articles are reviewed for 
-clinical accuracy against current GDC and DBOH guidance.*
+Dental Nurse Training Ltd. All articles are reviewed for clinical 
+accuracy against current DBOH and GDC guidance.*
