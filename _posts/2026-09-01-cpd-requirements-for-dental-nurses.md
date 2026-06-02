@@ -170,10 +170,12 @@ criteria and issues a certificate confirming the development
 outcomes covered.
 
 Our Certificate in Fluoride Varnish Application records 10 hours 
-of verifiable CPD against GDC development outcomes C and D, 
-clinical patient care and supporting patients' health and 
-wellbeing. That is 10 hours of your 50 hour requirement covered 
-in one structured qualification.
+of verifiable CPD against GDC development outcomes C and D. That 
+is 10 hours of your 50 hour requirement covered in one structured 
+qualification, while also demonstrating the competence you need 
+to take on fluoride varnish as an extended duty. For more on what 
+that means in practice, read our post on [GDC scope of practice 
+for dental nurses](https://dentalnurse.github.io/Fluoride/blog/can-dental-nurses-apply-fluoride-varnish-gdc-scope-of-practice-2025/).
 
 [Find out more here.](https://dentalnurse.github.io/Fluoride/enrol.html)
 
