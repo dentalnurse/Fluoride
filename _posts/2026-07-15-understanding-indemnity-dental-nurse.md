@@ -15,7 +15,9 @@ wrong, it is you who has to face the GDC, not your employer.
 
 This post covers what the GDC actually requires, the bits that often 
 catch people out, and what you specifically need to check if you are 
-carrying out extended duties like fluoride varnish application.
+carrying out extended duties like fluoride varnish application. For a 
+full explanation of the GDC requirements around extended duties, read 
+our post on [GDC scope of practice for dental nurses](https://dentalnurse.github.io/Fluoride/blog/can-dental-nurses-apply-fluoride-varnish-gdc-scope-of-practice-2025/).
 
 ## Is Indemnity Actually a Legal Requirement?
 
