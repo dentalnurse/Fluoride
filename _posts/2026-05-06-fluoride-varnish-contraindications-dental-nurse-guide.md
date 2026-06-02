@@ -13,6 +13,10 @@ contraindication and deferring treatment appropriately is a mark of
 clinical competence, not a failure. This article covers the 
 contraindications you need to know, and what to do when you find one.
 
+If you are not yet sure whether you meet the GDC requirements to 
+apply fluoride varnish independently, read our post on [GDC scope of 
+practice for dental nurses](https://dentalnurse.github.io/Fluoride/blog/can-dental-nurses-apply-fluoride-varnish-gdc-scope-of-practice-2025/) first.
+
 ## Why Contraindication Screening Matters
 
 Fluoride varnish is a safe and well-evidenced preventive intervention. 
@@ -80,7 +84,7 @@ The vast majority of asthmatic patients tolerate standard fluoride
 varnish without any issue. What matters is that you have screened, 
 made a reasoned decision, and documented it.
 
-**4. Children Under 3**
+**4. Children Under 3 -- Not Routinely Recommended**
 
 Delivering Better Oral Health does not routinely recommend fluoride 
 varnish for children under 3 unless there is a clear clinical need. 
@@ -140,6 +144,9 @@ If you identify a contraindication, your responsibilities are:
    contraindication such as persistent ulceration may need further 
    investigation
 
+For guidance on handling a patient who declines treatment altogether, 
+read our post on [managing fluoride varnish refusal](https://dentalnurse.github.io/Fluoride/blog/managing-fluoride-varnish-refusal/).
+
 ## The Bigger Picture
 
 A thorough pre-treatment assessment protects both your patient and 
@@ -156,5 +163,6 @@ are not yet qualified to apply fluoride varnish independently,
 
 ---
 
-*About the author: Emily Bremner is a dental nurse educator at Dental Nurse Training Ltd. All articles are reviewed for 
-clinical accuracy against current DBOH, GDC and HTM 01-05 guidance.*
+*About the author: Emily Bremner is a dental nurse educator at Dental 
+Nurse Training Ltd. All articles are reviewed for clinical accuracy 
+against current DBOH, GDC and HTM 01-05 guidance.*
