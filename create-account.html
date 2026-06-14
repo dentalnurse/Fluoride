@@ -84,7 +84,7 @@
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
-    const enrolData = JSON.parse(sessionStorage.getItem('enrolData') || '{}');
+    const enrolData = JSON.parse(localStorage.getItem('enrolData') || '{}');
 
     if (!enrolData.email) {
       window.location.href = 'enrol.html';
@@ -175,7 +175,7 @@
         } catch(e2) { /* notification is best-effort */ }
 
         // Clear session and go to dashboard
-        sessionStorage.removeItem('enrolData');
+        localStorage.removeItem('enrolData');
         window.location.href = 'dashboard.html';
 
       } catch(e) {

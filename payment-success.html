@@ -163,9 +163,9 @@
   <script>
     if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
     // If enrolData is present, redirect to account creation instead
-    if (sessionStorage.getItem('enrolData')) { window.location.href = 'create-account.html'; }
+    if (localStorage.getItem('enrolData')) { window.location.href = 'create-account.html'; }
 
-    const enrolData = JSON.parse(sessionStorage.getItem('enrolData') || '{}');
+    const enrolData = JSON.parse(localStorage.getItem('enrolData') || '{}');
     const learnerName  = ((enrolData.firstName || '') + ' ' + (enrolData.lastName || '')).trim() || 'Learner';
     const learnerEmail = enrolData.email || '';
     const learnerGDC   = enrolData.gdc || '';
@@ -248,7 +248,7 @@
       }
 
       // Clear session data after emails are sent
-      sessionStorage.removeItem('enrolData');
+      localStorage.removeItem('enrolData');
     }
 
     sendEmails();

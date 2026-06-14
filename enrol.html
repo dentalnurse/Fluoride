@@ -132,8 +132,8 @@
         return;
       }
 
-      // Store details in sessionStorage for the payment page
-      sessionStorage.setItem('enrolData', JSON.stringify({
+      // Store details in localStorage for the payment page
+      localStorage.setItem('enrolData', JSON.stringify({
         firstName, lastName, email, gdc, phone, workplace, experience, supervisor, indemnity, notes
       }));
 
