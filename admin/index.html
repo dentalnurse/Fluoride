@@ -787,6 +787,7 @@
           <button class="btn btn-outline" onclick="sendWelcomeEmail('${l.id}')">📧 Send welcome email</button>
           ${(() => { const d = daysUntilExpiry(l); return d !== null && d <= 14 ? `<button class="btn btn-outline" style="color:#92400E;border-color:#F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>` : `<button class="btn btn-outline" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>`; })()}
           <button class="btn btn-outline" onclick="saveNotes('${l.id}')">Save notes</button>
+          <a href="../portfolio-export.html?uid=${id}" target="_blank" class="btn btn-outline">📄 Download Portfolio</a>
           <button class="btn btn-primary" onclick="closeModal()">Close</button>
         </div>`;
       document.getElementById('learnerModal').classList.remove('hidden');

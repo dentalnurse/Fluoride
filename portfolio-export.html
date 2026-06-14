@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Portfolio Export - Dental Nurse Training</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Nunito Sans', sans-serif; font-size: 0.92rem; color: #1a1a2e; background: #f5f7fa; }
+
+    /* Screen toolbar */
+    .toolbar { background: #005f5a; color: #fff; padding: 0.85rem 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .toolbar h2 { font-size: 1rem; font-weight: 700; }
+    .toolbar-btns { display: flex; gap: 0.75rem; }
+    .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer; border: none; text-decoration: none; }
+    .btn-white { background: #fff; color: #005f5a; }
+    .btn-outline { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.5); }
+
+    /* Document */
+    .doc { max-width: 860px; margin: 2rem auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+    .doc-header { background: linear-gradient(135deg, #003d3a 0%, #005f5a 100%); padding: 2.5rem 2.5rem 2rem; color: #fff; }
+    .doc-header .logo-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+    .doc-header .logo-bar img { height: 44px; filter: brightness(0) invert(1); opacity: 0.9; }
+    .doc-header h1 { font-size: 1.55rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .doc-header .subtitle { color: rgba(255,255,255,0.7); font-size: 0.88rem; }
+    .meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1.5rem; }
+    .meta-item .mi-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.55); margin-bottom: 0.2rem; }
+    .meta-item .mi-value { font-size: 0.9rem; font-weight: 700; color: #fff; }
+
+    /* Progress bar */
+    .progress-section { padding: 1.5rem 2.5rem; border-bottom: 1px solid #e5e7eb; }
+    .progress-section h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6b7280; margin-bottom: 1rem; }
+    .mod-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.6rem; }
+    .mod-pill { text-align: center; padding: 0.6rem 0.4rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; }
+    .mod-pill.passed { background: #dcfce7; color: #166534; }
+    .mod-pill.not-started { background: #f3f4f6; color: #9ca3af; }
+    .mod-pill .mp-num { font-size: 0.68rem; font-weight: 600; margin-bottom: 0.15rem; opacity: 0.7; }
+
+    /* Sections */
+    .section { padding: 1.75rem 2.5rem; border-bottom: 1px solid #e5e7eb; }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: #005f5a; font-weight: 800; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: #d1fae5; }
+
+    /* Written tasks & case studies */
+    .task-block { margin-bottom: 1.5rem; }
+    .task-block:last-child { margin-bottom: 0; }
+    .task-label { font-size: 0.8rem; font-weight: 700; color: #374151; margin-bottom: 0.4rem; }
+    .task-prompt { font-size: 0.78rem; color: #9ca3af; font-style: italic; margin-bottom: 0.6rem; }
+    .task-body { white-space: pre-wrap; line-height: 1.8; color: #374151; font-size: 0.88rem; background: #f9fafb; border-radius: 8px; padding: 1rem 1.25rem; border: 1px solid #e5e7eb; }
+    .task-wc { font-size: 0.75rem; color: #9ca3af; margin-top: 0.35rem; }
+
+    /* Logbook table */
+    .lb-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .lb-table th { background: #f0fdf4; color: #166534; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.55rem 0.75rem; text-align: left; border-bottom: 2px solid #bbf7d0; }
+    .lb-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #f3f4f6; vertical-align: top; color: #374151; }
+    .lb-table tr:last-child td { border-bottom: none; }
+    .lb-table tr:nth-child(even) td { background: #fafafa; }
+    .check-yes { color: #16a34a; font-weight: 700; }
+    .check-no  { color: #d97706; }
+
+    /* Status badges */
+    .badge { display: inline-block; padding: 0.2rem 0.65rem; border-radius: 100px; font-size: 0.72rem; font-weight: 700; }
+    .badge-green { background: #dcfce7; color: #166534; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-grey  { background: #f3f4f6; color: #6b7280; }
+
+    /* Empty state */
+    .empty { color: #9ca3af; font-style: italic; font-size: 0.88rem; }
+
+    /* Footer */
+    .doc-footer { padding: 1.25rem 2.5rem; background: #f9fafb; text-align: center; font-size: 0.75rem; color: #9ca3af; }
+
+    /* Loading / error */
+    #loading { text-align: center; padding: 5rem 2rem; color: #6b7280; }
+
+    @media print {
+      body { background: #fff; font-size: 10pt; }
+      .toolbar { display: none; }
+      .doc { max-width: 100%; margin: 0; border-radius: 0; box-shadow: none; }
+      .section { page-break-inside: avoid; }
+      .task-block { page-break-inside: avoid; }
+    }
+    @media (max-width: 600px) {
+      .doc-header, .section, .progress-section { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .meta-grid { grid-template-columns: 1fr 1fr; }
+      .mod-grid { grid-template-columns: repeat(5, 1fr); gap: 0.4rem; }
+      .lb-table { font-size: 0.72rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar" id="toolbar" style="display:none">
+  <h2>📄 Portfolio Export</h2>
+  <div class="toolbar-btns">
+    <button class="btn btn-white" onclick="window.print()">🖨️ Save as PDF</button>
+    <a href="dashboard.html" class="btn btn-outline" id="backBtn">← Back to dashboard</a>
+  </div>
+</div>
+
+<div id="loading"><p>Loading portfolio…</p></div>
+<div class="doc" id="doc" style="display:none"></div>
+
+<script type="module">
+  import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const app  = initializeApp(FIREBASE_CONFIG);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const params    = new URLSearchParams(window.location.search);
+  const targetUid = params.get('uid');  // set for admin view; absent = own portfolio
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+
+    const isAdmin = ADMIN_EMAILS.includes(user.email);
+    const uid     = targetUid || user.uid;
+
+    // Non-admins can only view their own portfolio
+    if (targetUid && targetUid !== user.uid && !isAdmin) {
+      document.getElementById('loading').innerHTML = '<p>Access denied.</p>';
+      return;
+    }
+
+    try {
+      const snap = await getDoc(doc(db, 'learners', uid));
+      if (!snap.exists()) { document.getElementById('loading').innerHTML = '<p>Learner not found.</p>'; return; }
+      const l = snap.data();
+
+      if (isAdmin) {
+        document.getElementById('backBtn').href = 'admin/index.html';
+        document.getElementById('backBtn').textContent = '← Back to admin';
+      }
+
+      render(l, uid);
+    } catch(e) {
+      console.error(e);
+      document.getElementById('loading').innerHTML = '<p>Error loading portfolio.</p>';
+    }
+  });
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function wc(text) {
+    return (text || '').trim().split(/\s+/).filter(Boolean).length;
+  }
+  function fmt(ts) {
+    if (!ts) return '-';
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  const MODULE_TITLES = [
+    'Fluoride Science and Caries Prevention',
+    'Patient Assessment and Communication',
+    'Clinical Procedure and Technique',
+    'Safeguarding and Consent',
+    'GDC Standards and Professionalism',
+  ];
+
+  function render(l, uid) {
+    const mp      = l.moduleProgress || {};
+    const entries = l.logbookEntries || [];
+    const now     = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' });
+
+    const overallStatus =
+      l.writtenPassed && l.practicalPassed && l.reflectionPassed ? 'Complete'
+      : (l.writtenSubmitted || l.practicalSubmitted || l.reflectionSubmitted) ? 'In Progress'
+      : Object.values(mp).filter(v => v === 2 || v === '2').length === 5 ? 'Assessments Not Started'
+      : 'Modules In Progress';
+
+    const statusClass = overallStatus === 'Complete' ? 'badge-green' : overallStatus === 'In Progress' ? 'badge-amber' : 'badge-grey';
+
+    // ── Module progress ───────────────────────────────────────────────────
+    const modPills = MODULE_TITLES.map((title, i) => {
+      const n = i + 1;
+      const passed = mp[n] === 2 || mp[n] === '2';
+      return `<div class="mod-pill ${passed ? 'passed' : 'not-started'}">
+        <div class="mp-num">M${n}</div>
+        ${passed ? '✓ Passed' : 'Not passed'}
+      </div>`;
+    }).join('');
+
+    // ── Written tasks ─────────────────────────────────────────────────────
+    const writtenTasks = [
+      { key: 'writtenTask1', label: 'Task 1 — Consent process', prompt: 'Explain the consent process as it applies to fluoride varnish application.' },
+      { key: 'writtenTask2', label: 'Task 2 — GDC responsibilities', prompt: 'Explain your responsibilities as a GDC registrant and the professional and legal requirements when applying fluoride varnish.' },
+      { key: 'writtenTask3', label: 'Task 3 — Fluoride science', prompt: 'Explain the science of fluoride and how it prevents dental caries.' },
+    ];
+    const writtenHtml = writtenTasks.map(t => {
+      const text = l[t.key] || '';
+      const count = wc(text);
+      return `<div class="task-block">
+        <div class="task-label">${t.label}</div>
+        <div class="task-prompt">${esc(t.prompt)}</div>
+        ${text
+          ? `<div class="task-body">${esc(text)}</div><div class="task-wc">${count} words</div>`
+          : `<div class="task-body empty">Not yet written.</div>`}
+      </div>`;
+    }).join('<hr style="border:none;border-top:1px solid #e5e7eb;margin:1.25rem 0"/>');
+
+    // ── Logbook entries ───────────────────────────────────────────────────
+    const lbHtml = entries.length === 0
+      ? `<p class="empty">No logbook entries recorded yet.</p>`
+      : `<table class="lb-table">
+          <thead><tr>
+            <th>#</th><th>Date</th><th>Patient ID</th><th>Age group</th>
+            <th>Product</th><th>Prescribed by</th><th>Supervisor</th>
+            <th>Consent</th><th>Safety checks</th><th>Post-op advice</th><th>Notes</th>
+          </tr></thead>
+          <tbody>${entries.map((e, i) => {
+            const safeOk = e.safetyChecks && e.safetyChecks.asthma && e.safetyChecks.allergy && e.safetyChecks.ulcer;
+            const poOk   = e.postOpGiven  && e.postOpGiven.rinse   && e.postOpGiven.food    && e.postOpGiven.brush;
+            const consent = e.consent
+              ? (e.consent.type === 'guardian' ? `Guardian (${e.consent.guardianName||''})` : 'Patient')
+              : '-';
+            return `<tr>
+              <td>${i+1}</td>
+              <td>${esc(e.date||'-')}</td>
+              <td>${esc(e.patientId||'-')}</td>
+              <td>${esc(e.patientType||'-')}</td>
+              <td>${esc(e.product||'-')}</td>
+              <td>${esc(e.rxName||'-')} (GDC: ${esc(e.rxGdc||'-')}) ${e.rxDate?'<br><span style="color:#9ca3af">'+esc(e.rxDate)+'</span>':''}</td>
+              <td>${esc(e.supervisorName||'-')} (GDC: ${esc(e.supervisorGdc||'-')})</td>
+              <td>${esc(consent)}</td>
+              <td class="${safeOk?'check-yes':'check-no'}">${safeOk ? '✓ All' : '✗ Incomplete'}</td>
+              <td class="${poOk?'check-yes':'check-no'}">${poOk ? '✓ All' : '✗ Incomplete'}</td>
+              <td>${esc(e.notes||'-')}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>`;
+
+    // ── Case studies ──────────────────────────────────────────────────────
+    const caseStudies = [
+      { key: 'caseStudy1', label: 'Case Study 1' },
+      { key: 'caseStudy2', label: 'Case Study 2' },
+    ];
+    const csHtml = caseStudies.map(c => {
+      const text = l[c.key] || '';
+      const count = wc(text);
+      return `<div class="task-block">
+        <div class="task-label">${c.label}</div>
+        ${text
+          ? `<div class="task-body">${esc(text)}</div><div class="task-wc">${count} words</div>`
+          : `<div class="task-body empty">Not yet written.</div>`}
+      </div>`;
+    }).join('<hr style="border:none;border-top:1px solid #e5e7eb;margin:1.25rem 0"/>');
+
+    // ── Reflection ────────────────────────────────────────────────────────
+    const reflText = l.reflectionText || l.reflectionDraft || '';
+    const reflHtml = reflText
+      ? `<div class="task-body">${esc(reflText)}</div><div class="task-wc">${wc(reflText)} words</div>`
+      : l.reflectionSubmitted
+        ? `<p class="empty">Submitted via document upload.</p>`
+        : `<p class="empty">Not yet written.</p>`;
+
+    // ── Assemble ──────────────────────────────────────────────────────────
+    document.getElementById('doc').innerHTML = `
+      <div class="doc-header">
+        <div class="logo-bar">
+          <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
+               alt="Dental Nurse Training" onerror="this.style.display='none'"/>
+        </div>
+        <h1>Certificate in Fluoride Varnish Application</h1>
+        <div class="subtitle">Learner Portfolio — Dental Nurse Training Ltd</div>
+        <div class="meta-grid">
+          <div class="meta-item"><div class="mi-label">Learner</div><div class="mi-value">${esc(l.name||'-')}</div></div>
+          <div class="meta-item"><div class="mi-label">GDC Number</div><div class="mi-value">${esc(l.gdc||'-')}</div></div>
+          <div class="meta-item"><div class="mi-label">Workplace</div><div class="mi-value">${esc(l.workplace||'-')}</div></div>
+          <div class="meta-item"><div class="mi-label">Email</div><div class="mi-value">${esc(l.email||'-')}</div></div>
+          <div class="meta-item"><div class="mi-label">Enrolled</div><div class="mi-value">${fmt(l.enrolledAt||l.approvedAt)}</div></div>
+          <div class="meta-item"><div class="mi-label">Status</div><div class="mi-value"><span class="badge ${statusClass}">${overallStatus}</span></div></div>
+        </div>
+      </div>
+
+      <div class="progress-section">
+        <h2>Theory Modules</h2>
+        <div class="mod-grid">${modPills}</div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">✍️ Written Tasks
+          <span class="badge ${l.writtenPassed?'badge-green':l.writtenSubmitted?'badge-amber':'badge-grey'}" style="margin-left:0.5rem;text-transform:none;letter-spacing:0">
+            ${l.writtenPassed ? 'Passed' : l.writtenSubmitted ? 'Under review' : 'Not submitted'}
+          </span>
+        </div>
+        ${writtenHtml}
+      </div>
+
+      <div class="section">
+        <div class="section-title">🦷 Clinical Logbook
+          <span style="font-size:0.82rem;color:#6b7280;font-weight:600;text-transform:none;letter-spacing:0;margin-left:0.5rem">${entries.length}/10 entries</span>
+        </div>
+        ${lbHtml}
+      </div>
+
+      <div class="section">
+        <div class="section-title">📋 Case Studies
+          <span class="badge ${l.practicalPassed?'badge-green':l.practicalSubmitted?'badge-amber':'badge-grey'}" style="margin-left:0.5rem;text-transform:none;letter-spacing:0">
+            ${l.practicalPassed ? 'Passed' : l.practicalSubmitted ? 'Under review' : 'Not submitted'}
+          </span>
+        </div>
+        ${csHtml}
+      </div>
+
+      <div class="section">
+        <div class="section-title">🪞 Final Reflection
+          <span class="badge ${l.reflectionPassed?'badge-green':l.reflectionSubmitted?'badge-amber':'badge-grey'}" style="margin-left:0.5rem;text-transform:none;letter-spacing:0">
+            ${l.reflectionPassed ? 'Passed' : l.reflectionSubmitted ? 'Under review' : 'Not submitted'}
+          </span>
+        </div>
+        ${reflHtml}
+      </div>
+
+      <div class="doc-footer">
+        Exported ${now} - Dental Nurse Training Ltd - dentalnurse.training - emily@dentalnurse.training
+      </div>`;
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('doc').style.display     = 'block';
+    document.getElementById('toolbar').style.display = 'flex';
+    document.title = `Portfolio - ${l.name||'Learner'} - Dental Nurse Training`;
+  }
+</script>
+<script src="js/config.js"></script>
+</body>
+</html>
