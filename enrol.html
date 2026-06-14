@@ -80,11 +80,11 @@
           </div>
           <div class="form-group"><label>Anything else you would like us to know?</label><textarea id="enrolNotes" placeholder="Optional"></textarea></div>
           <div style="background:var(--teal-pale);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:0.88rem;color:var(--ink-mid);line-height:1.6">
-            By submitting this form you confirm you hold current GDC registration as a dental nurse and meet the course entry requirements. We will be in touch with payment details shortly.
+            By submitting this form you confirm you hold current GDC registration as a dental nurse and meet the course entry requirements. You will be taken to a secure payment screen to complete your enrolment.
           </div>
           <div id="enrolError" class="form-error" style="display:none;margin-bottom:1rem"></div>
-          <button class="btn btn-primary btn-lg" onclick="submitEnrolment()">Submit enquiry →</button>
-          <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--ink-light)">💳 Online payment coming soon - we will contact you directly to arrange payment.</p>
+          <button class="btn btn-primary btn-lg" onclick="submitEnrolment()">Continue to payment →</button>
+          <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--ink-light)">🔒 Secure payment powered by Stripe</p>
         </div>
       </div>
       <div>
@@ -137,15 +137,8 @@
         firstName, lastName, email, gdc, phone, workplace, experience, supervisor, indemnity, notes
       }));
 
-      // TODO: redirect to payment screen once online payment is live
-      // window.location.href = 'payment.html';
-      document.getElementById('formWrap').innerHTML = `
-        <div style="text-align:center;padding:2.5rem 1.5rem">
-          <div style="font-size:2.5rem;margin-bottom:1rem">✅</div>
-          <h2 style="color:var(--teal-dark);margin-bottom:0.75rem">Enquiry received!</h2>
-          <p style="color:var(--ink-mid);max-width:400px;margin:0 auto 1.25rem">Thanks ${firstName}, we have your details. We will be in touch at <strong>${email}</strong> shortly with payment instructions and next steps.</p>
-          <p style="font-size:0.85rem;color:var(--ink-light)">If you do not hear from us within 1 working day, please email <a href="mailto:emily@dentalnurse.training" style="color:var(--teal)">emily@dentalnurse.training</a>.</p>
-        </div>`;
+      // Redirect to Stripe Checkout
+      window.location.href = 'https://buy.stripe.com/test_dRm14o5YAeNqc1Xa59bZe03';
     };
   </script>
 
