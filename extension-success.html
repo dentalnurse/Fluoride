@@ -62,8 +62,8 @@
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
-    const expiryInfo = JSON.parse(sessionStorage.getItem('expiryInfo') || '{}');
-    const expiryUid  = sessionStorage.getItem('expiryUid');
+    const expiryInfo = JSON.parse(localStorage.getItem('expiryInfo') || '{}');
+    const expiryUid  = localStorage.getItem('expiryUid');
     const learnerName  = expiryInfo.name  || '';
     const learnerEmail = expiryInfo.email || '';
 
@@ -115,8 +115,8 @@
       // Send emails
       await sendExtensionEmails(learnerName, learnerEmail);
       // Clear session data
-      sessionStorage.removeItem('expiryInfo');
-      sessionStorage.removeItem('expiryUid');
+      localStorage.removeItem('expiryInfo');
+      localStorage.removeItem('expiryUid');
       // Redirect after 3 seconds
       setTimeout(() => { window.location.href = 'dashboard.html'; }, 3000);
     });

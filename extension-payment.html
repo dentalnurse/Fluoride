@@ -82,51 +82,32 @@
 
   <div style="background:linear-gradient(135deg,var(--teal-dark),var(--teal));padding:2.5rem 0 2rem">
     <div class="container">
-      <h1 style="color:var(--white);margin-bottom:0.4rem">Purchase Course Extension</h1>
-      <p style="color:rgba(255,255,255,0.75);max-width:500px">Extend your course access by 1 month. Enter your card details below to confirm your extension.</p>
+      <h1 style="color:var(--white);margin-bottom:0.4rem">Course Access Expired</h1>
+      <p style="color:rgba(255,255,255,0.75);max-width:500px">Your 3-month course access has ended. Purchase a 1-month extension to pick up where you left off.</p>
     </div>
   </div>
 
   <div class="container">
     <div class="pay-layout">
       <div>
-        <div class="preview-banner">
-          <span>🔧</span>
-          <span><strong>Preview mode:</strong> Stripe online payment is coming soon. This screen demonstrates the payment flow - no real payment is taken.</span>
+        <div id="graceWarning" style="display:none;background:#FFF8E7;border:1px solid rgba(245,158,11,0.4);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:0.88rem;color:#92400E">
+          <strong>⏰ Grace period:</strong> You have <span id="graceDaysLeft"></span> to purchase an extension before you will need to re-enrol and start the course again.
         </div>
 
         <div class="pay-card">
-          <h2>💳 Card details</h2>
-          <div class="card-icons">
-            <span class="card-icon visa">VISA</span>
-            <span class="card-icon mc">MC</span>
-            <span class="card-icon">AMEX</span>
+          <h2>1-month extension — £12</h2>
+          <p style="color:var(--ink-mid);font-size:0.9rem;margin-bottom:1.5rem">All your progress, logbook entries, and written work will be waiting for you. Click below to pay securely via Stripe.</p>
+
+          <div style="background:var(--teal-pale);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:0.88rem;color:var(--ink-mid);line-height:1.6">
+            Enrolling as: <strong id="summaryName">-</strong> (<span id="summaryEmail">-</span>)
           </div>
-          <div class="form-group">
-            <label>Name on card</label>
-            <input type="text" id="cardName" placeholder="As it appears on your card" autocomplete="cc-name"/>
-          </div>
-          <div class="form-group">
-            <label>Card number</label>
-            <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" autocomplete="cc-number" inputmode="numeric"/>
-          </div>
-          <div class="field-row">
-            <div class="form-group">
-              <label>Expiry date</label>
-              <input type="text" id="cardExpiry" placeholder="MM / YY" maxlength="7" autocomplete="cc-exp"/>
-            </div>
-            <div class="form-group">
-              <label>Security code (CVV)</label>
-              <input type="text" id="cardCVV" placeholder="123" maxlength="4" autocomplete="cc-csc" inputmode="numeric"/>
-            </div>
-          </div>
-          <div id="payError" style="display:none;background:var(--warn-light);border:1px solid var(--warn);border-radius:var(--radius);padding:0.75rem 1rem;font-size:0.88rem;color:var(--warn);margin-bottom:1rem"></div>
-          <button class="pay-btn" id="payBtn" onclick="processPayment()">
-            Pay <span id="payAmount">£12</span> securely
+
+          <button class="pay-btn" id="payBtn" onclick="goToStripe()">
+            Pay £12 securely via Stripe →
           </button>
-          <div class="lock-note">
+          <div class="lock-note" style="margin-top:0.75rem">
             <span>🔒</span>
-            <span>Payments are encrypted and secure. Your card details are never stored.</span>
+            <span>Secure payment powered by Stripe</span>
           </div>
         </div>
 
@@ -144,11 +125,11 @@
           </div>
           <div class="order-line">
             <span class="label">Learner</span>
-            <span class="val" id="summaryName">-</span>
+            <span class="val" id="summaryNameSide">-</span>
           </div>
           <div class="order-line">
             <span class="label">Email</span>
-            <span class="val" id="summaryEmail" style="word-break:break-all">-</span>
+            <span class="val" id="summaryEmailSide" style="word-break:break-all">-</span>
           </div>
           <div class="order-line" style="border-bottom:none">
             <span class="label">Extends access by</span>
@@ -181,57 +162,33 @@
 
   <script src="js/config.js"></script>
   <script>
-    const expiryInfo = JSON.parse(sessionStorage.getItem('expiryInfo') || '{}');
-    const urlParams  = new URLSearchParams(window.location.search);
-    const learnerName  = expiryInfo.name  || decodeURIComponent(urlParams.get('name')  || '');
-    const learnerEmail = expiryInfo.email || decodeURIComponent(urlParams.get('email') || '');
+    const expiryInfo   = JSON.parse(localStorage.getItem('expiryInfo') || '{}');
+    const learnerName  = expiryInfo.name  || '';
+    const learnerEmail = expiryInfo.email || '';
+    const daysExpired  = expiryInfo.daysExpired || 0;
+    const graceDaysLeft = 7 - daysExpired;
 
-    document.getElementById('summaryName').textContent = learnerName || '-';
-    document.getElementById('summaryEmail').textContent = learnerEmail || '-';
-    document.getElementById('payAmount').textContent = EXTENSION_FEE;
-    document.getElementById('summaryPrice').textContent = EXTENSION_FEE;
+    document.getElementById('summaryName').textContent     = learnerName  || '-';
+    document.getElementById('summaryEmail').textContent    = learnerEmail || '-';
+    document.getElementById('summaryNameSide').textContent = learnerName  || '-';
+    document.getElementById('summaryEmailSide').textContent= learnerEmail || '-';
+    document.getElementById('summaryPrice').textContent    = EXTENSION_FEE;
 
-    if (learnerName) {
-      document.getElementById('cardName').value = learnerName;
+    if (graceDaysLeft > 0) {
+      document.getElementById('graceWarning').style.display = 'block';
+      document.getElementById('graceDaysLeft').textContent  =
+        graceDaysLeft === 1 ? '1 day' : graceDaysLeft + ' days';
     }
 
-    document.getElementById('cardNumber').addEventListener('input', function() {
-      let v = this.value.replace(/\D/g, '').substring(0, 16);
-      this.value = v.replace(/(.{4})/g, '$1 ').trim();
-    });
+    // TODO: replace with live Stripe extension Payment Link when available
+    const EXTENSION_STRIPE_LINK = 'PENDING_STRIPE_LINK';
 
-    document.getElementById('cardExpiry').addEventListener('input', function() {
-      let v = this.value.replace(/\D/g, '').substring(0, 4);
-      if (v.length >= 3) { this.value = v.substring(0, 2) + ' / ' + v.substring(2); }
-      else { this.value = v; }
-    });
-
-    document.getElementById('cardCVV').addEventListener('input', function() {
-      this.value = this.value.replace(/\D/g, '').substring(0, 4);
-    });
-
-    window.processPayment = function() {
-      const cardName   = document.getElementById('cardName').value.trim();
-      const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
-      const cardExpiry = document.getElementById('cardExpiry').value.trim();
-      const cardCVV    = document.getElementById('cardCVV').value.trim();
-      const errEl      = document.getElementById('payError');
-      errEl.style.display = 'none';
-
-      if (!cardName) { errEl.textContent = 'Please enter the name on your card.'; errEl.style.display = 'block'; return; }
-      if (cardNumber.length < 16) { errEl.textContent = 'Please enter a valid 16-digit card number.'; errEl.style.display = 'block'; return; }
-      if (cardExpiry.replace(/\s/g, '').length < 4) { errEl.textContent = 'Please enter a valid expiry date.'; errEl.style.display = 'block'; return; }
-      if (cardCVV.length < 3) { errEl.textContent = 'Please enter your 3 or 4-digit security code.'; errEl.style.display = 'block'; return; }
-
-      const overlay = document.getElementById('processingOverlay');
-      const msgEl   = document.getElementById('processingMsg');
-      document.getElementById('payBtn').disabled = true;
-      overlay.classList.add('active');
-
-      setTimeout(() => { msgEl.textContent = 'Verifying card details...'; }, 800);
-      setTimeout(() => { msgEl.textContent = 'Authorising payment...'; }, 1800);
-      setTimeout(() => { msgEl.textContent = 'Payment confirmed! Updating your access...'; }, 2800);
-      setTimeout(() => { window.location.href = 'extension-success.html'; }, 3800);
+    window.goToStripe = function() {
+      if (EXTENSION_STRIPE_LINK === 'PENDING_STRIPE_LINK') {
+        alert('Online payment for extensions is coming soon. Please email emily@dentalnurse.training to arrange your extension.');
+        return;
+      }
+      window.location.href = EXTENSION_STRIPE_LINK;
     };
   </script>
 </body>
