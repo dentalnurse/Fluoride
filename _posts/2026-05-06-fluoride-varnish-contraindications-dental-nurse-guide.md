@@ -157,7 +157,7 @@ at every visit. Never assume the situation is the same as last time.
 When in doubt, defer and discuss. That is always the right call.
 
 Pre-treatment assessment is covered in full on our course, alongside 
-contraindication screening, documentation and GDC compliance. If you 
+contraindication screening, documentation and GDC Scope of Practice requirements. If you 
 are not yet qualified to apply fluoride varnish independently, 
 [find out more about the Dental Nurse Training Certificate here.](https://dentalnurse.github.io/Fluoride/enrol.html)
 
