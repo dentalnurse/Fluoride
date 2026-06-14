@@ -68,6 +68,7 @@
         <div class="admin-tab" onclick="switchAdminTab('all')">👥 All Learners</div>
         <div class="admin-tab" onclick="switchAdminTab('submissions')">📬 Submissions</div>
         <div class="admin-tab" onclick="switchAdminTab('content')">✏️ Course Content</div>
+        <div class="admin-tab" onclick="switchAdminTab('ec')">🏥 EC Requests <span id="ecBadge" style="display:none;background:#EF4444;color:#fff;border-radius:100px;padding:0.1rem 0.45rem;font-size:0.72rem;font-weight:700;margin-left:0.35rem"></span></div>
         <div class="admin-tab" onclick="switchAdminTab('audit')">📋 Audit / QA</div>
       </div>
 
@@ -116,7 +117,7 @@
     import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp }
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, increment, serverTimestamp }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const app  = initializeApp(FIREBASE_CONFIG);
@@ -127,6 +128,7 @@
     let currentTab          = 'pending';
     let supervisorAgreements = {};
     let logbookSignoffs      = {};
+    let ecRequests           = [];
 
     // ── Auth ───────────────────────────────────────────────────────────────
     onAuthStateChanged(auth, (user) => {
@@ -173,6 +175,16 @@
       } catch(e) {
         console.warn('Could not load logbook signoffs:', e.message);
       }
+      try {
+        const ecSnap = await getDocs(collection(db, 'ecRequests'));
+        ecRequests = ecSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const pendingEC = ecRequests.filter(r => r.status === 'pending').length;
+        const badge = document.getElementById('ecBadge');
+        if (pendingEC > 0) { badge.textContent = pendingEC; badge.style.display = 'inline'; }
+        else { badge.style.display = 'none'; }
+      } catch(e) {
+        console.warn('Could not load EC requests:', e.message);
+      }
       updateStats();
       renderTab(currentTab);
     }
@@ -193,7 +205,7 @@
     window.switchAdminTab = (tab) => {
       currentTab = tab;
       document.querySelectorAll('.admin-tab').forEach((t, i) => {
-        t.classList.toggle('active', ['pending','all','submissions','content','audit'][i] === tab);
+        t.classList.toggle('active', ['pending','all','submissions','content','ec','audit'][i] === tab);
       });
       renderTab(tab);
     };
@@ -204,6 +216,7 @@
       if (tab === 'all')         { renderAllTab(el); return; }
       if (tab === 'submissions') { renderSubmissionsTab(el); return; }
       if (tab === 'content')     { renderContentTab(el); return; }
+      if (tab === 'ec')          { renderECTab(el); return; }
       if (tab === 'audit')       { renderAuditTab(el); return; }
     }
 
@@ -487,6 +500,106 @@
 
       drawEditor();
     }
+
+    // ── EC Requests tab ───────────────────────────────────────────────────
+    function renderECTab(el) {
+      const fmt = (ts) => {
+        if (!ts) return '-';
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      };
+
+      if (!ecRequests.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No extenuating circumstances applications yet.</div>';
+        return;
+      }
+
+      const statusColour = { pending:'#FEF3C7', approved:'#D1FAE5', declined:'#FEE2E2' };
+      const statusText   = { pending:'⏳ Pending', approved:'✅ Approved', declined:'❌ Declined' };
+
+      el.innerHTML = '<div style="padding:1.5rem 0">'
+        + ecRequests.sort((a,b) => {
+            const ta = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(0);
+            const tb = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(0);
+            if (a.status==='pending' && b.status!=='pending') return -1;
+            if (b.status==='pending' && a.status!=='pending') return 1;
+            return tb - ta;
+          }).map(r => `
+          <div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+              <div>
+                <strong style="font-size:1rem">${r.name||'-'}</strong>
+                <span style="color:var(--ink-light);font-size:0.85rem;margin-left:0.5rem">${r.email||''}</span>
+                ${r.gdc ? `<span style="color:var(--ink-light);font-size:0.82rem"> &middot; GDC: ${r.gdc}</span>` : ''}
+                <div style="font-size:0.78rem;color:var(--ink-light);margin-top:0.2rem">Submitted: ${fmt(r.submittedAt)}</div>
+              </div>
+              <span style="background:${statusColour[r.status]||'#F3F4F6'};padding:0.3rem 0.85rem;border-radius:100px;font-size:0.8rem;font-weight:700;white-space:nowrap">${statusText[r.status]||r.status}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 1.5rem;font-size:0.85rem;margin-bottom:1rem;color:var(--ink-mid)">
+              <div><span style="color:var(--ink-light)">Type:</span> ${r.type||'-'}</div>
+              <div><span style="color:var(--ink-light)">Progress:</span> ${r.progress||'-'}</div>
+              <div><span style="color:var(--ink-light)">From:</span> ${r.dateFrom||'-'}</div>
+              <div><span style="color:var(--ink-light)">To:</span> ${r.dateTo||'-'}</div>
+              <div style="grid-column:1/-1"><span style="color:var(--ink-light)">Expected completion:</span> ${r.expectedCompletion||'-'}</div>
+            </div>
+            <div style="background:var(--off-white);border-radius:var(--radius);padding:0.85rem 1rem;font-size:0.88rem;color:var(--ink-mid);line-height:1.7;margin-bottom:${r.status==='pending'?'1rem':'0'}">
+              <strong style="color:var(--ink);display:block;margin-bottom:0.25rem">Description:</strong>
+              ${r.description||'-'}
+            </div>
+            ${r.adminNote ? `<div style="background:#FEF3C7;border-radius:var(--radius);padding:0.75rem 1rem;font-size:0.85rem;color:#92400E;margin-bottom:${r.status==='pending'?'1rem':'0'}"><strong>Your note:</strong> ${r.adminNote}</div>` : ''}
+            ${r.status === 'pending' ? `
+              <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center">
+                <input type="text" id="ecNote-${r.id}" placeholder="Optional note to learner..." style="flex:1;min-width:200px;padding:0.55rem 0.85rem;border:1.5px solid var(--border);border-radius:var(--radius);font-family:var(--font);font-size:0.85rem"/>
+                <button class="btn btn-success btn-sm" onclick="decideEC('${r.id}','approved','${r.uid}','${r.email}','${r.name}')">✅ Approve (grant free extension)</button>
+                <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:1px solid #FECACA" onclick="decideEC('${r.id}','declined','${r.uid}','${r.email}','${r.name}')">❌ Decline</button>
+              </div>` : ''}
+          </div>`).join('')
+        + '</div>';
+    }
+
+    window.decideEC = async (ecId, decision, learnerUid, learnerEmail, learnerName) => {
+      const note = document.getElementById('ecNote-' + ecId)?.value.trim() || '';
+      const confirmed = confirm(decision === 'approved'
+        ? 'Approve this application and grant a free 1-month extension?'
+        : 'Decline this application? The learner will be notified.');
+      if (!confirmed) return;
+
+      try {
+        // Update EC request status
+        await updateDoc(doc(db, 'ecRequests', ecId), {
+          status: decision, adminNote: note, decidedAt: serverTimestamp()
+        });
+
+        // If approved, grant extension in learner record
+        if (decision === 'approved' && learnerUid) {
+          await updateDoc(doc(db, 'learners', learnerUid), {
+            extensionMonths: increment(1),
+            extensionUpdatedAt: serverTimestamp(),
+            extensionReason: 'Extenuating circumstances approved'
+          });
+        }
+
+        // Email learner
+        if (typeof emailjs !== 'undefined') {
+          const approvedMsg = 'Hi ' + learnerName + ',\n\nWe have reviewed your extenuating circumstances application and are pleased to confirm that a free 1-month extension has been granted to your course.\n\n' + (note ? 'Note from your assessor: ' + note + '\n\n' : '') + 'Your access has been updated automatically. Please log in to continue your course:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nIf you have any questions, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training';
+          const declinedMsg = 'Hi ' + learnerName + ',\n\nThank you for submitting your extenuating circumstances application. Unfortunately, after careful consideration, we are unable to grant a free extension in this instance.\n\n' + (note ? 'Note from your assessor: ' + note + '\n\n' : '') + 'You can still purchase a 1-month extension for £12 at:\nhttps://dentalnurse.github.io/Fluoride/extension-payment.html\n\nIf you would like to discuss your situation further, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training';
+
+          emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+            to_email: learnerEmail, to_name: learnerName,
+            learner_name: learnerName, learner_email: learnerEmail, learner_gdc: '',
+            submission_type: 'EC Application ' + (decision === 'approved' ? 'Approved' : 'Declined'),
+            file_url: 'N/A', submitted_at: new Date().toLocaleString('en-GB'),
+            message: decision === 'approved' ? approvedMsg : declinedMsg
+          }).catch(() => {});
+        }
+
+        showToast(decision === 'approved' ? 'Extension granted ✅' : 'Application declined', decision === 'approved' ? 'success' : '');
+        await loadLearners();
+      } catch(e) {
+        console.error(e);
+        showToast('Something went wrong. Please try again.', 'error');
+      }
+    };
 
     // ── Audit / QA tab ────────────────────────────────────────────────────
     function renderAuditTab(el) {
