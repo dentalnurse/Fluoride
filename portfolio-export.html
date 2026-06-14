@@ -190,9 +190,9 @@
 
     // ── Written tasks ─────────────────────────────────────────────────────
     const writtenTasks = [
-      { key: 'writtenTask1', label: 'Task 1 — Consent process', prompt: 'Explain the consent process as it applies to fluoride varnish application.' },
-      { key: 'writtenTask2', label: 'Task 2 — GDC responsibilities', prompt: 'Explain your responsibilities as a GDC registrant and the professional and legal requirements when applying fluoride varnish.' },
-      { key: 'writtenTask3', label: 'Task 3 — Fluoride science', prompt: 'Explain the science of fluoride and how it prevents dental caries.' },
+      { key: 'writtenTask1', label: 'Task 1 - Consent process', prompt: 'Explain the consent process as it applies to fluoride varnish application.' },
+      { key: 'writtenTask2', label: 'Task 2 - GDC responsibilities', prompt: 'Explain your responsibilities as a GDC registrant and the professional and legal requirements when applying fluoride varnish.' },
+      { key: 'writtenTask3', label: 'Task 3 - Fluoride science', prompt: 'Explain the science of fluoride and how it prevents dental caries.' },
     ];
     const writtenHtml = writtenTasks.map(t => {
       const text = l[t.key] || '';
@@ -269,7 +269,7 @@
                alt="Dental Nurse Training" onerror="this.style.display='none'"/>
         </div>
         <h1>Certificate in Fluoride Varnish Application</h1>
-        <div class="subtitle">Learner Portfolio — Dental Nurse Training Ltd</div>
+        <div class="subtitle">Learner Portfolio - Dental Nurse Training Ltd</div>
         <div class="meta-grid">
           <div class="meta-item"><div class="mi-label">Learner</div><div class="mi-value">${esc(l.name||'-')}</div></div>
           <div class="meta-item"><div class="mi-label">GDC Number</div><div class="mi-value">${esc(l.gdc||'-')}</div></div>
