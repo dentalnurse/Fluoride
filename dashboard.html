@@ -82,7 +82,7 @@
         const extensionMonths = learner.extensionMonths || 0;
         if (enrolledAt) {
           const expiryDate = new Date(enrolledAt);
-          expiryDate.setMonth(expiryDate.getMonth() + 3 + extensionMonths);
+          expiryDate.setMonth(expiryDate.getMonth() + 4 + extensionMonths);
           const now = new Date();
           const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
           if (daysUntilExpiry <= 0) {
@@ -490,7 +490,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
               <li>Complete <strong>two clinical case studies</strong></li>
               <li>Write a <strong>final reflective account</strong> (300-500 words)</li>
             </ul>
-            <p style="margin-bottom:0;font-size:0.9rem">Course access: <strong>3 months</strong> from enrolment. Extensions are available at £12 per additional month.</p>
+            <p style="margin-bottom:0;font-size:0.9rem">Course access: <strong>4 months</strong> from enrolment. Extensions are available at £12 per additional month.</p>
           </div>
 
           <div class="content-card" style="margin-bottom:1.25rem">
@@ -514,7 +514,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
                 ['d3','All work I submit will be entirely my own. I will not use AI-generated content, plagiarise, or present others\' work as my own'],
                 ['d4','I understand that falsifying logbook entries or supervised practice records is a serious breach of GDC Standards that could result in fitness to practise proceedings'],
                 ['d5','I will ensure all clinical supervisors I register are GDC-registered and were physically present during the applications I record'],
-                ['d6','I understand the course lasts 3 months from enrolment and that I am responsible for managing my time accordingly'],
+                ['d6','I understand the course lasts 4 months from enrolment and that I am responsible for managing my time accordingly'],
                 ['d7','I consent to Dental Nurse Training storing and processing my personal data for the purpose of administering this course and issuing my CPD certificate'],
               ].map(([id,txt]) => `<label style="display:flex;align-items:flex-start;gap:0.75rem;margin-bottom:0.85rem;cursor:pointer;font-size:0.9rem;line-height:1.55">
                 <input type="checkbox" id="${id}" style="width:18px;height:18px;flex-shrink:0;margin-top:0.18rem;accent-color:#005A5F" onchange="checkDecReady()"/>
