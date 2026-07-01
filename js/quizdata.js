@@ -3,17 +3,17 @@ const QUIZ_DATA = {
   1: { // Fluoride Science and Caries Prevention
     title: "Module 1 Quiz - Fluoride Science and Caries Prevention",
     questions: [
-      { q: "What is the concentration of fluoride in standard UK fluoride varnish?", options: ["1,000 ppm", "5,000 ppm", "22,600 ppm", "10,000 ppm"], correct: 2 },
+      { q: "Before using a fluoride varnish product, what must you always check?", options: ["The product's expiry date, batch number and manufacturer's guidance on concentration and dosing", "Only that the product is in your clinic", "The patient's date of birth", "The product packaging colour"], correct: 0 },
       { q: "Which of the following best describes how fluoride prevents dental caries?", options: ["It kills all bacteria in the mouth", "It promotes remineralisation and inhibits demineralisation", "It hardens the enamel permanently", "It neutralises dietary acid"], correct: 1 },
       { q: "What mineral does fluoride replace in the tooth structure to form a more acid-resistant compound?", options: ["Calcium phosphate", "Hydroxyapatite", "Fluorapatite", "Dentine"], correct: 2 },
-      { q: "According to Delivering Better Oral Health, how often should fluoride varnish be applied to children aged 3 and over at moderate/high caries risk?", options: ["Once a year", "At least twice a year", "Every 3 months", "Monthly"], correct: 1 },
+      { q: "For children at moderate/high caries risk, fluoride varnish application frequency should be determined by:", options: ["The nurse's preference", "The prescribing dentist's clinical judgement, guided by evidence-based guidance like Delivering Better Oral Health", "Once per year regardless", "Only when a parent requests it"], correct: 1 },
       { q: "What is the cariogenic bacteria most strongly associated with dental caries?", options: ["Lactobacillus acidophilus", "Streptococcus mutans", "Staphylococcus aureus", "Candida albicans"], correct: 1 },
       { q: "What pH level is considered the critical point at which enamel begins to demineralise?", options: ["pH 7.0", "pH 6.5", "pH 5.5", "pH 4.5"], correct: 2 },
       { q: "Which of these is NOT a mechanism by which fluoride prevents caries?", options: ["Remineralisation of enamel", "Inhibition of bacterial enzyme systems", "Increasing saliva flow", "Inhibition of demineralisation"], correct: 2 },
       { q: "Dental fluorosis is caused by:", options: ["Applying too much fluoride varnish", "Excessive fluoride ingestion during tooth development", "Fluoride allergy", "Using high-concentration toothpaste as an adult"], correct: 1 },
       { q: "Which UK guidance document provides the main evidence base for fluoride use in dental practice?", options: ["GDC Scope of Practice", "Delivering Better Oral Health", "HTM 01-05", "NICE CG19"], correct: 1 },
       { q: "The estimated toxic dose of fluoride is approximately:", options: ["1 mg/kg body weight", "2 mg/kg body weight", "5 mg/kg body weight", "10 mg/kg body weight"], correct: 2 },
-      { q: "A standard single-dose application of 22,600 ppm fluoride varnish contains approximately how much fluoride?", options: ["1–2 mg", "5–11 mg", "25–50 mg", "100 mg"], correct: 1 },
+      { q: "For information about the exact fluoride content and application volume of a specific fluoride varnish product, where should you look?", options: ["The patient's dental history", "The product's specification sheet and manufacturer's guidance", "The GDC Standards", "Your clinic handbook"], correct: 1 },
       { q: "Which of the following is a natural source of fluoride?", options: ["Processed sugar", "Tea and fish", "Dairy products only", "Vitamin C supplements"], correct: 1 },
       { q: "Fluoride varnish is recommended for which of the following groups?", options: ["Adults at low caries risk only", "Children only", "Patients at moderate or high caries risk", "Patients with no dental history"], correct: 2 },
       { q: "What does remineralisation mean in the context of caries prevention?", options: ["Removal of existing fillings", "Re-deposition of minerals into demineralised enamel", "Replacement of fluoride after brushing", "Hardening of dentine"], correct: 1 },
@@ -45,7 +45,7 @@ const QUIZ_DATA = {
   3: { // Clinical Application and Safety
     title: "Module 3 Quiz - Clinical Application and Safety",
     questions: [
-      { q: "What is the recommended total dose of fluoride varnish per patient per application?", options: ["0.05–0.1 ml", "0.25–0.5 ml", "1–2 ml", "2–5 ml"], correct: 1 },
+      { q: "Who determines the specific application volume and technique for fluoride varnish?", options: ["The patient", "The manufacturer's guidance and the prescribing dentist's direction", "The nurse's experience", "NHS England guidelines only"], correct: 1 },
       { q: "In what order should tooth surfaces be prioritised during fluoride varnish application?", options: ["Anterior teeth first, then posterior", "Posterior teeth first, working anteriorly", "Random order is acceptable", "Only apply to upper teeth"], correct: 1 },
       { q: "Which surfaces should be given priority during application?", options: ["Buccal surfaces only", "Lingual surfaces only", "Occlusal pits, fissures, approximal margins and exposed root surfaces", "Incisal edges only"], correct: 2 },
       { q: "Why must teeth be dried before applying fluoride varnish?", options: ["It makes the varnish look better", "It allows the varnish to adhere properly to the tooth surface", "It is required by law", "To reduce bacteria"], correct: 1 },
