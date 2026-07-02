@@ -233,8 +233,13 @@
       if (!allPassed) { main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Locked</h3><p>Complete all five theory modules to unlock this section</p></div>'; return; }
       if (id === 'written') { renderWritten(main); return; }
       if (id === 'practical') {
+        const approvedCount = (learner.supervisors || []).filter(s => s.approved).length;
         if (!learner.supervisorsSubmitted) {
           main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Supervisors required</h3><p>Please register your clinical supervisors first</p><button class="btn btn-primary" style="margin-top:1rem" onclick="showSection(\'supervisors\')">Register supervisors</button></div>';
+          return;
+        }
+        if (approvedCount === 0) {
+          main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Awaiting supervisor approval</h3><p>Your logbook will unlock once at least one of your supervisors has been approved. Please check back shortly.</p><button class="btn btn-outline" style="margin-top:1rem" onclick="showSection(\'supervisors\')">View supervisors</button></div>';
           return;
         }
         renderPractical(main); return;
@@ -1055,7 +1060,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
         + listHtml
         + '<h3 style="margin-bottom:1rem">' + (sups.length > 0 ? 'Add another supervisor' : 'Add a supervisor') + '</h3>'
         + '<div class="form-group"><label>Supervisor full name *</label><input type="text" id="supName" placeholder="e.g. Dr Jane Smith"/></div>'
-        + '<div class="form-group"><label>Supervisor email</label><input type="text" id="supEmail" placeholder="e.g. jane.smith@practice.com"/></div>'
+        + '<div class="form-group"><label>Supervisor email *</label><input type="text" id="supEmail" placeholder="e.g. jane.smith@practice.com"/></div>'
         + '<div class="form-group"><label>Supervisor GDC number *</label><input type="text" id="supGDC" placeholder="e.g. 12345"/></div>'
         + '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.5rem">'
         + '<button class="btn btn-outline btn-sm" onclick="addSupervisorToList()">+ Add to list</button>'
@@ -1069,7 +1074,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
       const name = document.getElementById('supName').value.trim();
       const email = document.getElementById('supEmail').value.trim();
       const gdc = document.getElementById('supGDC').value.trim();
-      if (!name || !gdc) { showToast('Please enter supervisor name and GDC number.', 'error'); return; }
+      if (!name || !gdc || !email) { showToast('Please enter supervisor name, GDC number and email address.', 'error'); return; }
       const newSup = { name, email, gdc };
       if (!learner.supervisors) learner.supervisors = [];
       learner.supervisors.push(newSup);
@@ -1127,7 +1132,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
 
           <div class="content-card" style="margin-bottom:1.25rem">
             <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:0.85rem">Course Requirements</h2>
-            <p style="margin-bottom:0.75rem">The <strong>Dental Nurse Training Certificate in Fluoride Varnish Application</strong> is a 10-hour verifiable CPD course. To receive your certificate you must complete all of the following:</p>
+            <p style="margin-bottom:0.75rem">The <strong>Dental Nurse Training Fluoride Varnish Application Course</strong> is a 10-hour verifiable CPD course. To receive your certificate you must complete all of the following:</p>
             <ul style="margin:0 0 1rem 1.25rem;line-height:1.9;font-size:0.9rem">
               <li>Complete all <strong>five theory modules</strong> and pass each end-of-module MCQ (75% pass mark; unlimited retakes)</li>
               <li>Complete <strong>three written tasks</strong> (400-600 words each) and upload to the platform</li>
@@ -1350,7 +1355,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
         + '<div class="content-card" style="text-align:center;padding:3rem 2rem">'
         + '<div style="font-size:4rem;margin-bottom:1rem">🏆</div>'
         + '<h2 style="color:var(--teal-dark);margin-bottom:0.75rem">Congratulations, ' + (learner.name||'').split(' ')[0] + '!</h2>'
-        + '<p style="margin-bottom:1.75rem;max-width:480px;margin-left:auto;margin-right:auto">You have successfully completed all components of the <strong>Dental Nurse Training Certificate in Fluoride Varnish Application</strong>. Your certificate is ready to view and print.</p>'
+        + '<p style="margin-bottom:1.75rem;max-width:480px;margin-left:auto;margin-right:auto">You have successfully completed all components of the <strong>Dental Nurse Training Fluoride Varnish Application Course</strong>. Your certificate is ready to view and print.</p>'
         + '<a href="certificate.html" target="_blank" class="btn btn-primary btn-lg" style="margin-bottom:0.75rem">🎓 View &amp; Print Certificate</a>'
         + '<br/><a href="portfolio-export.html" target="_blank" class="btn btn-outline btn-lg" style="margin-bottom:1.25rem">📄 Download Portfolio</a>'
         + '<p style="font-size:0.85rem;color:var(--ink-light);margin-top:0.5rem">Your certificate will be available to download and print. Please allow up to 3 working days for your assessor to countersign.</p>'

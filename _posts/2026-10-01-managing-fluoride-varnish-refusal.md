@@ -169,7 +169,7 @@ feels pressured or dismissed may not come back at all.
 Consent and refusal are covered in full on our course, 
 alongside GDC scope of practice, contraindication screening 
 and documentation. [Find out more about the Dental Nurse 
-Training Certificate in Fluoride Varnish Application 
+Training Fluoride Varnish Application Course 
 here.](https://dentalnurse.github.io/Fluoride/enrol.html)
 
 ---

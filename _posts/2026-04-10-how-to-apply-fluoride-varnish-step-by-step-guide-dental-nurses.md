@@ -102,7 +102,7 @@ starting point, but clinical competence comes from structured
 training that covers the underpinning knowledge, supervised practice 
 and formal assessment.
 
-The Dental Nurse Training Certificate in Fluoride Varnish Application 
+The Dental Nurse Training Fluoride Varnish Application Course 
 covers everything above in depth, including GDC scope of practice, 
 patient assessment, consent, cross-infection control and 
 documentation, with assessor feedback at every stage.

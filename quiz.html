@@ -110,7 +110,17 @@ html
         const j = Math.floor(Math.random() * (i + 1));
         [bank[i], bank[j]] = [bank[j], bank[i]];
       }
-      const questions = bank.slice(0, Math.min(QUIZ_SIZE, bank.length));
+      // Shuffle options for each question so correct answer isn't always the same letter
+      const questions = bank.slice(0, Math.min(QUIZ_SIZE, bank.length)).map(q => {
+        const indices = q.options.map((_,i) => i);
+        for (let i = indices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        const shuffledOptions = indices.map(i => q.options[i]);
+        const shuffledCorrect = indices.indexOf(q.correct);
+        return { q: q.q, options: shuffledOptions, correct: shuffledCorrect };
+      });
       let current = 0, score = 0, answered = false;
 
       function draw() {

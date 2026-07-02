@@ -169,7 +169,7 @@ verifiable CPD, provided the provider meets the GDC's verifiable
 criteria and issues a certificate confirming the development 
 outcomes covered.
 
-Our Certificate in Fluoride Varnish Application records 10 hours 
+Our Fluoride Varnish Application Course records 10 hours 
 of verifiable CPD against GDC development outcomes C and D. That 
 is 10 hours of your 50 hour requirement covered in one structured 
 qualification, while also demonstrating the competence you need 

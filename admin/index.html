@@ -263,7 +263,7 @@
       if (allPassed) return {
         colour: '#1A7F4B', bg: '#D1FAE5', label: '🎉 All passed',
         emailSubject: 'Congratulations - Fluoride Varnish Certificate ready',
-        emailBody: (n, e) => `Hi ${n},\n\nFantastic news! You have successfully completed all elements of the Dental Nurse Training Certificate in Fluoride Varnish Application.\n\nYour certificate is now available in your course dashboard. Please log in to view and download it:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nWell done - this is a great achievement and will be a valuable addition to your GDC CPD record.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
+        emailBody: (n, e) => `Hi ${n},\n\nFantastic news! You have successfully completed all elements of the Dental Nurse Training Fluoride Varnish Application Course.\n\nYour certificate is now available in your course dashboard. Please log in to view and download it:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nWell done - this is a great achievement and will be a valuable addition to your GDC CPD record.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
       };
       if (allQuizzesPassed && !anyAssessmentStarted) return {
         colour: '#1D4ED8', bg: '#DBEAFE', label: '📝 Ready for assessments',
@@ -753,7 +753,7 @@
         promptEmail(
           l.email,
           'Your Dental Nurse Training Fluoride Varnish Certificate course is now active',
-          'Dear ' + l.name + ',\n\nCongratulations! Your Dental Nurse Training Certificate in Fluoride Varnish Application course is now active.\n\nYou can log in at:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nUse your email address (' + l.email + ') and the password you were sent separately.\n\nWork through the 5 theory modules in order, pass each quiz, then complete your written tasks, clinical logbook, case studies and final reflection.\n\nCourse duration: 3 months from today.\n\nIf you have any questions, please reply to this email or contact emily@dentalnurse.training.\n\nGood luck!\n\nEmily Bremner\nDental Nurse Training'
+          'Dear ' + l.name + ',\n\nCongratulations! Your Dental Nurse Training Fluoride Varnish Application Course course is now active.\n\nYou can log in at:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nUse your email address (' + l.email + ') and the password you were sent separately.\n\nWork through the 5 theory modules in order, pass each quiz, then complete your written tasks, clinical logbook, case studies and final reflection.\n\nCourse duration: 3 months from today.\n\nIf you have any questions, please reply to this email or contact emily@dentalnurse.training.\n\nGood luck!\n\nEmily Bremner\nDental Nurse Training'
         );
       }
       updateStats();
@@ -956,7 +956,7 @@
       promptEmail(
         l.email,
         'Welcome to your Dental Nurse Training Fluoride Varnish Application Certificate',
-        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Certificate in Fluoride Varnish Application!\n\nYour course is now active. You can log in at any time here:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks, clinical logbook, and case studies\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 3 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck - we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Fluoride Varnish Application Course!\n\nYour course is now active. You can log in at any time here:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks, clinical logbook, and case studies\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 3 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck - we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
       );
     };
 
@@ -977,7 +977,7 @@
       promptEmail(
         l.email,
         'Your Dental Nurse Training course access is expiring soon',
-        'Dear ' + l.name + ',\n\nThis is a reminder that your access to the Dental Nurse Training Certificate in Fluoride Varnish Application will expire in approximately ' + daysStr + '.\n\nIf you would like to continue, you can purchase a 1-month extension for £12 using the link below:\n\n' + extLink + '\n\nAlternatively, if extenuating circumstances have prevented you from completing the course, you can apply for a free extension instead:\n\nhttps://dentalnurse.github.io/Fluoride/extenuating-circumstances.html\n\nIf you have already completed the course or do not wish to continue, no action is needed.\n\nIf you have any questions, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+        'Dear ' + l.name + ',\n\nThis is a reminder that your access to the Dental Nurse Training Fluoride Varnish Application Course will expire in approximately ' + daysStr + '.\n\nIf you would like to continue, you can purchase a 1-month extension for £12 using the link below:\n\n' + extLink + '\n\nAlternatively, if extenuating circumstances have prevented you from completing the course, you can apply for a free extension instead:\n\nhttps://dentalnurse.github.io/Fluoride/extenuating-circumstances.html\n\nIf you have already completed the course or do not wish to continue, no action is needed.\n\nIf you have any questions, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
       );
     };
 
@@ -1159,7 +1159,7 @@
           promptEmail(
             l.email,
             'Congratulations - You have completed the Dental Nurse Training Fluoride Varnish Application Certificate!',
-            'Congratulations ' + l.name + '!\n\nWhat an achievement! You have successfully passed all three assessments for the Dental Nurse Training Certificate in Fluoride Varnish Application.\n\nYour certificate is now available to view and download from your course dashboard:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nThis certificate records 10 hours of verifiable CPD against GDC Outcomes C and D. You can use it as evidence of your CPD in your GDC Enhanced CPD record.\n\nAs a final request - it would mean a great deal to us if you could take 2 minutes to share your feedback on the course. Your thoughts help us improve the experience for future learners:\nhttps://forms.gle/SS25kq76yMiAPKiJA\n\nThank you for choosing Dental Nurse Training. It has been a pleasure supporting you through this qualification.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+            'Congratulations ' + l.name + '!\n\nWhat an achievement! You have successfully passed all three assessments for the Dental Nurse Training Fluoride Varnish Application Course.\n\nYour certificate is now available to view and download from your course dashboard:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nThis certificate records 10 hours of verifiable CPD against GDC Outcomes C and D. You can use it as evidence of your CPD in your GDC Enhanced CPD record.\n\nAs a final request - it would mean a great deal to us if you could take 2 minutes to share your feedback on the course. Your thoughts help us improve the experience for future learners:\nhttps://forms.gle/SS25kq76yMiAPKiJA\n\nThank you for choosing Dental Nurse Training. It has been a pleasure supporting you through this qualification.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
           );
         } else {
           promptEmail(
@@ -1197,7 +1197,7 @@
       promptEmail(
         s.email,
         'Supervisor agreement - Dental Nurse Training Fluoride Varnish Certificate (' + l.name + ')',
-        'Dear ' + s.name + ',\n\nYou have been registered as a clinical supervisor by ' + l.name + ' for their Dental Nurse Training Certificate in Fluoride Varnish Application.\n\nPlease click the link below to read the supervisor guidance and sign the online supervisor agreement (this takes approximately 5 minutes):\n\n' + link + '\n\nYou will be asked to confirm your GDC registration number as part of the agreement. Once you have signed, your details will be returned to the learner\'s course record and reviewed by our assessor.\n\nIf you have any questions, please do not hesitate to contact me.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+        'Dear ' + s.name + ',\n\nYou have been registered as a clinical supervisor by ' + l.name + ' for their Dental Nurse Training Fluoride Varnish Application Course.\n\nPlease click the link below to read the supervisor guidance and sign the online supervisor agreement (this takes approximately 5 minutes):\n\n' + link + '\n\nYou will be asked to confirm your GDC registration number as part of the agreement. Once you have signed, your details will be returned to the learner\'s course record and reviewed by our assessor.\n\nIf you have any questions, please do not hesitate to contact me.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
       );
     };
 
