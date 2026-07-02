@@ -189,6 +189,11 @@
           main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Supervisors required</h3><p>Please register your clinical supervisors first</p><button class="btn btn-primary" style="margin-top:1rem" onclick="showSection(\'supervisors\')">Register supervisors</button></div>';
           return;
         }
+        const hasApprovedSupervisor = learner.supervisors && learner.supervisors.some(s => s.approved);
+        if (!hasApprovedSupervisor) {
+          main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">⏳</div><h3>Awaiting supervisor approval</h3><p>Your supervisor must be approved by your assessor before you can start logging entries. You will be notified once approval is confirmed.</p><button class="btn btn-outline" style="margin-top:1rem" onclick="showSection(\'supervisors\')">View supervisors</button></div>';
+          return;
+        }
         renderPractical(main); return;
       }
       if (id === 'reflection') { renderReflection(main); return; }
