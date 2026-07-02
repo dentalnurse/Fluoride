@@ -18,6 +18,7 @@ const QUIZ_DATA = {
       { q: "Fluoride varnish is recommended for which of the following groups?", options: ["Adults at low caries risk only", "Children only", "Patients at moderate or high caries risk", "Patients with no dental history"], correct: 2 },
       { q: "What does remineralisation mean in the context of caries prevention?", options: ["Removal of existing fillings", "Re-deposition of minerals into demineralised enamel", "Replacement of fluoride after brushing", "Hardening of dentine"], correct: 1 },
       { q: "Systematic reviews have shown fluoride varnish reduces caries in the permanent dentition by approximately:", options: ["10%", "20%", "43%", "80%"], correct: 2 },
+      { q: "The maximum permitted value of fluoride in drinking water is:", options: ["0.3 mg/L", "0.7 mg/L", "1.0 mg/L", "1.5 mg/L"], correct: 3 },
     ]
   },
 
@@ -55,7 +56,7 @@ const QUIZ_DATA = {
       { q: "What immediate action should NOT be taken if acute fluoride toxicity is suspected?", options: ["Calling 999", "Giving milk or water if conscious", "Inducing vomiting", "Monitoring vital signs"], correct: 2 },
       { q: "Which of the following is the correct 3-stage decontamination cycle for reusable instruments?", options: ["Rinse, disinfect, store", "Clean, disinfect, sterilise", "Wipe, autoclave, store", "Soak, rinse, dry"], correct: 1 },
       { q: "What type of autoclave is required to sterilise wrapped instruments per HTM 01-05?", options: ["Class N", "Class B", "Class S", "Class A"], correct: 1 },
-      { q: "After applying fluoride varnish, the patient should avoid eating for:", options: ["15 minutes", "1 hour", "4 hours", "24 hours"], correct: 2 },
+      { q: "After applying fluoride varnish, the patient should avoid eating for:", options: ["15 minutes", "30 minutes", "1 hour", "4 hours"], correct: 1 },
       { q: "When should teeth NOT be brushed following fluoride varnish application?", options: ["For 15 minutes only", "Until the following morning", "For 48 hours", "Brushing can continue immediately"], correct: 1 },
       { q: "What should be placed in the buccal sulcus to assist with moisture control during application?", options: ["Gauze squares", "Cotton wool rolls or dry guards", "Tissue paper", "Nothing is needed"], correct: 1 },
       { q: "What is colophony and why is it clinically relevant?", options: ["A type of fluoride compound", "A resin constituent of many fluoride varnishes that is a known allergen", "A dental instrument", "A type of isolation material"], correct: 1 },
@@ -91,7 +92,7 @@ const QUIZ_DATA = {
       { q: "When a patient expresses concern about fluoride, what should be your first response?", options: ["Immediately correct them with facts", "Listen without judgment and allow them to explain fully", "Document the refusal and end the appointment", "Call the dentist in immediately"], correct: 1 },
       { q: "Which of the following statements about fluoride varnish safety is accurate?", options: ["Fluoride varnish causes fluorosis in adults", "There is no credible scientific evidence linking correctly applied topical fluoride to neurotoxicity or systemic disease", "Fluoride varnish should not be used in children under 12", "All fluoride products are prescription-only medicines"], correct: 1 },
       { q: "A patient states 'I've read online that fluoride causes cancer.' How should you respond?", options: ["Tell them the website is wrong and proceed", "Acknowledge their concern, share evidence-based information, and respect their right to decide", "Refuse to provide any treatment until they change their view", "Document the refusal immediately without discussion"], correct: 1 },
-      { q: "Fluoride varnish has been used safely in the UK and across Europe since approximately:", options: ["The 1960s", "The 1970s", "The 1980s", "The 2000s"], correct: 2 },
+      { q: "Fluoride varnish was first developed and introduced to the dental market in Europe in:", options: ["The 1950s", "1964", "The 1970s", "The 1980s"], correct: 1 },
       { q: "If a patient declines fluoride varnish after being given accurate information, what must you do?", options: ["Apply a reduced dose without telling them", "Respect their decision, document the refusal clearly, and inform the supervising dentist", "Refuse to see the patient again", "Apply only to posterior teeth as a compromise"], correct: 1 },
       { q: "Why might a parent specifically be concerned about fluoride for their child?", options: ["Children don't need fluoride", "Concerns about dental fluorosis, often based on misunderstanding of the risk", "Fluoride varnish is not recommended for children", "Parents are not entitled to refuse treatment for children"], correct: 1 },
       { q: "Which of the following is a key fact to share with a patient who is concerned about fluoride being 'unnatural'?", options: ["Fluoride is a synthetic compound added to dental products for profit", "Fluoride is a naturally occurring mineral found in food, water and the environment", "Fluoride only exists in drinking water", "Fluoride is a pharmaceutical drug"], correct: 1 },

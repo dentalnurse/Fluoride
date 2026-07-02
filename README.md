@@ -1,6 +1,6 @@
-# DNT — Certificate in Fluoride Varnish Application
+# DNT — Fluoride Varnish Application Course
 
-Website for the DNT Certificate in Fluoride Varnish Application, delivered by Em Bremner of DNT — Dental Nurse Training.
+Website for the DNT Fluoride Varnish Application Course, delivered by Em Bremner of DNT — Dental Nurse Training.
 
 ## Hosting on GitHub Pages
 
