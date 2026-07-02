@@ -410,7 +410,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
         + listHtml
         + '<h3 style="margin-bottom:1rem">' + (sups.length > 0 ? 'Add another supervisor' : 'Add a supervisor') + '</h3>'
         + '<div class="form-group"><label>Supervisor full name *</label><input type="text" id="supName" placeholder="e.g. Dr Jane Smith"/></div>'
-        + '<div class="form-group"><label>Supervisor email</label><input type="text" id="supEmail" placeholder="e.g. jane.smith@practice.com"/></div>'
+        + '<div class="form-group"><label>Supervisor email *</label><input type="text" id="supEmail" placeholder="e.g. jane.smith@practice.com"/></div>'
         + '<div class="form-group"><label>Supervisor GDC number *</label><input type="text" id="supGDC" placeholder="e.g. 12345"/></div>'
         + '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.5rem">'
         + '<button class="btn btn-outline btn-sm" onclick="addSupervisorToList()">+ Add to list</button>'
@@ -424,7 +424,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
       const name = document.getElementById('supName').value.trim();
       const email = document.getElementById('supEmail').value.trim();
       const gdc = document.getElementById('supGDC').value.trim();
-      if (!name || !gdc) { showToast('Please enter supervisor name and GDC number.', 'error'); return; }
+      if (!name || !email || !gdc) { showToast('Please enter supervisor name, email and GDC number.', 'error'); return; }
       const newSup = { name, email, gdc };
       if (!learner.supervisors) learner.supervisors = [];
       learner.supervisors.push(newSup);
@@ -447,9 +447,9 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
       const name = document.getElementById('supName')?.value.trim();
       const email = document.getElementById('supEmail')?.value.trim();
       const gdc = document.getElementById('supGDC')?.value.trim();
-      if (name && gdc) {
+      if (name && email && gdc) {
         if (!learner.supervisors) learner.supervisors = [];
-        learner.supervisors.push({ name, email: email || '', gdc });
+        learner.supervisors.push({ name, email, gdc });
       }
       if (!learner.supervisors || learner.supervisors.length === 0) {
         showToast('Please add at least one supervisor.', 'error'); return;
