@@ -753,7 +753,7 @@
         promptEmail(
           l.email,
           'Your Dental Nurse Training Fluoride Varnish Certificate course is now active',
-          'Dear ' + l.name + ',\n\nCongratulations! Your Dental Nurse Training Fluoride Varnish Application Course course is now active.\n\nYou can log in at:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nUse your email address (' + l.email + ') and the password you were sent separately.\n\nWork through the 5 theory modules in order, pass each quiz, then complete your written tasks, clinical logbook, case studies and final reflection.\n\nCourse duration: 3 months from today.\n\nIf you have any questions, please reply to this email or contact emily@dentalnurse.training.\n\nGood luck!\n\nEmily Bremner\nDental Nurse Training'
+          'Dear ' + l.name + ',\n\nCongratulations! Your Dental Nurse Training Fluoride Varnish Application Course course is now active.\n\nYou can log in at:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nUse your email address (' + l.email + ') and the password you were sent separately.\n\nWork through the 5 theory modules in order, pass each quiz, then complete your written tasks, clinical logbook, case studies and final reflection.\n\nCourse duration: 4 months from today.\n\nIf you have any questions, please reply to this email or contact emily@dentalnurse.training.\n\nGood luck!\n\nEmily Bremner\nDental Nurse Training'
         );
       }
       updateStats();
@@ -956,7 +956,7 @@
       promptEmail(
         l.email,
         'Welcome to your Dental Nurse Training Fluoride Varnish Application Certificate',
-        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Fluoride Varnish Application Course!\n\nYour course is now active. You can log in at any time here:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks, clinical logbook, and case studies\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 3 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck - we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Fluoride Varnish Application Course!\n\nYour course is now active. You can log in at any time here:\nhttps://dentalnurse.github.io/Fluoride/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks, clinical logbook, and case studies\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 4 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck - we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
       );
     };
 
@@ -1224,7 +1224,7 @@
     function daysUntilExpiry(l) {
       if (!l.enrolledAt?.toDate) return null;
       const expiry = new Date(l.enrolledAt.toDate());
-      expiry.setMonth(expiry.getMonth() + 3 + (l.extensionMonths || 0));
+      expiry.setMonth(expiry.getMonth() + 4 + (l.extensionMonths || 0));
       return Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24));
     }
 
