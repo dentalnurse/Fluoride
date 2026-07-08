@@ -35,7 +35,7 @@ const EXTENSION_STRIPE_LINK  = "https://buy.stripe.com/test_aFa4gAgDe9t68PL915bZ
 const COURSE_PRICE           = "£120";
 const COURSE_ORIGINAL_PRICE  = "£150";
 const EXTENSION_FEE          = "£12";
-const COURSE_DURATION_MONTHS = 3;
+const COURSE_DURATION_MONTHS = 4;
 
 // ── Course structure ─────────────────────────────────────────────────────
 const MODULES = [

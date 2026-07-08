@@ -130,6 +130,15 @@
     let logbookSignoffs      = {};
     let ecRequests           = [];
 
+    // Escape for HTML text/attribute content
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    // Escape for embedding inside a single-quoted JS string within a double-quoted onclick="" attribute
+    function escJsAttr(s) {
+      return String(s || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
     // ── Auth ───────────────────────────────────────────────────────────────
     onAuthStateChanged(auth, (user) => {
       if (user && ADMIN_EMAILS.includes(user.email)) {
@@ -235,12 +244,12 @@
           </tr></thead>
           <tbody>
             ${pending.map(l => `<tr>
-              <td><div class="td-name">${l.name}</div></td>
-              <td><div>${l.email||'-'}</div><div class="td-email">GDC: ${l.gdc||'-'}</div></td>
+              <td><div class="td-name">${esc(l.name)}</div></td>
+              <td><div>${esc(l.email)||'-'}</div><div class="td-email">GDC: ${esc(l.gdc)||'-'}</div></td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'}</td>
               <td>
                 <div class="admin-actions">
-                  <button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${l.name}')">✓ Approve</button>
+                  <button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${escJsAttr(l.name)}')">✓ Approve</button>
                   <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">View</button>
                 </div>
               </td>
@@ -308,13 +317,13 @@
         const flag = getCommFlag(l);
         return `<tr style="${rowStyle}">
           <td>
-            <div class="td-name" style="${flag ? 'color:'+flag.colour+';font-weight:700' : ''}">${l.name}</div>
+            <div class="td-name" style="${flag ? 'color:'+flag.colour+';font-weight:700' : ''}">${esc(l.name)}</div>
             ${flag ? `<div style="margin-top:0.25rem;display:flex;align-items:center;gap:0.4rem">
               <span style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:9999px;background:${flag.bg};color:${flag.colour};font-weight:600">${flag.label}</span>
               <button onclick="showEmailTemplate('${l.id}')" style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:9999px;background:#F3F4F6;border:1px solid var(--border);cursor:pointer;color:var(--ink-mid)">📧 Email</button>
             </div>` : ''}
           </td>
-          <td><div style="font-size:0.82rem">${l.email||'-'}</div><div class="td-email">GDC: ${l.gdc||'-'}</div></td>
+          <td><div style="font-size:0.82rem">${esc(l.email)||'-'}</div><div class="td-email">GDC: ${esc(l.gdc)||'-'}</div></td>
           <td style="display:flex;flex-wrap:wrap;gap:0.3rem;align-items:center;padding-top:0.6rem">
             ${l.unlocked ? '<span class="pill pill-green">Active</span>' : '<span class="pill pill-orange">Pending</span>'}
             ${expBadge}
@@ -326,7 +335,7 @@
           <td>
             <div class="admin-actions">
               <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">Manage</button>
-              ${!l.unlocked ? `<button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${l.name}')">Approve</button>` : ''}
+              ${!l.unlocked ? `<button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${escJsAttr(l.name)}')">Approve</button>` : ''}
               ${days !== null && days <= 14 ? `<button class="btn btn-sm" style="background:#FFF3CD;color:#92400E;border:1px solid #F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Remind</button>` : ''}
             </div>
           </td>
@@ -352,17 +361,17 @@
       const body = flag.emailBody(l.name || 'there', l.email || '');
       document.getElementById('learnerModalContent').innerHTML = `
         <div class="modal-header">
-          <h3>📧 Email template - ${l.name}</h3>
+          <h3>📧 Email template - ${esc(l.name)}</h3>
           <button class="modal-close" onclick="closeModal()">×</button>
         </div>
-        <p style="font-size:0.85rem;color:var(--ink-light);margin-bottom:1rem">Copy and send via your email client to <strong>${l.email||'learner'}</strong>.</p>
+        <p style="font-size:0.85rem;color:var(--ink-light);margin-bottom:1rem">Copy and send via your email client to <strong>${esc(l.email)||'learner'}</strong>.</p>
         <div class="form-group">
           <label>Subject</label>
-          <input type="text" id="etSubject" value="${subject.replace(/"/g,'&quot;')}" readonly style="background:var(--off-white)"/>
+          <input type="text" id="etSubject" value="${esc(subject)}" readonly style="background:var(--off-white)"/>
         </div>
         <div class="form-group">
           <label>Body</label>
-          <textarea id="etBody" style="min-height:220px;font-size:0.85rem;line-height:1.7" readonly>${body}</textarea>
+          <textarea id="etBody" style="min-height:220px;font-size:0.85rem;line-height:1.7" readonly>${esc(body)}</textarea>
         </div>
         <div class="modal-footer">
           <button class="btn btn-outline btn-sm" onclick="copyToClip('etSubject','Subject copied!')">Copy subject</button>
@@ -411,21 +420,21 @@
           </tr></thead>
           <tbody>
             ${filtered.length ? filtered.map(({ l, type, label, url, feedback, passed, amended, at }) => `<tr>
-              <td><div class="td-name">${l.name}</div><div class="td-email">${l.email||'-'}</div></td>
+              <td><div class="td-name">${esc(l.name)}</div><div class="td-email">${esc(l.email)||'-'}</div></td>
               <td><span class="pill pill-teal">${label}</span></td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${at?.toDate ? at.toDate().toLocaleDateString('en-GB') : '-'}</td>
               <td>${type === 'written'
-                ? `<button class="btn btn-outline btn-sm" onclick="viewWrittenResponses('${l.id}','${l.name.replace(/'/g,"\\'") }')">👁 View responses</button>`
+                ? `<button class="btn btn-outline btn-sm" onclick="viewWrittenResponses('${l.id}','${escJsAttr(l.name)}')">👁 View responses</button>`
                 : type === 'practical'
-                  ? `<button class="btn btn-outline btn-sm" onclick="viewPracticalPortfolio('${l.id}','${l.name.replace(/'/g,"\\'")}')">👁 View portfolio</button>`
-                  : url ? url.split(', ').map(u=>`<a href="${u}" target="_blank" class="submission-link" style="display:block;margin-bottom:2px">📥 Download</a>`).join('') : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'
+                  ? `<button class="btn btn-outline btn-sm" onclick="viewPracticalPortfolio('${l.id}','${escJsAttr(l.name)}')">👁 View portfolio</button>`
+                  : url ? url.split(', ').map(u=>`<a href="${esc(u)}" target="_blank" class="submission-link" style="display:block;margin-bottom:2px">📥 Download</a>`).join('') : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'
               }</td>
               <td style="font-size:0.82rem">${passed ? '<span class="pill pill-green">Passed</span>' : amended ? '<span style="color:#D97706;font-weight:600">✏ Amendments requested</span>' : feedback ? '<span style="color:var(--teal-dark)">Feedback given</span>' : '<span style="color:var(--ink-light)">Awaiting review</span>'}</td>
               <td>
                 <div class="admin-actions">
-                  <button class="btn btn-primary btn-sm" onclick="openFeedbackModal('${l.id}','${type}','${l.name}')">${feedback ? 'Edit feedback' : 'Add feedback'}</button>
-                  ${!passed ? `<button class="btn btn-outline btn-sm" style="color:#D97706;border-color:#D97706" onclick="requestAmendments('${l.id}','${type}','${l.name.replace(/'/g,"\\'")}')">✏ Request amendments</button>` : ''}
-                  ${!passed ? `<button class="btn btn-success btn-sm" onclick="markPassed('${l.id}','${type}','${l.name}')">✓ Mark passed</button>` : ''}
+                  <button class="btn btn-primary btn-sm" onclick="openFeedbackModal('${l.id}','${type}','${escJsAttr(l.name)}')">${feedback ? 'Edit feedback' : 'Add feedback'}</button>
+                  ${!passed ? `<button class="btn btn-outline btn-sm" style="color:#D97706;border-color:#D97706" onclick="requestAmendments('${l.id}','${type}','${escJsAttr(l.name)}')">✏ Request amendments</button>` : ''}
+                  ${!passed ? `<button class="btn btn-success btn-sm" onclick="markPassed('${l.id}','${type}','${escJsAttr(l.name)}')">✓ Mark passed</button>` : ''}
                 </div>
               </td>
             </tr>`).join('') : '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--ink-light)">No submissions in this category.</td></tr>'}
@@ -528,30 +537,30 @@
           <div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
               <div>
-                <strong style="font-size:1rem">${r.name||'-'}</strong>
-                <span style="color:var(--ink-light);font-size:0.85rem;margin-left:0.5rem">${r.email||''}</span>
-                ${r.gdc ? `<span style="color:var(--ink-light);font-size:0.82rem"> &middot; GDC: ${r.gdc}</span>` : ''}
+                <strong style="font-size:1rem">${esc(r.name)||'-'}</strong>
+                <span style="color:var(--ink-light);font-size:0.85rem;margin-left:0.5rem">${esc(r.email)||''}</span>
+                ${r.gdc ? `<span style="color:var(--ink-light);font-size:0.82rem"> &middot; GDC: ${esc(r.gdc)}</span>` : ''}
                 <div style="font-size:0.78rem;color:var(--ink-light);margin-top:0.2rem">Submitted: ${fmt(r.submittedAt)}</div>
               </div>
               <span style="background:${statusColour[r.status]||'#F3F4F6'};padding:0.3rem 0.85rem;border-radius:100px;font-size:0.8rem;font-weight:700;white-space:nowrap">${statusText[r.status]||r.status}</span>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 1.5rem;font-size:0.85rem;margin-bottom:1rem;color:var(--ink-mid)">
-              <div><span style="color:var(--ink-light)">Type:</span> ${r.type||'-'}</div>
-              <div><span style="color:var(--ink-light)">Progress:</span> ${r.progress||'-'}</div>
-              <div><span style="color:var(--ink-light)">From:</span> ${r.dateFrom||'-'}</div>
-              <div><span style="color:var(--ink-light)">To:</span> ${r.dateTo||'-'}</div>
-              <div style="grid-column:1/-1"><span style="color:var(--ink-light)">Expected completion:</span> ${r.expectedCompletion||'-'}</div>
+              <div><span style="color:var(--ink-light)">Type:</span> ${esc(r.type)||'-'}</div>
+              <div><span style="color:var(--ink-light)">Progress:</span> ${esc(r.progress)||'-'}</div>
+              <div><span style="color:var(--ink-light)">From:</span> ${esc(r.dateFrom)||'-'}</div>
+              <div><span style="color:var(--ink-light)">To:</span> ${esc(r.dateTo)||'-'}</div>
+              <div style="grid-column:1/-1"><span style="color:var(--ink-light)">Expected completion:</span> ${esc(r.expectedCompletion)||'-'}</div>
             </div>
             <div style="background:var(--off-white);border-radius:var(--radius);padding:0.85rem 1rem;font-size:0.88rem;color:var(--ink-mid);line-height:1.7;margin-bottom:${r.status==='pending'?'1rem':'0'}">
               <strong style="color:var(--ink);display:block;margin-bottom:0.25rem">Description:</strong>
-              ${r.description||'-'}
+              ${esc(r.description)||'-'}
             </div>
-            ${r.adminNote ? `<div style="background:#FEF3C7;border-radius:var(--radius);padding:0.75rem 1rem;font-size:0.85rem;color:#92400E;margin-bottom:${r.status==='pending'?'1rem':'0'}"><strong>Your note:</strong> ${r.adminNote}</div>` : ''}
+            ${r.adminNote ? `<div style="background:#FEF3C7;border-radius:var(--radius);padding:0.75rem 1rem;font-size:0.85rem;color:#92400E;margin-bottom:${r.status==='pending'?'1rem':'0'}"><strong>Your note:</strong> ${esc(r.adminNote)}</div>` : ''}
             ${r.status === 'pending' ? `
               <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center">
                 <input type="text" id="ecNote-${r.id}" placeholder="Optional note to learner..." style="flex:1;min-width:200px;padding:0.55rem 0.85rem;border:1.5px solid var(--border);border-radius:var(--radius);font-family:var(--font);font-size:0.85rem"/>
-                <button class="btn btn-success btn-sm" onclick="decideEC('${r.id}','approved','${r.uid}','${r.email}','${r.name}')">✅ Approve (grant free extension)</button>
-                <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:1px solid #FECACA" onclick="decideEC('${r.id}','declined','${r.uid}','${r.email}','${r.name}')">❌ Decline</button>
+                <button class="btn btn-success btn-sm" onclick="decideEC('${r.id}','approved','${r.uid}','${escJsAttr(r.email)}','${escJsAttr(r.name)}')">✅ Approve (grant free extension)</button>
+                <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:1px solid #FECACA" onclick="decideEC('${r.id}','declined','${r.uid}','${escJsAttr(r.email)}','${escJsAttr(r.name)}')">❌ Decline</button>
               </div>` : ''}
           </div>`).join('')
         + '</div>';
@@ -675,11 +684,11 @@
             </tr></thead>
             <tbody>
               ${rows.map(r => `<tr>
-                <td style="${tdStyle};font-family:monospace;font-size:0.75rem;color:var(--teal-dark)">${r.certNumber}</td>
-                <td style="${tdStyle};font-weight:600">${r.name}</td>
-                <td style="${tdStyle};color:var(--ink-mid)">${r.email}</td>
-                <td style="${tdStyle}">${r.gdc}</td>
-                <td style="${tdStyle};color:var(--ink-mid)">${r.workplace}</td>
+                <td style="${tdStyle};font-family:monospace;font-size:0.75rem;color:var(--teal-dark)">${esc(r.certNumber)}</td>
+                <td style="${tdStyle};font-weight:600">${esc(r.name)}</td>
+                <td style="${tdStyle};color:var(--ink-mid)">${esc(r.email)}</td>
+                <td style="${tdStyle}">${esc(r.gdc)}</td>
+                <td style="${tdStyle};color:var(--ink-mid)">${esc(r.workplace)}</td>
                 <td style="${tdStyle}">${r.enrolled}</td>
                 <td style="${tdStyle}">${r.approved}</td>
                 <td style="${tdStyle};text-align:center;color:${r.m1!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m1}</td>
@@ -796,8 +805,8 @@
                 <div style="margin-top:0.75rem;background:#F0FAF5;border:1px solid #A7D7C5;border-radius:6px;padding:0.75rem 1rem;font-size:0.82rem">
                   <div style="font-weight:700;color:#1A7F4B;margin-bottom:0.4rem">✍️ Signed agreement</div>
                   <div style="display:grid;grid-template-columns:auto 1fr;gap:0.2rem 0.75rem;color:var(--ink-mid)">
-                    <span style="color:var(--ink-light)">Name:</span><span>${agr.signedName || '-'}</span>
-                    <span style="color:var(--ink-light)">GDC:</span><span>${agr.signedGdc || '-'}</span>
+                    <span style="color:var(--ink-light)">Name:</span><span>${esc(agr.signedName)||'-'}</span>
+                    <span style="color:var(--ink-light)">GDC:</span><span>${esc(agr.signedGdc)||'-'}</span>
                     <span style="color:var(--ink-light)">Signed:</span><span>${agr.signedAt?.toDate ? agr.signedAt.toDate().toLocaleString('en-GB') : '-'}</span>
                   </div>
                   <div style="margin-top:0.5rem;color:var(--ink-light)">Confirmed: physical presence, GDC registration, countersigning responsibilities, authenticity declaration, availability to supervise.</div>
@@ -805,8 +814,8 @@
               return `<div style="padding:0.75rem 1rem;background:var(--off-white);border-radius:var(--radius);border:1px solid var(--border)">
                 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;flex-wrap:wrap">
                   <div style="flex:1">
-                    <div style="font-weight:700;font-size:0.88rem">${s.name}</div>
-                    <div style="font-size:0.8rem;color:var(--ink-light)">${s.email||'No email'} &middot; GDC: ${s.gdc}</div>
+                    <div style="font-weight:700;font-size:0.88rem">${esc(s.name)}</div>
+                    <div style="font-size:0.8rem;color:var(--ink-light)">${esc(s.email)||'No email'} &middot; GDC: ${esc(s.gdc)}</div>
                     ${signedPanel}
                   </div>
                   <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">${badge} ${actionBtn}</div>
@@ -818,7 +827,7 @@
 
       document.getElementById('learnerModalContent').innerHTML = `
         <div class="modal-header">
-          <h3>${l.name||'Unnamed learner'}</h3>
+          <h3>${esc(l.name)||'Unnamed learner'}</h3>
           <button class="modal-close" onclick="closeModal()">×</button>
         </div>
 
@@ -829,9 +838,9 @@
           </div>
           <div id="learnerViewMode">
             <table style="width:100%;font-size:0.9rem;border-collapse:collapse">
-              ${[['Name', l.name||'-'],['Email', l.email||'-'],['GDC', l.gdc||'-'],['Phone', l.phone||'-'],['Workplace', l.workplace||'-'],
+              ${[['Name', esc(l.name)||'-'],['Email', esc(l.email)||'-'],['GDC', esc(l.gdc)||'-'],['Phone', esc(l.phone)||'-'],['Workplace', esc(l.workplace)||'-'],
                  ['Status', l.unlocked?'Active':'Pending approval'],
-                 ['Declaration', l.declarationSigned ? '✅ Signed (' + (l.declarationSignedName||'') + ')' : '⏳ Not yet signed'],
+                 ['Declaration', l.declarationSigned ? '✅ Signed (' + esc(l.declarationSignedName) + ')' : '⏳ Not yet signed'],
                  ['Enrolled', l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'],
                  ['Module 1', mp[1]===2?'✅ Passed':mp[1]===1?'In progress':'Not started'],
                  ['Module 2', mp[2]===2?'✅ Passed':mp[2]===1?'In progress':'Not started'],
@@ -849,11 +858,11 @@
           </div>
           <div id="learnerEditMode" style="display:none">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">
-              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">Full name</label><input type="text" id="edit-name" value="${(l.name||'').replace(/"/g,'&quot;')}"/></div>
-              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">Email address</label><input type="email" id="edit-email" value="${(l.email||'').replace(/"/g,'&quot;')}"/></div>
-              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">GDC number</label><input type="text" id="edit-gdc" value="${(l.gdc||'').replace(/"/g,'&quot;')}"/></div>
-              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">Phone</label><input type="text" id="edit-phone" value="${(l.phone||'').replace(/"/g,'&quot;')}"/></div>
-              <div class="form-group" style="margin:0;grid-column:1/-1"><label style="font-size:0.8rem">Workplace</label><input type="text" id="edit-workplace" value="${(l.workplace||'').replace(/"/g,'&quot;')}"/></div>
+              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">Full name</label><input type="text" id="edit-name" value="${esc(l.name)}"/></div>
+              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">Email address</label><input type="email" id="edit-email" value="${esc(l.email)}"/></div>
+              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">GDC number</label><input type="text" id="edit-gdc" value="${esc(l.gdc)}"/></div>
+              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">Phone</label><input type="text" id="edit-phone" value="${esc(l.phone)}"/></div>
+              <div class="form-group" style="margin:0;grid-column:1/-1"><label style="font-size:0.8rem">Workplace</label><input type="text" id="edit-workplace" value="${esc(l.workplace)}"/></div>
             </div>
             <button class="btn btn-primary btn-sm" onclick="saveAdminLearnerEdits('${l.id}')">Save changes</button>
             <button class="btn btn-outline btn-sm" onclick="toggleEditLearner('${l.id}')">Cancel</button>
@@ -882,7 +891,7 @@
               ${uniqueSups.map(s => {
                 const confirmed = Object.values(logbookSignoffs).some(a => a.learnerUid === l.id && a.supervisorGdc === s.gdc && a.signedAt);
                 return `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1rem;background:var(--off-white);border-radius:var(--radius);border:1px solid var(--border);font-size:0.88rem">
-                  <div><strong>${s.name}</strong> <span style="color:var(--ink-light)">&middot; GDC: ${s.gdc}</span></div>
+                  <div><strong>${esc(s.name)}</strong> <span style="color:var(--ink-light)">&middot; GDC: ${esc(s.gdc)}</span></div>
                   ${confirmed
                     ? '<span style="background:#D1FAE5;color:#065F46;font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px">Confirmed</span>'
                     : '<span style="background:#FFF3CD;color:#92400E;font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px">Awaiting confirmation</span>'}
@@ -894,10 +903,10 @@
         })()}
         <div class="form-group" style="margin-top:1.25rem">
           <label>Internal notes (not visible to learner)</label>
-          <textarea id="adminNotes" style="min-height:80px">${l.notes||''}</textarea>
+          <textarea id="adminNotes" style="min-height:80px">${esc(l.notes)}</textarea>
         </div>
         <div class="modal-footer">
-          ${!l.unlocked ? `<button class="btn btn-success" onclick="approveLearner('${l.id}','${l.name}');closeModal()">✓ Approve learner</button>` : ''}
+          ${!l.unlocked ? `<button class="btn btn-success" onclick="approveLearner('${l.id}','${escJsAttr(l.name)}');closeModal()">✓ Approve learner</button>` : ''}
           <button class="btn btn-outline" onclick="sendWelcomeEmail('${l.id}')">📧 Send welcome email</button>
           ${(() => { const d = daysUntilExpiry(l); return d !== null && d <= 14 ? `<button class="btn btn-outline" style="color:#92400E;border-color:#F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>` : `<button class="btn btn-outline" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>`; })()}
           <button class="btn btn-outline" onclick="saveNotes('${l.id}')">Save notes</button>
