@@ -98,12 +98,13 @@
         }
         document.getElementById('navName').textContent = (learner.name || user.email).split(' ')[0];
 
-        // Check course expiry
+        // Check course expiry (skip if the learner has already completed the course)
         const enrolledAt = learner.enrolledAt?.toDate ? learner.enrolledAt.toDate() : null;
         const extensionMonths = learner.extensionMonths || 0;
-        if (enrolledAt && !ADMIN_EMAILS.includes(user.email)) {
+        const courseCompleted = !!learner.certNumber || !!(learner.writtenPassed && learner.practicalPassed && learner.reflectionPassed);
+        if (enrolledAt && !ADMIN_EMAILS.includes(user.email) && !courseCompleted) {
           const expiryDate = new Date(enrolledAt);
-          expiryDate.setMonth(expiryDate.getMonth() + 3 + extensionMonths);
+          expiryDate.setMonth(expiryDate.getMonth() + 4 + extensionMonths);
           const now = new Date();
           const daysExpired = Math.floor((now - expiryDate) / (1000 * 60 * 60 * 24));
           if (daysExpired >= 0) {
@@ -115,7 +116,7 @@
                 <div style="max-width:520px;margin:5rem auto;text-align:center;padding:2rem">
                   <div style="font-size:3.5rem;margin-bottom:1rem">⏰</div>
                   <h2 style="color:var(--ink);margin-bottom:0.75rem">Your course access has expired</h2>
-                  <p style="color:var(--ink-mid);margin-bottom:0.5rem">Your 3-month course access ended ${daysExpired} days ago. The 7-day extension window has now closed.</p>
+                  <p style="color:var(--ink-mid);margin-bottom:0.5rem">Your 4-month course access ended ${daysExpired} days ago. The 7-day extension window has now closed.</p>
                   <p style="color:var(--ink-mid);margin-bottom:1.75rem">To continue, you will need to re-enrol and start the course again. Please contact us first — we can advise on the best option for you.</p>
                   <a href="mailto:emily@dentalnurse.training?subject=Course%20re-enrolment%20query&body=Hi%20Emily%2C%0A%0AMy%20course%20access%20has%20expired.%20I%20would%20like%20to%20discuss%20my%20options.%0A%0AMy%20name%3A%20${encodeURIComponent(learner.name||'')}%0AMy%20email%3A%20${encodeURIComponent(learner.email||'')}%0A" class="btn btn-primary btn-lg" style="margin-bottom:0.75rem">📧 Contact us to re-enrol</a>
                   <br/><button class="btn btn-outline" onclick="handleLogout()" style="margin-top:0.5rem">Log out</button>
@@ -790,7 +791,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
         const entryDate = new Date(date);
         const courseStart = new Date(enrolledAt); courseStart.setHours(0,0,0,0);
         const courseEnd   = new Date(enrolledAt);
-        courseEnd.setMonth(courseEnd.getMonth() + 3 + (learner.extensionMonths || 0));
+        courseEnd.setMonth(courseEnd.getMonth() + 4 + (learner.extensionMonths || 0));
         if (entryDate < courseStart) {
           errEl.textContent = 'Entry date cannot be before your enrolment date (' + courseStart.toLocaleDateString('en-GB') + ').';
           errEl.style.display = 'block'; return;

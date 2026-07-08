@@ -777,7 +777,8 @@
           ${sups.length && !Object.keys(supervisorAgreements).length && sups.some(s=>s.guidanceSent&&!s.approved) ? `<div style="background:#FFF8E7;border:1px solid #FBBF24;border-radius:6px;padding:0.6rem 0.85rem;font-size:0.8rem;color:#92400E;margin-bottom:0.75rem">⚠️ Signed agreements could not be loaded. Check your Firestore rules allow authenticated reads on the <strong>supervisorAgreements</strong> collection, then click ↺ Refresh.</div>` : ''}
           ${sups.length ? `<div style="display:flex;flex-direction:column;gap:0.6rem">
             ${sups.map((s, i) => {
-              const agr = s.token ? (supervisorAgreements[s.token] || Object.values(supervisorAgreements).find(a => a.learnerUid === id && a.supGdc === s.gdc && a.signedAt)) : null;
+              const agrRaw = s.token ? (supervisorAgreements[s.token] || Object.values(supervisorAgreements).find(a => a.learnerUid === id && a.supGdc === s.gdc && a.signedAt)) : null;
+              const agr = agrRaw && agrRaw.signedAt ? agrRaw : null;
               const status = s.approved ? 'approved' : agr ? 'signed' : s.guidanceSent ? 'sent' : 'pending';
               const badge = {
                 approved: '<span class="pill pill-green">✓ Approved</span>',
