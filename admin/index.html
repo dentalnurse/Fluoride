@@ -11,7 +11,7 @@
   </script>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin - Dental Nurse Training Fluoride Varnish Certificate</title>
+  <title>Admin - Dental Nurse Training Fluoride Varnish Application Course</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="../css/style.css"/>
@@ -25,7 +25,7 @@
         <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
              alt="Dental Nurse Training" style="height:56px;margin:0 auto 1rem" onerror="this.style.display='none'"/>
         <h2>Admin Access</h2>
-        <p style="font-size:0.85rem;color:var(--ink-light);margin-top:0.25rem">Fluoride Varnish Certificate Platform</p>
+        <p style="font-size:0.85rem;color:var(--ink-light);margin-top:0.25rem">Fluoride Varnish Application Course Platform</p>
       </div>
       <div class="form-group">
         <label>Admin email</label>
@@ -45,7 +45,7 @@
     <div class="admin-header">
       <div>
         <h1>Dental Nurse Training - Admin Dashboard</h1>
-        <span style="font-size:0.8rem;opacity:0.6">Fluoride Varnish Application Certificate</span>
+        <span style="font-size:0.8rem;opacity:0.6">Fluoride Varnish Application Course</span>
       </div>
       <div style="display:flex;align-items:center;gap:1rem">
         <span style="font-size:0.85rem;color:rgba(255,255,255,0.6)">emily@dentalnurse.training</span>
@@ -932,7 +932,7 @@
       if (l) {
         promptEmail(
           l.email,
-          'Your Dental Nurse Training Fluoride Varnish Certificate course is now active',
+          'Your Dental Nurse Training Fluoride Varnish Application Course is now active',
           'Dear ' + l.name + ',\n\nCongratulations! Your Dental Nurse Training Fluoride Varnish Application Course course is now active.\n\nYou can log in at:\nhttps://fluoride.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you were sent separately.\n\nWork through the 5 theory modules in order, pass each quiz, then complete your written tasks, clinical logbook, case studies and final reflection.\n\nCourse duration: 4 months from today.\n\nIf you have any questions, please reply to this email or contact emily@dentalnurse.training.\n\nGood luck!\n\nEmily Bremner\nDental Nurse Training'
         );
       }
@@ -1126,7 +1126,7 @@
       if (!l) return;
       promptEmail(
         l.email,
-        'Welcome to your Dental Nurse Training Fluoride Varnish Application Certificate',
+        'Welcome to your Dental Nurse Training Fluoride Varnish Application Course',
         'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Fluoride Varnish Application Course!\n\nYour course is now active. You can log in at any time here:\nhttps://fluoride.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks, clinical logbook, and case studies\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 4 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck - we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
       );
     };
@@ -1268,7 +1268,7 @@
         const typeLabels = { written: 'Written Tasks', practical: 'Practical Portfolio', reflection: 'Final Reflection' };
         promptEmail(
           l.email,
-          'Feedback available: ' + typeLabels[type] + ' - Dental Nurse Training Fluoride Varnish Certificate',
+          'Feedback available: ' + typeLabels[type] + ' - Dental Nurse Training Fluoride Varnish Application Course',
           'Hi ' + l.name + ',\n\nI have reviewed your ' + typeLabels[type] + ' and feedback is now available in your course dashboard.\n\nPlease log in to view it:\nhttps://fluoride.dentalnurse.training/login.html\n\nIf you have any questions, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
         );
       }
@@ -1310,7 +1310,7 @@
       if (l) {
         promptEmail(
           l.email,
-          'Amendments required: ' + typeLabels[type] + ' - Dental Nurse Training Fluoride Varnish Certificate',
+          'Amendments required: ' + typeLabels[type] + ' - Dental Nurse Training Fluoride Varnish Application Course',
           'Hi ' + (l.name||name) + ',\n\nThank you for submitting your ' + typeLabels[type] + '. I have reviewed your work and would like you to make some amendments before it can be marked.\n\nPlease log in to your dashboard to view the feedback and resubmit:\nhttps://fluoride.dentalnurse.training/login.html\n\nIf you have any questions, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
         );
       }
@@ -1329,7 +1329,7 @@
         if (allNowPassed) {
           promptEmail(
             l.email,
-            'Congratulations - You have completed the Dental Nurse Training Fluoride Varnish Application Certificate!',
+            'Congratulations - You have completed the Dental Nurse Training Fluoride Varnish Application Course!',
             'Congratulations ' + l.name + '!\n\nWhat an achievement! You have successfully passed all three assessments for the Dental Nurse Training Fluoride Varnish Application Course.\n\nYour certificate is now available to view and download from your course dashboard:\nhttps://fluoride.dentalnurse.training/login.html\n\nThis certificate records 10 hours of verifiable CPD against GDC Outcomes C and D. You can use it as evidence of your CPD in your GDC Enhanced CPD record.\n\nAs a final request - it would mean a great deal to us if you could take 2 minutes to share your feedback on the course. Your thoughts help us improve the experience for future learners:\nhttps://forms.gle/SS25kq76yMiAPKiJA\n\nThank you for choosing Dental Nurse Training. It has been a pleasure supporting you through this qualification.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
           );
         } else {
@@ -1368,7 +1368,7 @@
       showToast('Supervisor link generated ✅', 'success');
       promptEmail(
         s.email,
-        'Supervisor agreement - Dental Nurse Training Fluoride Varnish Certificate (' + l.name + ')',
+        'Supervisor agreement - Dental Nurse Training Fluoride Varnish Application Course (' + l.name + ')',
         'Dear ' + s.name + ',\n\nYou have been registered as a clinical supervisor by ' + l.name + ' for their Dental Nurse Training Fluoride Varnish Application Course.\n\nPlease click the link below to read the supervisor guidance and sign the online supervisor agreement (this takes approximately 5 minutes):\n\n' + link + '\n\nYou will be asked to confirm your GDC registration number as part of the agreement. Once you have signed, your details will be returned to the learner\'s course record and reviewed by our assessor.\n\nIf you have any questions, please do not hesitate to contact me.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
       );
     };
@@ -1388,7 +1388,7 @@
       if (currentTab === 'all') renderTab('all');
       promptEmail(
         l.email,
-        'Supervisor approved - Dental Nurse Training Fluoride Varnish Certificate',
+        'Supervisor approved - Dental Nurse Training Fluoride Varnish Application Course',
         'Hi ' + l.name + ',\n\nGreat news! Your supervisor ' + s.name + ' has been approved and is now confirmed for your clinical logbook.\n\nYou can view the status of all your supervisors in your course dashboard:\nhttps://fluoride.dentalnurse.training/login.html\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
       );
       openLearnerModal(learnerId);
