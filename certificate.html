@@ -326,19 +326,35 @@
       try {
         const snap    = await getDoc(doc(db, 'learners', user.uid));
         const learner = snap.exists() ? snap.data() : null;
-        if (learner) {
-          const name = learner.name || user.email;
-          const gdc  = learner.gdc  || '-';
-          const completedAt = learner.reflectionSubmittedAt?.toDate
-            ? learner.reflectionSubmittedAt.toDate()
-            : new Date();
-          const dateStr = completedAt.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
 
-          // Generate cert number if not already assigned
-          let certNumber = learner.certNumber;
-          if (!certNumber) {
+        if (!learner) {
+          document.getElementById('certName').textContent = 'No learner record found';
+          document.getElementById('certGDC').textContent  = 'This account (' + user.email + ') has no course record. Contact emily@dentalnurse.training.';
+          return;
+        }
+
+        const name = learner.name || user.email;
+        const gdc  = learner.gdc  || '-';
+        const completedAt = learner.reflectionSubmittedAt?.toDate
+          ? learner.reflectionSubmittedAt.toDate()
+          : new Date();
+        const dateStr = completedAt.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        // Render everything we already have first, so a failure below (e.g. a
+        // Firestore permissions issue generating the cert number) doesn't leave
+        // the page stuck showing "Loading..." with no feedback.
+        document.getElementById('certName').textContent     = name;
+        document.getElementById('certNameBack').textContent = name;
+        document.getElementById('certGDC').textContent      = 'GDC Registration Number: ' + gdc;
+        document.getElementById('certDate').textContent     = dateStr;
+        document.getElementById('certDateBack').textContent = dateStr;
+        document.getElementById('certNumber').textContent   = learner.certNumber ? 'Certificate No: ' + learner.certNumber : 'Certificate number pending...';
+
+        // Generate cert number if not already assigned
+        if (!learner.certNumber) {
+          try {
             const counterRef = doc(db, 'counters', 'certificates');
-            certNumber = await runTransaction(db, async (tx) => {
+            const certNumber = await runTransaction(db, async (tx) => {
               const snap = await tx.get(counterRef);
               const next = (snap.exists() ? snap.data().count : 0) + 1;
               tx.set(counterRef, { count: next });
@@ -348,17 +364,16 @@
               certNumber,
               certIssuedAt: serverTimestamp()
             });
+            document.getElementById('certNumber').textContent = 'Certificate No: ' + certNumber;
+          } catch (e) {
+            console.error('Failed to generate certificate number:', e);
+            document.getElementById('certNumber').textContent = 'Certificate number unavailable - please refresh or contact emily@dentalnurse.training';
           }
-
-          document.getElementById('certName').textContent     = name;
-          document.getElementById('certNameBack').textContent = name;
-          document.getElementById('certGDC').textContent      = 'GDC Registration Number: ' + gdc;
-          document.getElementById('certDate').textContent     = dateStr;
-          document.getElementById('certDateBack').textContent = dateStr;
-          document.getElementById('certNumber').textContent   = 'Certificate No: ' + certNumber;
         }
       } catch(e) {
         console.error(e);
+        document.getElementById('certName').textContent = 'Unable to load certificate';
+        document.getElementById('certGDC').textContent  = 'Please refresh, or contact emily@dentalnurse.training if this persists.';
       }
       if (new URLSearchParams(window.location.search).get('print') === '1') {
         setTimeout(() => window.print(), 600);
