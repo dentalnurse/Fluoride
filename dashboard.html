@@ -76,6 +76,7 @@
     let learner = null;
     let uid = null;
     let customContent = {};
+    let courseExpiryDate = null;
 
     function esc(s) {
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -102,9 +103,12 @@
         const enrolledAt = learner.enrolledAt?.toDate ? learner.enrolledAt.toDate() : null;
         const extensionMonths = learner.extensionMonths || 0;
         const courseCompleted = !!learner.certNumber || !!(learner.writtenPassed && learner.practicalPassed && learner.reflectionPassed);
+        if (enrolledAt) {
+          courseExpiryDate = new Date(enrolledAt);
+          courseExpiryDate.setMonth(courseExpiryDate.getMonth() + 4 + extensionMonths);
+        }
         if (enrolledAt && !ADMIN_EMAILS.includes(user.email) && !courseCompleted) {
-          const expiryDate = new Date(enrolledAt);
-          expiryDate.setMonth(expiryDate.getMonth() + 4 + extensionMonths);
+          const expiryDate = courseExpiryDate;
           const now = new Date();
           const daysExpired = Math.floor((now - expiryDate) / (1000 * 60 * 60 * 24));
           if (daysExpired >= 0) {
@@ -251,7 +255,20 @@
       const passed = [1,2,3,4,5].filter(i => mp[i] === 2 || mp[i] === '2').length;
       const pct = Math.round(passed / 5 * 100);
       const icons = ['🔬','🗣️','🦷','⚖️','💬'];
+      const courseCompleted = !!learner.certNumber || !!(learner.writtenPassed && learner.practicalPassed && learner.reflectionPassed);
+      let timeRemainingHtml = '';
+      if (courseExpiryDate && !courseCompleted) {
+        const daysLeft = Math.ceil((courseExpiryDate - new Date()) / (1000 * 60 * 60 * 24));
+        const low = daysLeft <= 14;
+        const dateStr = courseExpiryDate.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+        timeRemainingHtml = '<div class="content-card" style="margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;' + (low ? 'background:#FFF8E7;border-color:rgba(245,158,11,0.4)' : '') + '">'
+          + '<div><strong style="font-size:0.9rem' + (low ? ';color:#92400E' : '') + '">' + (daysLeft >= 0 ? daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' left on your course' : 'Your course access has ended') + '</strong>'
+          + '<div style="font-size:0.82rem;color:' + (low ? '#92400E' : 'var(--ink-light)') + ';margin-top:0.2rem">Access ends ' + dateStr + '</div></div>'
+          + '<a href="extension-payment.html" class="btn btn-outline btn-sm">+ Buy 1-month extension (£12)</a>'
+          + '</div>';
+      }
       el.innerHTML = '<div class="dash-header"><h1>Welcome back, ' + (learner.name||'').split(' ')[0] + ' 👋</h1><p>GDC: ' + (learner.gdc||'-') + '</p></div>'
+        + timeRemainingHtml
         + '<div class="content-card" style="margin-bottom:1.25rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem"><strong>Theory progress</strong><span style="font-size:0.85rem;color:var(--teal-dark);font-weight:700">' + passed + '/5 modules complete</span></div><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div></div>'
         + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.85rem;margin-bottom:1.5rem">'
         + [1,2,3,4,5].map(i => {
