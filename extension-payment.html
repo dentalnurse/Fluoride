@@ -184,14 +184,7 @@
         graceDaysLeft === 1 ? '1 day' : graceDaysLeft + ' days';
     }
 
-    // TODO: replace with live Stripe extension Payment Link when available
-    const EXTENSION_STRIPE_LINK = 'PENDING_STRIPE_LINK';
-
     window.goToStripe = function() {
-      if (EXTENSION_STRIPE_LINK === 'PENDING_STRIPE_LINK') {
-        alert('Online payment for extensions is coming soon. Please email emily@dentalnurse.training to arrange your extension.');
-        return;
-      }
       window.location.href = EXTENSION_STRIPE_LINK;
     };
   </script>

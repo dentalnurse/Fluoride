@@ -444,7 +444,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
             to_email: 'emily@dentalnurse.training',
             learner_name: learner.name || 'Unknown', learner_email: learner.email || '', learner_gdc: learner.gdc || '',
             submission_type: 'Written Tasks', file_url: 'View in admin panel', submitted_at: new Date().toLocaleString('en-GB'),
-            message: 'Written tasks submitted by ' + (learner.name||'Unknown') + '. Log in to the admin panel to review:\nhttps://dentalnurse.github.io/Fluoride/admin/index.html',
+            message: 'Written tasks submitted by ' + (learner.name||'Unknown') + '. Log in to the admin panel to review:\nhttps://fluoride.dentalnurse.training/admin/index.html',
           });
         }
         renderSidebar(); showSection('written');
@@ -629,9 +629,9 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
             learner_email: learner.email || '',
             learner_gdc: learner.gdc || '',
             submission_type: 'Logbook Sign-off Request (Resent)',
-            file_url: 'https://dentalnurse.github.io/Fluoride/logbook-signoff.html?t=' + token,
+            file_url: 'https://fluoride.dentalnurse.training/logbook-signoff.html?t=' + token,
             submitted_at: new Date().toLocaleString('en-GB'),
-            message: supervisorName + ',\n\nThis is a reminder that ' + (learner.name||'your learner') + ' has asked you to confirm their clinical logbook entries.\n\nPlease click the link below to review and sign off:\n\nhttps://dentalnurse.github.io/Fluoride/logbook-signoff.html?t=' + token + '\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
+            message: supervisorName + ',\n\nThis is a reminder that ' + (learner.name||'your learner') + ' has asked you to confirm their clinical logbook entries.\n\nPlease click the link below to review and sign off:\n\nhttps://fluoride.dentalnurse.training/logbook-signoff.html?t=' + token + '\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
           });
           showToast('Sign-off email resent to ' + supervisorEmail + ' ✅', 'success');
         } else {
@@ -916,9 +916,9 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
               learner_email: learner.email || '',
               learner_gdc: learner.gdc || '',
               submission_type: 'Logbook Sign-off Request',
-              file_url: 'https://dentalnurse.github.io/Fluoride/logbook-signoff.html?t=' + token,
+              file_url: 'https://fluoride.dentalnurse.training/logbook-signoff.html?t=' + token,
               submitted_at: new Date().toLocaleString('en-GB'),
-              message: supervisorName + ',\n\n' + (learner.name||'Your learner') + ' has completed their clinical logbook and requires your confirmation that the entries you supervised are accurate.\n\nPlease click the link below to review your entries and sign off the logbook:\n\nhttps://dentalnurse.github.io/Fluoride/logbook-signoff.html?t=' + token + '\n\nThis should only take a few minutes. You will be asked to confirm that you were physically present for each application and that the details recorded are accurate.\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
+              message: supervisorName + ',\n\n' + (learner.name||'Your learner') + ' has completed their clinical logbook and requires your confirmation that the entries you supervised are accurate.\n\nPlease click the link below to review your entries and sign off the logbook:\n\nhttps://fluoride.dentalnurse.training/logbook-signoff.html?t=' + token + '\n\nThis should only take a few minutes. You will be asked to confirm that you were physically present for each application and that the details recorded are accurate.\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
             });
           }
         }
@@ -1052,7 +1052,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
                     ? '<span style="font-size:0.78rem;font-weight:600;color:var(--ink-light);background:var(--off-white);border-radius:100px;padding:0.2rem 0.6rem;border:1px solid var(--border)">Pending assessor contact</span>'
                     : '';
               const canEdit = !s.approved;
-              return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:var(--teal-pale);border:1px solid var(--teal-light);border-radius:var(--radius);gap:0.5rem;flex-wrap:wrap"><div><strong style="font-size:0.9rem">' + s.name + '</strong><div style="font-size:0.82rem;color:var(--ink-light)">' + s.email + ' · GDC: ' + s.gdc + '</div></div><div style="display:flex;align-items:center;gap:0.5rem">' + statusBadge + (canEdit ? '<button onclick="editSupervisor(' + i + ')" style="background:none;border:none;color:var(--teal-dark);cursor:pointer;font-size:0.82rem;padding:0.25rem 0.4rem;text-decoration:underline">Edit</button>' : '') + (canEdit ? '<button onclick="removeSupervisor(' + i + ')" style="background:none;border:none;color:var(--warn);cursor:pointer;font-size:0.9rem;padding:0.25rem">✕</button>' : '') + '</div></div>';
+              return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:var(--teal-pale);border:1px solid var(--teal-light);border-radius:var(--radius);gap:0.5rem;flex-wrap:wrap"><div><strong style="font-size:0.9rem">' + esc(s.name) + '</strong><div style="font-size:0.82rem;color:var(--ink-light)">' + esc(s.email) + ' · GDC: ' + esc(s.gdc) + '</div></div><div style="display:flex;align-items:center;gap:0.5rem">' + statusBadge + (canEdit ? '<button onclick="editSupervisor(' + i + ')" style="background:none;border:none;color:var(--teal-dark);cursor:pointer;font-size:0.82rem;padding:0.25rem 0.4rem;text-decoration:underline">Edit</button>' : '') + (canEdit ? '<button onclick="removeSupervisor(' + i + ')" style="background:none;border:none;color:var(--warn);cursor:pointer;font-size:0.9rem;padding:0.25rem">✕</button>' : '') + '</div></div>';
             }).join('')
           + '</div></div>'
         : '';
@@ -1106,9 +1106,9 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
       form.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:999;padding:1rem';
       form.innerHTML = '<div style="background:var(--white);border-radius:var(--radius-lg);padding:2rem;width:100%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.18)">'
         + '<h3 style="margin-bottom:1.25rem">Edit supervisor</h3>'
-        + '<div class="form-group"><label>Full name *</label><input type="text" id="editSupName" value="' + s.name + '"/></div>'
-        + '<div class="form-group"><label>Email *</label><input type="text" id="editSupEmail" value="' + s.email + '"/></div>'
-        + '<div class="form-group"><label>GDC number *</label><input type="text" id="editSupGdc" value="' + s.gdc + '"/></div>'
+        + '<div class="form-group"><label>Full name *</label><input type="text" id="editSupName" value="' + esc(s.name) + '"/></div>'
+        + '<div class="form-group"><label>Email *</label><input type="text" id="editSupEmail" value="' + esc(s.email) + '"/></div>'
+        + '<div class="form-group"><label>GDC number *</label><input type="text" id="editSupGdc" value="' + esc(s.gdc) + '"/></div>'
         + '<div style="display:flex;gap:0.75rem;margin-top:1rem">'
         + '<button class="btn btn-primary" onclick="saveEditSupervisor(' + index + ')">Save changes</button>'
         + '<button class="btn btn-outline" onclick="document.getElementById(\'editSupForm\').remove()">Cancel</button>'

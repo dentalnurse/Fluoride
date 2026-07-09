@@ -46,10 +46,16 @@
         <div style="color:var(--ink-light)" id="summaryEmail"></div>
         <div style="color:var(--ink-light)" id="summaryGDC"></div>
       </div>
-      <div id="emailEntry" class="form-group" style="display:none">
-        <label for="manualEmail">Your email address (used to pay)</label>
-        <input type="email" id="manualEmail" placeholder="your@email.com" autocomplete="email"/>
-        <div class="pw-hint">Enter the email you used when enrolling</div>
+      <div id="emailEntry" style="display:none">
+        <div class="form-group">
+          <label for="manualName">Your full name</label>
+          <input type="text" id="manualName" placeholder="Jane Smith" autocomplete="name"/>
+        </div>
+        <div class="form-group">
+          <label for="manualEmail">Your email address (used to pay)</label>
+          <input type="email" id="manualEmail" placeholder="your@email.com" autocomplete="email"/>
+          <div class="pw-hint">Enter the email you used when enrolling</div>
+        </div>
       </div>
 
       <div class="form-group">
@@ -139,11 +145,16 @@
 
       // Use stored email or manually entered email
       const email = enrolData.email || (document.getElementById('manualEmail') || {}).value?.trim();
+      const manualName = (document.getElementById('manualName') || {}).value?.trim();
 
       errEl.style.display = 'none';
 
       if (!email) {
         errEl.textContent = 'Please enter your email address.';
+        errEl.style.display = 'block'; return;
+      }
+      if (!enrolData.email && !manualName) {
+        errEl.textContent = 'Please enter your full name.';
         errEl.style.display = 'block'; return;
       }
       if (password.length < 8) {
@@ -163,7 +174,7 @@
         const uid  = cred.user.uid;
 
         // Create Firestore learner document
-        const fullName = enrolData.email ? ((enrolData.firstName || '') + ' ' + (enrolData.lastName || '')).trim() : '';
+        const fullName = enrolData.email ? ((enrolData.firstName || '') + ' ' + (enrolData.lastName || '')).trim() : manualName;
         await setDoc(doc(db, 'learners', uid), {
           name:        fullName || email,
           email:       email,

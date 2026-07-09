@@ -27,13 +27,15 @@ const ADMIN_EMAILS = [
 ];
 const ADMIN_EMAIL = ADMIN_EMAILS[0]; // kept for backwards compatibility
 
-// ── Stripe payment link ──────────────────────────────────────────────────
+// ── Stripe payment links ─────────────────────────────────────────────────
 // Create a payment link in your Stripe dashboard and paste the URL here
 const STRIPE_PAYMENT_URL     = "https://buy.stripe.com/YOUR_PAYMENT_LINK";
+// TODO: this is a Stripe test-mode link - replace with the live Payment Link before launch
+const EXTENSION_STRIPE_LINK  = "https://buy.stripe.com/test_aFa4gAgDe9t68PL915bZe04";
 const COURSE_PRICE           = "£120";
 const COURSE_ORIGINAL_PRICE  = "£150";
 const EXTENSION_FEE          = "£12";
-const COURSE_DURATION_MONTHS = 3;
+const COURSE_DURATION_MONTHS = 4;
 
 // ── Course structure ─────────────────────────────────────────────────────
 const MODULES = [
