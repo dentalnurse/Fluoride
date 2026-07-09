@@ -193,6 +193,7 @@
           if (typeof emailjs !== 'undefined') {
             emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
               to_email: 'emily@dentalnurse.training', to_name: 'Emily',
+              subject: 'New enrolment - account created (' + (fullName || email) + ')',
               learner_name: fullName || email, learner_email: email, learner_gdc: enrolData.gdc || '',
               submission_type: 'New Enrolment - Account Created',
               file_url: 'N/A', submitted_at: new Date().toLocaleString('en-GB'),

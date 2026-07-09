@@ -153,6 +153,26 @@
       return !!l.certNumber || !!(l.writtenPassed && l.practicalPassed && l.reflectionPassed);
     }
 
+    function getUniqueLogbookSupervisors(l) {
+      const seenGdc = new Set();
+      const uniqueSups = [];
+      for (const e of (l.logbookEntries || [])) {
+        if (e.supervisorGdc && !seenGdc.has(e.supervisorGdc)) {
+          seenGdc.add(e.supervisorGdc);
+          uniqueSups.push({ name: e.supervisorName, gdc: e.supervisorGdc });
+        }
+      }
+      return uniqueSups;
+    }
+
+    function allLogbookSupervisorsConfirmed(l) {
+      const uniqueSups = getUniqueLogbookSupervisors(l);
+      if (!uniqueSups.length) return false;
+      return uniqueSups.every(s =>
+        Object.values(logbookSignoffs).some(a => a.learnerUid === l.id && a.supervisorGdc === s.gdc && a.signedAt)
+      );
+    }
+
     // 'approved' | 'signed' (signed by supervisor, awaiting admin approval) | 'sent' | 'pending'
     function getSupervisorStatus(learnerId, s) {
       const agrRaw = s.token ? (supervisorAgreements[s.token] || Object.values(supervisorAgreements).find(a => a.learnerUid === learnerId && a.supGdc === s.gdc && a.signedAt)) : null;
@@ -209,6 +229,20 @@
         lsSnap.docs.forEach(d => { logbookSignoffs[d.id] = d.data(); });
       } catch(e) {
         console.warn('Could not load logbook signoffs:', e.message);
+      }
+      // Auto-promote to "submitted, awaiting review" once every supervisor has
+      // signed off - previously this required Emily to manually open each
+      // learner's modal and click a button, so learners saw a stale "awaiting
+      // sign-off" status until she happened to do that.
+      for (const l of learners) {
+        if (l.practicalPendingSignoff && !l.practicalSubmitted && allLogbookSupervisorsConfirmed(l)) {
+          try {
+            await updateDoc(doc(db, 'learners', l.id), { practicalSubmitted: true, practicalSubmittedAt: serverTimestamp() });
+            l.practicalSubmitted = true;
+          } catch(e) {
+            console.warn('Could not auto-promote practical portfolio for', l.id, e.message);
+          }
+        }
       }
       try {
         const ecSnap = await getDocs(collection(db, 'ecRequests'));
@@ -1009,19 +1043,9 @@
         ${supSection}
         ${(() => {
           if (!l.practicalPendingSignoff || l.practicalPassed) return '';
-          const lbEntries = l.logbookEntries || [];
-          const seenGdc = new Set();
-          const uniqueSups = [];
-          for (const e of lbEntries) {
-            if (e.supervisorGdc && !seenGdc.has(e.supervisorGdc)) {
-              seenGdc.add(e.supervisorGdc);
-              uniqueSups.push({ name: e.supervisorName, gdc: e.supervisorGdc });
-            }
-          }
+          const uniqueSups = getUniqueLogbookSupervisors(l);
           if (!uniqueSups.length) return '';
-          const allConfirmed = uniqueSups.every(s =>
-            Object.values(logbookSignoffs).some(a => a.learnerUid === l.id && a.supervisorGdc === s.gdc && a.signedAt)
-          );
+          const allConfirmed = allLogbookSupervisorsConfirmed(l);
           return `<div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border)">
             <h4 style="margin:0 0 0.85rem;font-size:0.95rem">Logbook Sign-off Status</h4>
             <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.85rem">
@@ -1311,7 +1335,7 @@
         } else {
           promptEmail(
             l.email,
-            'Assessment passed: ' + typeLabels[type] + ' - Dental Nurse Training Fluoride Varnish Certificate',
+            'Assessment passed: ' + typeLabels[type] + ' - Dental Nurse Training Fluoride Varnish Course',
             'Congratulations ' + l.name + '!\n\nGreat news - your ' + typeLabels[type] + ' has been marked as passed!\n\nLog in to your dashboard to see your progress:\nhttps://fluoride.dentalnurse.training/login.html\n\nWell done and keep up the great work!\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
           );
         }
