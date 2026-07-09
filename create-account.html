@@ -88,7 +88,7 @@
     import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword }
                                from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, serverTimestamp }
+    import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp }
                                from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const app  = initializeApp(FIREBASE_CONFIG);
@@ -200,6 +200,9 @@
             });
           }
         } catch(e2) { /* notification is best-effort */ }
+
+        // Remove the enrolment lead now that the account actually exists
+        try { await deleteDoc(doc(db, 'pendingEnrolments', email.toLowerCase())); } catch(e3) { /* best-effort */ }
 
         // Clear session and go to dashboard
         localStorage.removeItem('enrolData');
