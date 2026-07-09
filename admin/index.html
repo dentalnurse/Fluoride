@@ -65,6 +65,7 @@
         <div class="admin-stat"><div class="as-n" id="statTotal">-</div><div class="as-lbl">Total learners</div></div>
         <div class="admin-stat"><div class="as-n" id="statPending">-</div><div class="as-lbl">Awaiting approval</div></div>
         <div class="admin-stat"><div class="as-n" id="statActive">-</div><div class="as-lbl">Active learners</div></div>
+        <div class="admin-stat"><div class="as-n" id="statCompleted">-</div><div class="as-lbl">Completed</div></div>
         <div class="admin-stat"><div class="as-n" id="statSubmissions">-</div><div class="as-lbl">New submissions</div></div>
         <div class="admin-stat" id="statSupervisorsTile"><div class="as-n" id="statSupervisors">-</div><div class="as-lbl">Supervisors to approve</div></div>
       </div>
@@ -144,6 +145,10 @@
     // Escape for embedding inside a single-quoted JS string within a double-quoted onclick="" attribute
     function escJsAttr(s) {
       return String(s || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function isCourseCompleted(l) {
+      return !!l.certNumber || !!(l.writtenPassed && l.practicalPassed && l.reflectionPassed);
     }
 
     // 'approved' | 'signed' (signed by supervisor, awaiting admin approval) | 'sent' | 'pending'
@@ -228,7 +233,8 @@
 
     function updateStats() {
       const pending     = learners.filter(l => !l.unlocked).length;
-      const active      = learners.filter(l => l.unlocked).length;
+      const completed   = learners.filter(l => l.unlocked && isCourseCompleted(l)).length;
+      const active      = learners.filter(l => l.unlocked && !isCourseCompleted(l)).length;
       const submissions = learners.filter(l =>
         l.writtenSubmitted || l.practicalSubmitted || l.reflectionSubmitted
       ).length;
@@ -239,6 +245,7 @@
       document.getElementById('statTotal').textContent       = learners.length;
       document.getElementById('statPending').textContent     = pending;
       document.getElementById('statActive').textContent      = active;
+      document.getElementById('statCompleted').textContent   = completed;
       document.getElementById('statSubmissions').textContent = submissions;
       document.getElementById('statSupervisors').textContent = supervisorsToApprove;
       document.getElementById('statSupervisorsTile').classList.toggle('needs-attention', supervisorsToApprove > 0);

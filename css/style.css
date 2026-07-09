@@ -400,7 +400,7 @@ p  { color: var(--ink-mid); line-height: 1.75; }
 .admin-tab   { padding: 0.5rem 1.1rem; border-radius: 100px; font-size: 0.88rem; font-weight: 600; cursor: pointer; border: 2px solid var(--border); background: var(--white); color: var(--ink-mid); transition: all 0.15s; }
 .admin-tab.active { background: var(--teal); color: var(--white); border-color: var(--teal); }
 .admin-tab-badge { background: #EF4444; color: #fff; border-radius: 100px; padding: 0.1rem 0.45rem; font-size: 0.72rem; font-weight: 700; margin-left: 0.35rem; }
-.admin-stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.admin-stat-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
 .admin-stat { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; transition: background 0.15s, border-color 0.15s; }
 .admin-stat .as-n  { font-size: 2rem; font-weight: 800; color: var(--teal); line-height: 1; }
 .admin-stat .as-lbl { font-size: 0.8rem; color: var(--ink-light); margin-top: 0.25rem; }
