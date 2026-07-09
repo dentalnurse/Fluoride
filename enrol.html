@@ -109,7 +109,13 @@
   </footer>
   <div class="toast" id="toast"></div>
   <script src="js/config.js"></script>
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const app = initializeApp(FIREBASE_CONFIG);
+    const db  = getFirestore(app);
+
     document.getElementById('sidebarPrice').textContent = COURSE_PRICE;
 
     window.submitEnrolment = () => {
@@ -136,6 +142,16 @@
       localStorage.setItem('enrolData', JSON.stringify({
         firstName, lastName, email, gdc, phone, workplace, experience, supervisor, indemnity, notes
       }));
+
+      // Record the lead immediately so it's visible in admin even if the
+      // learner never comes back to finish creating their account after
+      // paying. Keyed by email so re-submitting (e.g. after abandoning
+      // checkout and trying again) updates the same record. Fire-and-forget
+      // so a Firestore hiccup never delays the redirect to payment.
+      setDoc(doc(db, 'pendingEnrolments', email.toLowerCase()), {
+        firstName, lastName, email, gdc, phone, workplace, experience, supervisor, indemnity, notes,
+        submittedAt: serverTimestamp()
+      }).catch(e => console.warn('Could not record enrolment lead:', e.message));
 
       // Redirect to Stripe Checkout
       window.location.href = 'https://buy.stripe.com/test_dRm14o5YAeNqc1Xa59bZe03';

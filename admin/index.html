@@ -72,6 +72,7 @@
 
       <!-- Tabs -->
       <div class="admin-tabs">
+        <div class="admin-tab" onclick="switchAdminTab('leads')">📝 Enrolment Leads <span id="leadsBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab active" onclick="switchAdminTab('pending')">⏳ Awaiting Approval <span id="pendingBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab" onclick="switchAdminTab('all')">👥 All Learners <span id="supervisorBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab" onclick="switchAdminTab('submissions')">📬 Submissions <span id="submissionsBadge" class="admin-tab-badge" style="display:none"></span></div>
@@ -125,7 +126,7 @@
     import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, increment, serverTimestamp }
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, increment, serverTimestamp }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const app  = initializeApp(FIREBASE_CONFIG);
@@ -137,6 +138,7 @@
     let supervisorAgreements = {};
     let logbookSignoffs      = {};
     let ecRequests           = [];
+    let pendingEnrolments    = [];
 
     // Escape for HTML text/attribute content
     function esc(s) {
@@ -149,6 +151,26 @@
 
     function isCourseCompleted(l) {
       return !!l.certNumber || !!(l.writtenPassed && l.practicalPassed && l.reflectionPassed);
+    }
+
+    function getUniqueLogbookSupervisors(l) {
+      const seenGdc = new Set();
+      const uniqueSups = [];
+      for (const e of (l.logbookEntries || [])) {
+        if (e.supervisorGdc && !seenGdc.has(e.supervisorGdc)) {
+          seenGdc.add(e.supervisorGdc);
+          uniqueSups.push({ name: e.supervisorName, gdc: e.supervisorGdc });
+        }
+      }
+      return uniqueSups;
+    }
+
+    function allLogbookSupervisorsConfirmed(l) {
+      const uniqueSups = getUniqueLogbookSupervisors(l);
+      if (!uniqueSups.length) return false;
+      return uniqueSups.every(s =>
+        Object.values(logbookSignoffs).some(a => a.learnerUid === l.id && a.supervisorGdc === s.gdc && a.signedAt)
+      );
     }
 
     // 'approved' | 'signed' (signed by supervisor, awaiting admin approval) | 'sent' | 'pending'
@@ -208,11 +230,36 @@
       } catch(e) {
         console.warn('Could not load logbook signoffs:', e.message);
       }
+      // Auto-promote to "submitted, awaiting review" once every supervisor has
+      // signed off - previously this required Emily to manually open each
+      // learner's modal and click a button, so learners saw a stale "awaiting
+      // sign-off" status until she happened to do that.
+      for (const l of learners) {
+        if (l.practicalPendingSignoff && !l.practicalSubmitted && allLogbookSupervisorsConfirmed(l)) {
+          try {
+            await updateDoc(doc(db, 'learners', l.id), { practicalSubmitted: true, practicalSubmittedAt: serverTimestamp() });
+            l.practicalSubmitted = true;
+          } catch(e) {
+            console.warn('Could not auto-promote practical portfolio for', l.id, e.message);
+          }
+        }
+      }
       try {
         const ecSnap = await getDocs(collection(db, 'ecRequests'));
         ecRequests = ecSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       } catch(e) {
         console.warn('Could not load EC requests:', e.message);
+      }
+      try {
+        const leadsSnap = await getDocs(collection(db, 'pendingEnrolments'));
+        const knownEmails = new Set(learners.map(l => (l.email || '').toLowerCase()).filter(Boolean));
+        // Filter out any lead whose account already exists, in case the
+        // cleanup delete in create-account.html didn't run for some reason
+        pendingEnrolments = leadsSnap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter(r => !knownEmails.has((r.email || '').toLowerCase()));
+      } catch(e) {
+        console.warn('Could not load pending enrolments - check Firestore rules allow authenticated reads on pendingEnrolments:', e.message);
       }
       updateStats();
       renderTab(currentTab);
@@ -254,6 +301,7 @@
       setBadge('supervisorBadge', supervisorsToApprove);
       setBadge('submissionsBadge', submissionsToReview);
       setBadge('ecBadge', pendingEC);
+      setBadge('leadsBadge', pendingEnrolments.length);
 
       // Combined "needs your attention" banner across everything at once
       const items = [];
@@ -274,13 +322,14 @@
     window.switchAdminTab = (tab) => {
       currentTab = tab;
       document.querySelectorAll('.admin-tab').forEach((t, i) => {
-        t.classList.toggle('active', ['pending','all','submissions','content','ec','audit'][i] === tab);
+        t.classList.toggle('active', ['leads','pending','all','submissions','content','ec','audit'][i] === tab);
       });
       renderTab(tab);
     };
 
     function renderTab(tab) {
       const el = document.getElementById('tabContent');
+      if (tab === 'leads')       { renderLeadsTab(el); return; }
       if (tab === 'pending')     { renderPendingTab(el); return; }
       if (tab === 'all')         { renderAllTab(el); return; }
       if (tab === 'submissions') { renderSubmissionsTab(el); return; }
@@ -317,6 +366,64 @@
           </tbody>
         </table>`;
     }
+
+    // ── Enrolment leads tab ──────────────────────────────────────────────
+    // People who filled in enrol.html (and were sent to Stripe) but never
+    // came back to finish creating their account.
+    function renderLeadsTab(el) {
+      if (!pendingEnrolments.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">✅ No unfinished enrolments - everyone who started has either created an account or hasn\'t submitted the form yet.</div>';
+        return;
+      }
+      const fmt = (ts) => {
+        if (!ts) return '-';
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      };
+      el.innerHTML = `
+        <p style="margin-bottom:1rem;color:var(--ink-light);font-size:0.9rem">${pendingEnrolments.length} learner${pendingEnrolments.length>1?'s':''} submitted the enrolment form and were sent to payment, but have not come back to finish creating their account yet. If they paid, chase them to complete signup; if not, this may just be someone who didn't go through with it.</p>
+        <table class="admin-table">
+          <thead><tr>
+            <th>Name</th><th>Email / GDC</th><th>Workplace / Phone</th><th>Submitted</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${pendingEnrolments.map(r => `<tr>
+              <td><div class="td-name">${esc((r.firstName||'') + ' ' + (r.lastName||''))||'-'}</div></td>
+              <td><div>${esc(r.email)||'-'}</div><div class="td-email">GDC: ${esc(r.gdc)||'-'}</div></td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${esc(r.workplace)||'-'}<br/>${esc(r.phone)||'-'}</td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${fmt(r.submittedAt)}</td>
+              <td>
+                <div class="admin-actions">
+                  <button class="btn btn-outline btn-sm" onclick="remindEnrolmentLead('${r.id}')">📧 Remind</button>
+                  <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:1px solid #FECACA" onclick="removeEnrolmentLead('${r.id}')">🗑 Remove</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    window.remindEnrolmentLead = (id) => {
+      const r = pendingEnrolments.find(x => x.id === id);
+      if (!r) return;
+      const name = ((r.firstName||'') + ' ' + (r.lastName||'')).trim() || 'there';
+      promptEmail(
+        r.email,
+        'Finish setting up your Dental Nurse Training account',
+        'Hi ' + name + ',\n\nWe noticed you started enrolling on the Dental Nurse Training Fluoride Varnish Application Course but haven\'t finished setting up your account yet.\n\nIf you have already paid, please complete your account setup here so you can access the course:\nhttps://fluoride.dentalnurse.training/create-account.html\n\nIf you did not intend to enrol, no action is needed - just let me know and I will remove your details.\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
+      );
+    };
+
+    window.removeEnrolmentLead = async (id) => {
+      const r = pendingEnrolments.find(x => x.id === id);
+      if (!r) return;
+      if (!confirm('Remove this enrolment lead (' + (r.email||'unknown') + ')? This just clears it from your list - it does not affect any payment.')) return;
+      await deleteDoc(doc(db, 'pendingEnrolments', id));
+      pendingEnrolments = pendingEnrolments.filter(x => x.id !== id);
+      showToast('Removed', 'success');
+      updateStats();
+      renderTab('leads');
+    };
 
     // Returns a communication action flag for a learner, or null
     function getCommFlag(l) {
@@ -936,19 +1043,9 @@
         ${supSection}
         ${(() => {
           if (!l.practicalPendingSignoff || l.practicalPassed) return '';
-          const lbEntries = l.logbookEntries || [];
-          const seenGdc = new Set();
-          const uniqueSups = [];
-          for (const e of lbEntries) {
-            if (e.supervisorGdc && !seenGdc.has(e.supervisorGdc)) {
-              seenGdc.add(e.supervisorGdc);
-              uniqueSups.push({ name: e.supervisorName, gdc: e.supervisorGdc });
-            }
-          }
+          const uniqueSups = getUniqueLogbookSupervisors(l);
           if (!uniqueSups.length) return '';
-          const allConfirmed = uniqueSups.every(s =>
-            Object.values(logbookSignoffs).some(a => a.learnerUid === l.id && a.supervisorGdc === s.gdc && a.signedAt)
-          );
+          const allConfirmed = allLogbookSupervisorsConfirmed(l);
           return `<div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border)">
             <h4 style="margin:0 0 0.85rem;font-size:0.95rem">Logbook Sign-off Status</h4>
             <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.85rem">
@@ -1238,7 +1335,7 @@
         } else {
           promptEmail(
             l.email,
-            'Assessment passed: ' + typeLabels[type] + ' - Dental Nurse Training Fluoride Varnish Certificate',
+            'Assessment passed: ' + typeLabels[type] + ' - Dental Nurse Training Fluoride Varnish Course',
             'Congratulations ' + l.name + '!\n\nGreat news - your ' + typeLabels[type] + ' has been marked as passed!\n\nLog in to your dashboard to see your progress:\nhttps://fluoride.dentalnurse.training/login.html\n\nWell done and keep up the great work!\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
           );
         }

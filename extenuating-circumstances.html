@@ -189,6 +189,7 @@
           emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
           emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
             to_email: 'emily@dentalnurse.training', to_name: 'Emily',
+            subject: 'New extenuating circumstances application - ' + learner.name,
             learner_name: learner.name, learner_email: learner.email, learner_gdc: learner.gdc || '',
             submission_type: 'Extenuating Circumstances Application',
             file_url: 'N/A',

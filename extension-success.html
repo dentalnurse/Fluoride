@@ -90,6 +90,7 @@
       if (email) {
         promises.push(emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
           to_email: email, to_name: name,
+          subject: 'Your course extension is confirmed',
           learner_name: name, learner_email: email, learner_gdc: '',
           submission_type: 'Extension Confirmed',
           file_url: 'N/A', submitted_at: now,
@@ -98,6 +99,7 @@
       }
       promises.push(emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
         to_email: 'emily@dentalnurse.training', to_name: 'Emily',
+        subject: 'Extension payment received - ' + name,
         learner_name: name, learner_email: email, learner_gdc: '',
         submission_type: 'Extension Payment Received',
         file_url: 'N/A', submitted_at: now,

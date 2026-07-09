@@ -172,7 +172,8 @@
       ['written','practical','reflection'].forEach(s => {
         const btn = document.getElementById('sb-'+s);
         const badge = document.getElementById('badge-'+s);
-        if (!allPassed) { btn.classList.add('locked'); badge.textContent='🔒'; return; }
+        const locked = !allPassed || (s === 'reflection' && !learner.practicalPassed);
+        if (locked) { btn.classList.add('locked'); badge.textContent='🔒'; badge.className='si-badge badge-lock'; return; }
         btn.classList.remove('locked');
         badge.textContent = learner[s+'Submitted'] ? '✓' : '→';
         badge.className = learner[s+'Submitted'] ? 'si-badge badge-done' : 'si-badge badge-new';
@@ -249,7 +250,13 @@
         }
         renderPractical(main); return;
       }
-      if (id === 'reflection') { renderReflection(main); return; }
+      if (id === 'reflection') {
+        if (!learner.practicalPassed) {
+          main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Locked</h3><p>Your Final Reflection will unlock once your Practical Portfolio has passed.</p></div>';
+          return;
+        }
+        renderReflection(main); return;
+      }
       if (id === 'profile') { renderProfile(main); return; }
     };function renderHome(el, mp, allPassed) {
       const passed = [1,2,3,4,5].filter(i => mp[i] === 2 || mp[i] === '2').length;
@@ -283,7 +290,8 @@
             const icons2 = {written:'✍️',practical:'🦷',reflection:'🪞'};
             const submitted = learner[s+'Submitted'];
 const passed = learner[s+'Passed'];
-return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'default') + '" onclick="' + (allPassed?'showSection(\''+s+'\')':'') + '"><div style="font-size:1.75rem;margin-bottom:0.5rem">' + icons2[s] + '</div><strong style="font-size:0.95rem">' + labels[s] + '</strong><div class="mc-status" style="margin-top:0.6rem"><div class="status-dot ' + (allPassed?(passed?'dot-done':submitted?'dot-pend':'dot-pend'):'dot-lock') + '"></div><span style="font-size:0.82rem;color:' + (passed?'var(--success)':'') + '">' + (!allPassed?'Locked - complete theory first':passed?'✅ Passed!':submitted?'Submitted - awaiting review':'Ready to submit') + '</span></div></div>';
+const unlocked = allPassed && (s !== 'reflection' || learner.practicalPassed);
+return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default') + '" onclick="' + (unlocked?'showSection(\''+s+'\')':'') + '"><div style="font-size:1.75rem;margin-bottom:0.5rem">' + icons2[s] + '</div><strong style="font-size:0.95rem">' + labels[s] + '</strong><div class="mc-status" style="margin-top:0.6rem"><div class="status-dot ' + (unlocked?(passed?'dot-done':submitted?'dot-pend':'dot-pend'):'dot-lock') + '"></div><span style="font-size:0.82rem;color:' + (passed?'var(--success)':'') + '">' + (!allPassed?'Locked - complete theory first':!unlocked?'Locked - complete practical first':passed?'✅ Passed!':submitted?'Submitted - awaiting review':'Ready to submit') + '</span></div></div>';
           }).join('')
         + '</div>';
     }
@@ -459,6 +467,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
         if (typeof emailjs !== 'undefined') {
           emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
             to_email: 'emily@dentalnurse.training',
+            subject: 'Written tasks submitted - ' + (learner.name || 'Unknown'),
             learner_name: learner.name || 'Unknown', learner_email: learner.email || '', learner_gdc: learner.gdc || '',
             submission_type: 'Written Tasks', file_url: 'View in admin panel', submitted_at: new Date().toLocaleString('en-GB'),
             message: 'Written tasks submitted by ' + (learner.name||'Unknown') + '. Log in to the admin panel to review:\nhttps://fluoride.dentalnurse.training/admin/index.html',
@@ -600,6 +609,9 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
         { key: 'caseStudy2', label: 'Case Study 2', prompt: 'Describe a second patient case, ideally one that presented a different challenge or patient type to your first.' },
       ];
       html += CASE_STUDY_GUIDANCE;
+      if (!submitted && !pendingSignoff) {
+        html += `<div class="callout" style="margin-bottom:1.25rem"><div class="callout-label">Reminder</div><p>Your case studies auto-save a few seconds after you stop typing. If you're adding to or editing one and about to navigate away, click <strong>💾 Save drafts</strong> below first to make sure your latest changes aren't lost.</p></div>`;
+      }
       html += CASE_STUDIES.map(({ key, label, prompt }) => {
         const savedText = learner[key] || '';
         const wc = wordCount(savedText);
@@ -642,6 +654,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
           await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
             to_email: supervisorEmail,
             to_name: supervisorName,
+            subject: 'Reminder: logbook sign-off needed for ' + (learner.name || 'your learner'),
             learner_name: learner.name || '',
             learner_email: learner.email || '',
             learner_gdc: learner.gdc || '',
@@ -929,6 +942,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
             emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
               to_email: supervisorEmail,
               to_name: supervisorName,
+              subject: 'Logbook sign-off needed for ' + (learner.name || 'your learner'),
               learner_name: learner.name,
               learner_email: learner.email || '',
               learner_gdc: learner.gdc || '',
@@ -1028,8 +1042,10 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
         await updateDoc(doc(db, 'learners', uid), updateData);
         learner[type+'Submitted'] = true;
         if (typeof emailjs !== 'undefined') {
+          const typeLabels = { practical: 'Practical Portfolio', reflection: 'Final Reflection' };
           emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
             to_email: 'emily@dentalnurse.training',
+            subject: (typeLabels[type] || type) + ' submitted - ' + (learner.name || 'Unknown'),
             learner_name: learner.name, learner_email: learner.email, learner_gdc: learner.gdc,
             submission_type: type, file_url: fileUrl || 'Text only', submitted_at: new Date().toLocaleString('en-GB')
           });

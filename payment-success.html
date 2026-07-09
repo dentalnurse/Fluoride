@@ -186,6 +186,7 @@
           emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
             to_email:        learnerEmail,
             to_name:         learnerName,
+            subject:         'Your Dental Nurse Training enrolment is confirmed',
             learner_name:    learnerName,
             learner_email:   learnerEmail,
             learner_gdc:     learnerGDC,
@@ -217,6 +218,7 @@
           emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
             to_email:        'emily@dentalnurse.training',
             to_name:         'Emily',
+            subject:         'New enrolment payment received - ' + learnerName,
             learner_name:    learnerName,
             learner_email:   learnerEmail,
             learner_gdc:     learnerGDC,
