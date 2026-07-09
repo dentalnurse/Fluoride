@@ -193,7 +193,7 @@
             submission_type: 'Extenuating Circumstances Application',
             file_url: 'N/A',
             submitted_at: new Date().toLocaleString('en-GB'),
-            message: 'A learner has submitted an extenuating circumstances application.\n\nLearner: ' + learner.name + '\nEmail: ' + learner.email + '\nGDC: ' + (learner.gdc||'') + '\n\nType: ' + type + '\nFrom: ' + dateFrom + '\nTo: ' + (dateTo||'Ongoing') + '\nProgress: ' + (progress||'Not specified') + '\nExpected completion: ' + (expected||'Not specified') + '\n\nDescription:\n' + description + '\n\nPlease log in to the admin panel to review and approve or decline:\nhttps://dentalnurse.github.io/Fluoride/admin/'
+            message: 'A learner has submitted an extenuating circumstances application.\n\nLearner: ' + learner.name + '\nEmail: ' + learner.email + '\nGDC: ' + (learner.gdc||'') + '\n\nType: ' + type + '\nFrom: ' + dateFrom + '\nTo: ' + (dateTo||'Ongoing') + '\nProgress: ' + (progress||'Not specified') + '\nExpected completion: ' + (expected||'Not specified') + '\n\nDescription:\n' + description + '\n\nPlease log in to the admin panel to review and approve or decline:\nhttps://fluoride.dentalnurse.training/admin/'
           }).catch(() => {});
         }
 

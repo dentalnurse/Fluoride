@@ -444,7 +444,7 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
             to_email: 'emily@dentalnurse.training',
             learner_name: learner.name || 'Unknown', learner_email: learner.email || '', learner_gdc: learner.gdc || '',
             submission_type: 'Written Tasks', file_url: 'View in admin panel', submitted_at: new Date().toLocaleString('en-GB'),
-            message: 'Written tasks submitted by ' + (learner.name||'Unknown') + '. Log in to the admin panel to review:\nhttps://dentalnurse.github.io/Fluoride/admin/index.html',
+            message: 'Written tasks submitted by ' + (learner.name||'Unknown') + '. Log in to the admin panel to review:\nhttps://fluoride.dentalnurse.training/admin/index.html',
           });
         }
         renderSidebar(); showSection('written');
@@ -629,9 +629,9 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
             learner_email: learner.email || '',
             learner_gdc: learner.gdc || '',
             submission_type: 'Logbook Sign-off Request (Resent)',
-            file_url: 'https://dentalnurse.github.io/Fluoride/logbook-signoff.html?t=' + token,
+            file_url: 'https://fluoride.dentalnurse.training/logbook-signoff.html?t=' + token,
             submitted_at: new Date().toLocaleString('en-GB'),
-            message: supervisorName + ',\n\nThis is a reminder that ' + (learner.name||'your learner') + ' has asked you to confirm their clinical logbook entries.\n\nPlease click the link below to review and sign off:\n\nhttps://dentalnurse.github.io/Fluoride/logbook-signoff.html?t=' + token + '\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
+            message: supervisorName + ',\n\nThis is a reminder that ' + (learner.name||'your learner') + ' has asked you to confirm their clinical logbook entries.\n\nPlease click the link below to review and sign off:\n\nhttps://fluoride.dentalnurse.training/logbook-signoff.html?t=' + token + '\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
           });
           showToast('Sign-off email resent to ' + supervisorEmail + ' ✅', 'success');
         } else {
@@ -916,9 +916,9 @@ return '<div class="content-card" style="cursor:' + (allPassed?'pointer':'defaul
               learner_email: learner.email || '',
               learner_gdc: learner.gdc || '',
               submission_type: 'Logbook Sign-off Request',
-              file_url: 'https://dentalnurse.github.io/Fluoride/logbook-signoff.html?t=' + token,
+              file_url: 'https://fluoride.dentalnurse.training/logbook-signoff.html?t=' + token,
               submitted_at: new Date().toLocaleString('en-GB'),
-              message: supervisorName + ',\n\n' + (learner.name||'Your learner') + ' has completed their clinical logbook and requires your confirmation that the entries you supervised are accurate.\n\nPlease click the link below to review your entries and sign off the logbook:\n\nhttps://dentalnurse.github.io/Fluoride/logbook-signoff.html?t=' + token + '\n\nThis should only take a few minutes. You will be asked to confirm that you were physically present for each application and that the details recorded are accurate.\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
+              message: supervisorName + ',\n\n' + (learner.name||'Your learner') + ' has completed their clinical logbook and requires your confirmation that the entries you supervised are accurate.\n\nPlease click the link below to review your entries and sign off the logbook:\n\nhttps://fluoride.dentalnurse.training/logbook-signoff.html?t=' + token + '\n\nThis should only take a few minutes. You will be asked to confirm that you were physically present for each application and that the details recorded are accurate.\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
             });
           }
         }
