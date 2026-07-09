@@ -54,21 +54,28 @@
     </div>
 
     <div class="admin-panel">
+      <!-- Needs-attention banner -->
+      <div id="attentionBanner" style="display:none;background:#FEF3C7;border:1.5px solid #F59E0B;border-radius:var(--radius);padding:0.85rem 1.25rem;margin-bottom:1.25rem;font-size:0.88rem;color:#92400E;align-items:center;gap:0.6rem;flex-wrap:wrap">
+        <span style="font-size:1.1rem">🔔</span>
+        <span id="attentionBannerText" style="font-weight:600"></span>
+      </div>
+
       <!-- Stats row -->
       <div class="admin-stat-row" id="statsRow">
         <div class="admin-stat"><div class="as-n" id="statTotal">-</div><div class="as-lbl">Total learners</div></div>
         <div class="admin-stat"><div class="as-n" id="statPending">-</div><div class="as-lbl">Awaiting approval</div></div>
         <div class="admin-stat"><div class="as-n" id="statActive">-</div><div class="as-lbl">Active learners</div></div>
         <div class="admin-stat"><div class="as-n" id="statSubmissions">-</div><div class="as-lbl">New submissions</div></div>
+        <div class="admin-stat" id="statSupervisorsTile"><div class="as-n" id="statSupervisors">-</div><div class="as-lbl">Supervisors to approve</div></div>
       </div>
 
       <!-- Tabs -->
       <div class="admin-tabs">
-        <div class="admin-tab active" onclick="switchAdminTab('pending')">⏳ Awaiting Approval</div>
-        <div class="admin-tab" onclick="switchAdminTab('all')">👥 All Learners</div>
-        <div class="admin-tab" onclick="switchAdminTab('submissions')">📬 Submissions</div>
+        <div class="admin-tab active" onclick="switchAdminTab('pending')">⏳ Awaiting Approval <span id="pendingBadge" class="admin-tab-badge" style="display:none"></span></div>
+        <div class="admin-tab" onclick="switchAdminTab('all')">👥 All Learners <span id="supervisorBadge" class="admin-tab-badge" style="display:none"></span></div>
+        <div class="admin-tab" onclick="switchAdminTab('submissions')">📬 Submissions <span id="submissionsBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab" onclick="switchAdminTab('content')">✏️ Course Content</div>
-        <div class="admin-tab" onclick="switchAdminTab('ec')">🏥 EC Requests <span id="ecBadge" style="display:none;background:#EF4444;color:#fff;border-radius:100px;padding:0.1rem 0.45rem;font-size:0.72rem;font-weight:700;margin-left:0.35rem"></span></div>
+        <div class="admin-tab" onclick="switchAdminTab('ec')">🏥 EC Requests <span id="ecBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab" onclick="switchAdminTab('audit')">📋 Audit / QA</div>
       </div>
 
@@ -139,6 +146,18 @@
       return String(s || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    // 'approved' | 'signed' (signed by supervisor, awaiting admin approval) | 'sent' | 'pending'
+    function getSupervisorStatus(learnerId, s) {
+      const agrRaw = s.token ? (supervisorAgreements[s.token] || Object.values(supervisorAgreements).find(a => a.learnerUid === learnerId && a.supGdc === s.gdc && a.signedAt)) : null;
+      const agr = agrRaw && agrRaw.signedAt ? agrRaw : null;
+      return s.approved ? 'approved' : agr ? 'signed' : s.guidanceSent ? 'sent' : 'pending';
+    }
+
+    // Count of learners with at least one supervisor signed and awaiting admin approval
+    function countSupervisorsAwaitingApproval() {
+      return learners.filter(l => (l.supervisors || []).some(s => getSupervisorStatus(l.id, s) === 'signed')).length;
+    }
+
     // ── Auth ───────────────────────────────────────────────────────────────
     onAuthStateChanged(auth, (user) => {
       if (user && ADMIN_EMAILS.includes(user.email)) {
@@ -187,15 +206,24 @@
       try {
         const ecSnap = await getDocs(collection(db, 'ecRequests'));
         ecRequests = ecSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        const pendingEC = ecRequests.filter(r => r.status === 'pending').length;
-        const badge = document.getElementById('ecBadge');
-        if (pendingEC > 0) { badge.textContent = pendingEC; badge.style.display = 'inline'; }
-        else { badge.style.display = 'none'; }
       } catch(e) {
         console.warn('Could not load EC requests:', e.message);
       }
       updateStats();
       renderTab(currentTab);
+    }
+
+    // Count of individual written/practical/reflection submissions not yet marked passed
+    function countSubmissionsAwaitingReview() {
+      return learners.reduce((n, l) =>
+        n + ['written','practical','reflection'].filter(type => l[type+'Submitted'] && !l[type+'Passed']).length
+      , 0);
+    }
+
+    function setBadge(id, count) {
+      const el = document.getElementById(id);
+      if (count > 0) { el.textContent = count; el.style.display = 'inline'; }
+      else { el.style.display = 'none'; }
     }
 
     function updateStats() {
@@ -204,10 +232,35 @@
       const submissions = learners.filter(l =>
         l.writtenSubmitted || l.practicalSubmitted || l.reflectionSubmitted
       ).length;
+      const supervisorsToApprove   = countSupervisorsAwaitingApproval();
+      const submissionsToReview    = countSubmissionsAwaitingReview();
+      const pendingEC              = ecRequests.filter(r => r.status === 'pending').length;
+
       document.getElementById('statTotal').textContent       = learners.length;
       document.getElementById('statPending').textContent     = pending;
       document.getElementById('statActive').textContent      = active;
       document.getElementById('statSubmissions').textContent = submissions;
+      document.getElementById('statSupervisors').textContent = supervisorsToApprove;
+      document.getElementById('statSupervisorsTile').classList.toggle('needs-attention', supervisorsToApprove > 0);
+
+      setBadge('pendingBadge', pending);
+      setBadge('supervisorBadge', supervisorsToApprove);
+      setBadge('submissionsBadge', submissionsToReview);
+      setBadge('ecBadge', pendingEC);
+
+      // Combined "needs your attention" banner across everything at once
+      const items = [];
+      if (supervisorsToApprove > 0) items.push(supervisorsToApprove + ' supervisor' + (supervisorsToApprove===1?'':'s') + ' awaiting approval');
+      if (pending > 0)               items.push(pending + ' learner account' + (pending===1?'':'s') + ' awaiting approval');
+      if (submissionsToReview > 0)   items.push(submissionsToReview + ' submission' + (submissionsToReview===1?'':'s') + ' awaiting review');
+      if (pendingEC > 0)             items.push(pendingEC + ' extenuating circumstances request' + (pendingEC===1?'':'s'));
+      const banner = document.getElementById('attentionBanner');
+      if (items.length) {
+        document.getElementById('attentionBannerText').textContent = 'You have ' + items.join(', ') + '.';
+        banner.style.display = 'flex';
+      } else {
+        banner.style.display = 'none';
+      }
     }
 
     // ── Tabs ──────────────────────────────────────────────────────────────
@@ -315,12 +368,16 @@
         const rowStyle = expiryRowStyle(days);
         const expBadge = expiryBadge(days);
         const flag = getCommFlag(l);
+        const supAwaiting = (l.supervisors || []).some(s => getSupervisorStatus(l.id, s) === 'signed');
         return `<tr style="${rowStyle}">
           <td>
             <div class="td-name" style="${flag ? 'color:'+flag.colour+';font-weight:700' : ''}">${esc(l.name)}</div>
             ${flag ? `<div style="margin-top:0.25rem;display:flex;align-items:center;gap:0.4rem">
               <span style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:9999px;background:${flag.bg};color:${flag.colour};font-weight:600">${flag.label}</span>
               <button onclick="showEmailTemplate('${l.id}')" style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:9999px;background:#F3F4F6;border:1px solid var(--border);cursor:pointer;color:var(--ink-mid)">📧 Email</button>
+            </div>` : ''}
+            ${supAwaiting ? `<div style="margin-top:0.25rem">
+              <button onclick="openLearnerModal('${l.id}')" style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:9999px;background:#FEE2E2;border:1px solid #FCA5A5;color:#B91C1C;font-weight:600;cursor:pointer">👩‍⚕️ Supervisor awaiting approval</button>
             </div>` : ''}
           </td>
           <td><div style="font-size:0.82rem">${esc(l.email)||'-'}</div><div class="td-email">GDC: ${esc(l.gdc)||'-'}</div></td>
@@ -788,7 +845,7 @@
             ${sups.map((s, i) => {
               const agrRaw = s.token ? (supervisorAgreements[s.token] || Object.values(supervisorAgreements).find(a => a.learnerUid === id && a.supGdc === s.gdc && a.signedAt)) : null;
               const agr = agrRaw && agrRaw.signedAt ? agrRaw : null;
-              const status = s.approved ? 'approved' : agr ? 'signed' : s.guidanceSent ? 'sent' : 'pending';
+              const status = getSupervisorStatus(id, s);
               const badge = {
                 approved: '<span class="pill pill-green">✓ Approved</span>',
                 signed:   '<span class="pill pill-teal">✍️ Signed - awaiting approval</span>',
@@ -1179,6 +1236,7 @@
           );
         }
       }
+      updateStats();
       renderTab(currentTab);
     };
 
@@ -1222,6 +1280,8 @@
       await updateDoc(doc(db, 'learners', learnerId), { supervisors: updatedSups });
       l.supervisors = updatedSups;
       showToast(s.name + ' approved as supervisor ✅', 'success');
+      updateStats();
+      if (currentTab === 'all') renderTab('all');
       promptEmail(
         l.email,
         'Supervisor approved - Dental Nurse Training Fluoride Varnish Certificate',

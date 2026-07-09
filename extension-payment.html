@@ -82,8 +82,8 @@
 
   <div style="background:linear-gradient(135deg,var(--teal-dark),var(--teal));padding:2.5rem 0 2rem">
     <div class="container">
-      <h1 style="color:var(--white);margin-bottom:0.4rem">Course Access Expired</h1>
-      <p style="color:rgba(255,255,255,0.75);max-width:500px">Your 4-month course access has ended. Purchase a 1-month extension to pick up where you left off.</p>
+      <h1 style="color:var(--white);margin-bottom:0.4rem" id="heroTitle">Extend Your Course Access</h1>
+      <p style="color:rgba(255,255,255,0.75);max-width:500px" id="heroSubtitle">Purchase a 1-month extension at any time to give yourself more time to finish.</p>
     </div>
   </div>
 
@@ -165,26 +165,72 @@
   </footer>
 
   <script src="js/config.js"></script>
-  <script>
-    const expiryInfo   = JSON.parse(localStorage.getItem('expiryInfo') || '{}');
-    const learnerName  = expiryInfo.name  || '';
-    const learnerEmail = expiryInfo.email || '';
-    const daysExpired  = expiryInfo.daysExpired || 0;
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const app  = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const storedInfo = JSON.parse(localStorage.getItem('expiryInfo') || '{}');
+
+    // Resolve name/email/daysExpired from (in priority order once auth loads):
+    // 1. The learner's live Firestore record, if logged in
+    // 2. Whatever's already in localStorage (set by the dashboard's expiry redirect)
+    // 3. The ?name=&email= query string (used by the expiry reminder email link)
+    let learnerName    = storedInfo.name  || params.get('name')  || '';
+    let learnerEmail   = storedInfo.email || params.get('email') || '';
+    let learnerUid     = localStorage.getItem('expiryUid') || null;
+    const daysExpired   = storedInfo.daysExpired || 0;
     const graceDaysLeft = 7 - daysExpired;
 
-    document.getElementById('summaryName').textContent     = learnerName  || '-';
-    document.getElementById('summaryEmail').textContent    = learnerEmail || '-';
-    document.getElementById('summaryNameSide').textContent = learnerName  || '-';
-    document.getElementById('summaryEmailSide').textContent= learnerEmail || '-';
-    document.getElementById('summaryPrice').textContent    = EXTENSION_FEE;
+    function renderSummary() {
+      document.getElementById('summaryName').textContent     = learnerName  || '-';
+      document.getElementById('summaryEmail').textContent    = learnerEmail || '-';
+      document.getElementById('summaryNameSide').textContent = learnerName  || '-';
+      document.getElementById('summaryEmailSide').textContent= learnerEmail || '-';
+      document.getElementById('summaryPrice').textContent    = EXTENSION_FEE;
+    }
+    renderSummary();
 
     if (graceDaysLeft > 0) {
+      document.getElementById('heroTitle').textContent    = 'Course Access Expired';
+      document.getElementById('heroSubtitle').textContent = 'Your 4-month course access has ended. Purchase a 1-month extension to pick up where you left off.';
       document.getElementById('graceWarning').style.display = 'block';
       document.getElementById('graceDaysLeft').textContent  =
         graceDaysLeft === 1 ? '1 day' : graceDaysLeft + ' days';
     }
 
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+      learnerUid = user.uid;
+      try {
+        const snap = await getDoc(doc(db, 'learners', user.uid));
+        if (snap.exists()) {
+          const learner = snap.data();
+          learnerName  = learner.name  || learnerName  || user.email;
+          learnerEmail = learner.email || learnerEmail || user.email;
+        } else if (!learnerEmail) {
+          learnerEmail = user.email;
+        }
+      } catch (e) {
+        console.error('Failed to load learner record:', e);
+      }
+      renderSummary();
+      // Keep localStorage in sync so extension-success.html has reliable data
+      // regardless of how this page was reached (expiry redirect, reminder
+      // email link, or the self-service link on the dashboard).
+      localStorage.setItem('expiryInfo', JSON.stringify({ name: learnerName, email: learnerEmail, daysExpired }));
+      localStorage.setItem('expiryUid', learnerUid);
+    });
+
     window.goToStripe = function() {
+      // Best-effort sync even if onAuthStateChanged hasn't resolved yet
+      localStorage.setItem('expiryInfo', JSON.stringify({ name: learnerName, email: learnerEmail, daysExpired }));
+      if (learnerUid) localStorage.setItem('expiryUid', learnerUid);
       window.location.href = EXTENSION_STRIPE_LINK;
     };
   </script>

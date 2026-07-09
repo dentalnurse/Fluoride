@@ -64,8 +64,8 @@
 
     const expiryInfo = JSON.parse(localStorage.getItem('expiryInfo') || '{}');
     const expiryUid  = localStorage.getItem('expiryUid');
-    const learnerName  = expiryInfo.name  || '';
-    const learnerEmail = expiryInfo.email || '';
+    let learnerName  = expiryInfo.name  || '';
+    let learnerEmail = expiryInfo.email || '';
 
     if (learnerEmail) {
       document.getElementById('emailDisplay').textContent = learnerEmail;
@@ -109,6 +109,26 @@
     // Try to get uid from sessionStorage or current auth user
     onAuthStateChanged(auth, async (user) => {
       const uid = expiryUid || (user ? user.uid : null);
+      // Fall back to the live Firestore record / auth user if localStorage
+      // didn't have name/email (e.g. this page was reached without going
+      // through the expiry-redirect flow that normally populates it).
+      if ((!learnerName || !learnerEmail) && uid) {
+        try {
+          const snap = await getDoc(doc(db, 'learners', uid));
+          if (snap.exists()) {
+            const learner = snap.data();
+            learnerName  = learnerName  || learner.name  || (user ? user.email : '') || '';
+            learnerEmail = learnerEmail || learner.email || (user ? user.email : '') || '';
+          } else if (!learnerEmail && user) {
+            learnerEmail = user.email;
+          }
+        } catch (e) {
+          console.error('Failed to load learner record:', e);
+        }
+        if (learnerEmail) {
+          document.getElementById('emailDisplay').textContent = learnerEmail;
+        }
+      }
       if (uid) {
         await doExtension(uid);
       }
