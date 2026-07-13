@@ -115,19 +115,19 @@
             localStorage.setItem('expiryInfo', JSON.stringify({ name: learner.name, email: learner.email, daysExpired }));
             localStorage.setItem('expiryUid', uid);
             if (daysExpired > 7) {
-              // Hard expired — show repurchase screen, no extension allowed
+              // Hard expired - show repurchase screen, no extension allowed
               document.getElementById('dashMain').innerHTML = `
                 <div style="max-width:520px;margin:5rem auto;text-align:center;padding:2rem">
                   <div style="font-size:3.5rem;margin-bottom:1rem">⏰</div>
                   <h2 style="color:var(--ink);margin-bottom:0.75rem">Your course access has expired</h2>
                   <p style="color:var(--ink-mid);margin-bottom:0.5rem">Your 4-month course access ended ${daysExpired} days ago. The 7-day extension window has now closed.</p>
-                  <p style="color:var(--ink-mid);margin-bottom:1.75rem">To continue, you will need to re-enrol and start the course again. Please contact us first — we can advise on the best option for you.</p>
+                  <p style="color:var(--ink-mid);margin-bottom:1.75rem">To continue, you will need to re-enrol and start the course again. Please contact us first, and we can advise on the best option for you.</p>
                   <a href="mailto:emily@dentalnurse.training?subject=Course%20re-enrolment%20query&body=Hi%20Emily%2C%0A%0AMy%20course%20access%20has%20expired.%20I%20would%20like%20to%20discuss%20my%20options.%0A%0AMy%20name%3A%20${encodeURIComponent(learner.name||'')}%0AMy%20email%3A%20${encodeURIComponent(learner.email||'')}%0A" class="btn btn-primary btn-lg" style="margin-bottom:0.75rem">📧 Contact us to re-enrol</a>
                   <br/><button class="btn btn-outline" onclick="handleLogout()" style="margin-top:0.5rem">Log out</button>
                 </div>`;
               return;
             } else {
-              // Grace period (0-7 days expired) — offer extension
+              // Grace period (0-7 days expired) - offer extension
               window.location.href = 'extension-payment.html';
               return;
             }
