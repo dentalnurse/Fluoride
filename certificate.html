@@ -321,19 +321,29 @@
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
+    const params    = new URLSearchParams(window.location.search);
+    const targetUid = params.get('uid'); // set for admin view; absent = own certificate
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) { window.location.href = 'login.html'; return; }
+      const isAdmin = ADMIN_EMAILS.includes(user.email);
+      if (targetUid && targetUid !== user.uid && !isAdmin) {
+        document.getElementById('certName').textContent = 'Not authorised';
+        document.getElementById('certGDC').textContent  = 'You do not have permission to view this certificate.';
+        return;
+      }
+      const uid = (targetUid && isAdmin) ? targetUid : user.uid;
       try {
-        const snap    = await getDoc(doc(db, 'learners', user.uid));
+        const snap    = await getDoc(doc(db, 'learners', uid));
         const learner = snap.exists() ? snap.data() : null;
 
         if (!learner) {
           document.getElementById('certName').textContent = 'No learner record found';
-          document.getElementById('certGDC').textContent  = 'This account (' + user.email + ') has no course record. Contact emily@dentalnurse.training.';
+          document.getElementById('certGDC').textContent  = 'This account has no course record. Contact emily@dentalnurse.training.';
           return;
         }
 
-        const name = learner.name || user.email;
+        const name = learner.name || learner.email || user.email;
         const gdc  = learner.gdc  || '-';
         const completedAt = learner.reflectionSubmittedAt?.toDate
           ? learner.reflectionSubmittedAt.toDate()
@@ -350,8 +360,9 @@
         document.getElementById('certDateBack').textContent = dateStr;
         document.getElementById('certNumber').textContent   = learner.certNumber ? 'Certificate No: ' + learner.certNumber : 'Certificate number pending...';
 
-        // Generate cert number if not already assigned
-        if (!learner.certNumber) {
+        // Generate cert number if not already assigned (only when viewing your own
+        // certificate - an admin previewing someone else's shouldn't trigger this)
+        if (!learner.certNumber && uid === user.uid) {
           try {
             const counterRef = doc(db, 'counters', 'certificates');
             const certNumber = await runTransaction(db, async (tx) => {
@@ -360,7 +371,7 @@
               tx.set(counterRef, { count: next });
               return 'DNT/FV/' + new Date().getFullYear() + '/' + String(next).padStart(4, '0');
             });
-            await updateDoc(doc(db, 'learners', user.uid), {
+            await updateDoc(doc(db, 'learners', uid), {
               certNumber,
               certIssuedAt: serverTimestamp()
             });
@@ -369,6 +380,8 @@
             console.error('Failed to generate certificate number:', e);
             document.getElementById('certNumber').textContent = 'Certificate number unavailable - please refresh or contact emily@dentalnurse.training';
           }
+        } else if (!learner.certNumber) {
+          document.getElementById('certNumber').textContent = 'Certificate number not yet issued';
         }
       } catch(e) {
         console.error(e);

@@ -75,6 +75,7 @@
         <div class="admin-tab" onclick="switchAdminTab('leads')">📝 Enrolment Leads <span id="leadsBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab active" onclick="switchAdminTab('pending')">⏳ Awaiting Approval <span id="pendingBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab" onclick="switchAdminTab('all')">👥 All Learners <span id="supervisorBadge" class="admin-tab-badge" style="display:none"></span></div>
+        <div class="admin-tab" onclick="switchAdminTab('completed')">🎓 Completed</div>
         <div class="admin-tab" onclick="switchAdminTab('submissions')">📬 Submissions <span id="submissionsBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab" onclick="switchAdminTab('content')">✏️ Course Content</div>
         <div class="admin-tab" onclick="switchAdminTab('ec')">🏥 EC Requests <span id="ecBadge" class="admin-tab-badge" style="display:none"></span></div>
@@ -322,7 +323,7 @@
     window.switchAdminTab = (tab) => {
       currentTab = tab;
       document.querySelectorAll('.admin-tab').forEach((t, i) => {
-        t.classList.toggle('active', ['leads','pending','all','submissions','content','ec','audit'][i] === tab);
+        t.classList.toggle('active', ['leads','pending','all','completed','submissions','content','ec','audit'][i] === tab);
       });
       renderTab(tab);
     };
@@ -332,6 +333,7 @@
       if (tab === 'leads')       { renderLeadsTab(el); return; }
       if (tab === 'pending')     { renderPendingTab(el); return; }
       if (tab === 'all')         { renderAllTab(el); return; }
+      if (tab === 'completed')   { renderCompletedTab(el); return; }
       if (tab === 'submissions') { renderSubmissionsTab(el); return; }
       if (tab === 'content')     { renderContentTab(el); return; }
       if (tab === 'ec')          { renderECTab(el); return; }
@@ -456,8 +458,9 @@
 
     // ── All learners tab ──────────────────────────────────────────────────
     function renderAllTab(el) {
-      if (!learners.length) {
-        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No learners yet.</div>';
+      const active = learners.filter(l => !isCourseCompleted(l));
+      if (!active.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No active learners. Check the Completed tab.</div>';
         return;
       }
       el.innerHTML = `
@@ -469,7 +472,39 @@
             <th>Name</th><th>Email / GDC</th><th>Status</th><th>Theory</th><th>Written</th><th>Practical</th><th>Reflection</th><th>Actions</th>
           </tr></thead>
           <tbody id="allLearnersBody">
-            ${renderAllRows(learners)}
+            ${renderAllRows(active)}
+          </tbody>
+        </table>`;
+    }
+
+    function renderCompletedTab(el) {
+      const completed = learners.filter(l => isCourseCompleted(l));
+      if (!completed.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No learners have completed the course yet.</div>';
+        return;
+      }
+      el.innerHTML = `
+        <table class="admin-table">
+          <thead><tr>
+            <th>Name</th><th>Email / GDC</th><th>Certificate No.</th><th>Issued</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${completed.map(l => {
+              const issuedAt = l.certIssuedAt?.toDate ? l.certIssuedAt.toDate().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) : '-';
+              return `<tr>
+                <td><div class="td-name">${esc(l.name)}</div></td>
+                <td><div style="font-size:0.82rem">${esc(l.email)||'-'}</div><div class="td-email">GDC: ${esc(l.gdc)||'-'}</div></td>
+                <td>${esc(l.certNumber) || 'Pending'}</td>
+                <td>${issuedAt}</td>
+                <td>
+                  <div class="admin-actions">
+                    <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">Manage</button>
+                    <a href="../certificate.html?uid=${l.id}" target="_blank" class="btn btn-outline btn-sm">🎓 View Certificate</a>
+                    <a href="../portfolio-export.html?uid=${l.id}" target="_blank" class="btn btn-outline btn-sm">📄 Portfolio</a>
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
           </tbody>
         </table>`;
     }
@@ -515,10 +550,10 @@
     }
 
     window.filterLearners = (q) => {
-      const filtered = learners.filter(l =>
+      const filtered = learners.filter(l => !isCourseCompleted(l) && (
         l.name?.toLowerCase().includes(q.toLowerCase()) ||
         l.email?.toLowerCase().includes(q.toLowerCase())
-      );
+      ));
       const body = document.getElementById('allLearnersBody');
       if (body) body.innerHTML = renderAllRows(filtered);
     };
@@ -1072,6 +1107,7 @@
           ${(() => { const d = daysUntilExpiry(l); return d !== null && d <= 14 ? `<button class="btn btn-outline" style="color:#92400E;border-color:#F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>` : `<button class="btn btn-outline" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>`; })()}
           <button class="btn btn-outline" onclick="saveNotes('${l.id}')">Save notes</button>
           <a href="../portfolio-export.html?uid=${id}" target="_blank" class="btn btn-outline">📄 Download Portfolio</a>
+          ${isCourseCompleted(l) ? `<a href="../certificate.html?uid=${id}" target="_blank" class="btn btn-outline">🎓 View Certificate</a>` : ''}
           <button class="btn btn-primary" onclick="closeModal()">Close</button>
         </div>`;
       document.getElementById('learnerModal').classList.remove('hidden');

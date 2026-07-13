@@ -1,6 +1,6 @@
-# DNT — Fluoride Varnish Application Course
+# DNT - Fluoride Varnish Application Course
 
-Website for the DNT Fluoride Varnish Application Course, delivered by Em Bremner of DNT — Dental Nurse Training.
+Website for the DNT Fluoride Varnish Application Course, delivered by Em Bremner of DNT - Dental Nurse Training.
 
 ## Hosting on GitHub Pages
 
@@ -20,7 +20,7 @@ Website for the DNT Fluoride Varnish Application Course, delivered by Em Bremner
    ```
 3. Go to **Settings → Pages** in your GitHub repository
 4. Under **Source**, select `main` branch and `/ (root)` folder
-5. Save — your site will be live at `https://yourusername.github.io/repo-name/`
+5. Save - your site will be live at `https://yourusername.github.io/repo-name/`
 
 ## Pages
 
@@ -51,4 +51,4 @@ The handbook (`pages/handbook.html`) is a self-contained click-through presentat
 
 ## Built by
 
-DNT — Dental Nurse Training | dentalnurse.training
+DNT - Dental Nurse Training | dentalnurse.training

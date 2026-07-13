@@ -98,14 +98,14 @@
     const enrolData = JSON.parse(localStorage.getItem('enrolData') || '{}');
 
     if (enrolData.email) {
-      // We have stored data — show the summary box
+      // We have stored data - show the summary box
       const fullName = ((enrolData.firstName || '') + ' ' + (enrolData.lastName || '')).trim();
       document.getElementById('summaryBox').style.display  = 'block';
       document.getElementById('summaryName').textContent   = fullName || 'Your account';
       document.getElementById('summaryEmail').textContent  = enrolData.email;
       document.getElementById('summaryGDC').textContent    = enrolData.gdc ? 'GDC: ' + enrolData.gdc : '';
     } else {
-      // No stored data — ask them for their email
+      // No stored data - ask them for their email
       document.getElementById('emailEntry').style.display = 'block';
     }
 
