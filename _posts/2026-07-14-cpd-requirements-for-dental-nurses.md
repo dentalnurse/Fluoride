@@ -179,6 +179,10 @@ for dental nurses](https://dentalnurse.github.io/Fluoride/blog/can-dental-nurses
 
 [Find out more here.](https://dentalnurse.github.io/Fluoride/enrol.html)
 
+Fluoride varnish is just one of many post-registration qualifications 
+that count towards your CPD. [Explore the full range of courses at 
+Dental Nurse Training.](https://dentalnurse.training)
+
 ## Where to Find the Full GDC Guidance
 
 Everything in this post comes directly from GDC guidance. You 
