@@ -140,6 +140,9 @@ extended duty, our course covers indemnity requirements in full
 alongside GDC scope of practice, clinical technique and 
 documentation. [Find out more here.](https://dentalnurse.github.io/Fluoride/enrol.html)
 
+Indemnity applies to every extended duty, not just fluoride varnish. 
+[Explore the full range of courses at Dental Nurse Training.](https://dentalnurse.training)
+
 ---
 
 *About the author: Emily Bremner is a dental nurse educator at 

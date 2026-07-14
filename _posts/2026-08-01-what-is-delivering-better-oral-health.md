@@ -175,6 +175,9 @@ Our course covers it in depth alongside GDC scope of practice,
 clinical technique and documentation. [Find out more 
 here.](https://dentalnurse.github.io/Fluoride/enrol.html)
 
+DBOH also underpins many of our other post-registration courses. 
+[Explore the full range of courses at Dental Nurse Training.](https://dentalnurse.training)
+
 ---
 
 *About the author: Emily Bremner is a dental nurse educator at 
