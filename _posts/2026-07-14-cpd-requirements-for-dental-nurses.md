@@ -1,7 +1,7 @@
 ---
 title: "CPD Requirements for Dental Nurses: What You Actually Need 
 to Know"
-date: 2026-09-01
+date: 2026-07-14
 description: "A plain-English guide to GDC CPD requirements for 
 dental nurses, covering hours, verifiable CPD, recommended topics, 
 records and annual statements."
