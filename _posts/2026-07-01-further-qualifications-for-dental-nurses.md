@@ -101,8 +101,3 @@ Training are happy to talk it through with you.
 [Visit Dental Nurse Training to explore all available 
 qualifications.](https://dentalnurse.training)
 
----
-
-*About the author: Emily Bremner is a dental nurse educator at 
-Dental Nurse Training Ltd. All articles are reviewed for clinical 
-accuracy against current GDC guidance.*

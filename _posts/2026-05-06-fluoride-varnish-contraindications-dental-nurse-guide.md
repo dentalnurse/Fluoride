@@ -161,8 +161,3 @@ contraindication screening, documentation and GDC Scope of Practice requirements
 are not yet qualified to apply fluoride varnish independently, 
 [find out more about the Dental Nurse Training Certificate here.](https://dentalnurse.github.io/Fluoride/enrol.html)
 
----
-
-*About the author: Emily Bremner is a dental nurse educator at Dental 
-Nurse Training Ltd. All articles are reviewed for clinical accuracy 
-against current DBOH, GDC and HTM 01-05 guidance.*

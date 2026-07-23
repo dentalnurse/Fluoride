@@ -172,8 +172,3 @@ and documentation. [Find out more about the Dental Nurse
 Training Fluoride Varnish Application Course 
 here.](https://dentalnurse.github.io/Fluoride/enrol.html)
 
----
-
-*About the author: Emily Bremner is a dental nurse educator at 
-Dental Nurse Training Ltd. All articles are reviewed for clinical 
-accuracy against current DBOH and GDC guidance.*

@@ -109,8 +109,3 @@ documentation, with assessor feedback at every stage.
 
 [Find out more and enrol here.](https://dentalnurse.github.io/Fluoride/enrol.html)
 
----
-
-*About the author: Emily Bremner is a dental nurse educator at Dental 
-Nurse Training Ltd. All articles are reviewed for clinical accuracy 
-against current DBOH, GDC and HTM 01-05 guidance.*
