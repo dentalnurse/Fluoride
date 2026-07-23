@@ -143,8 +143,3 @@ documentation. [Find out more here.](https://dentalnurse.github.io/Fluoride/enro
 Indemnity applies to every extended duty, not just fluoride varnish. 
 [Explore the full range of courses at Dental Nurse Training.](https://dentalnurse.training)
 
----
-
-*About the author: Emily Bremner is a dental nurse educator at 
-Dental Nurse Training Ltd. All articles are reviewed for clinical 
-accuracy against current GDC guidance.*

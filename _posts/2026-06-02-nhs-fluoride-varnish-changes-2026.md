@@ -125,8 +125,3 @@ Contract Reforms (December 2025)](https://www.gov.uk/government/consultations/nh
 2026)](https://www.gdc-uk.org/news-blogs/blog/detail/blogs/2026/01/29/nhs-contract-reforms-positive-step-for-profession)
 - [Delivering Better Oral Health](https://www.gov.uk/government/publications/delivering-better-oral-health-an-evidence-based-toolkit-for-prevention)
 
----
-
-*About the author: Emily Bremner is a dental nurse educator at Dental 
-Nurse Training Ltd. All articles are reviewed for clinical accuracy 
-against current GDC, NHS England and DBOH guidance.*

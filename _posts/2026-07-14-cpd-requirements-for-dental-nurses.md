@@ -192,8 +192,3 @@ can read the full CPD guidance for dental professionals at:
 
 [GDC recommended CPD topics](https://www.gdc-uk.org/education-cpd/cpd/recommended-cpd-topics)
 
----
-
-*About the author: Emily Bremner is a dental nurse educator at 
-Dental Nurse Training Ltd. All articles are reviewed for clinical 
-accuracy against current GDC guidance.*

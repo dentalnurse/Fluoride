@@ -178,8 +178,3 @@ here.](https://dentalnurse.github.io/Fluoride/enrol.html)
 DBOH also underpins many of our other post-registration courses. 
 [Explore the full range of courses at Dental Nurse Training.](https://dentalnurse.training)
 
----
-
-*About the author: Emily Bremner is a dental nurse educator at 
-Dental Nurse Training Ltd. All articles are reviewed for clinical 
-accuracy against current DBOH, GDC and NHS England guidance.*
