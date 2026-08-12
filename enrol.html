@@ -46,8 +46,8 @@
           </div>
           <div class="form-group"><label>Email address *</label><input type="email" id="enrolEmail" placeholder="your@email.com"/></div>
           <div class="form-group"><label>GDC registration number *</label><input type="text" id="enrolGDC" placeholder="e.g. 123456"/></div>
-          <div class="form-group"><label>Phone number</label><input type="tel" id="enrolPhone" placeholder="Optional"/></div>
-          <div class="form-group"><label>Place of work</label><input type="text" id="enrolWorkplace" placeholder="Practice or employer name"/></div>
+          <div class="form-group"><label>Phone number *</label><input type="tel" id="enrolPhone"/></div>
+          <div class="form-group"><label>Place of work *</label><input type="text" id="enrolWorkplace" placeholder="Practice or employer name"/></div>
           <div class="form-group">
             <label>How long have you been qualified? *</label>
             <select id="enrolExperience">
@@ -132,7 +132,7 @@
       const errEl      = document.getElementById('enrolError');
       errEl.style.display = 'none';
 
-      if (!firstName || !lastName || !email || !gdc || !experience || !supervisor || !indemnity) {
+      if (!firstName || !lastName || !email || !gdc || !phone || !workplace || !experience || !supervisor || !indemnity) {
         errEl.textContent = 'Please complete all required fields marked with *';
         errEl.style.display = 'block';
         return;

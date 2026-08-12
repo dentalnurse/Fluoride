@@ -88,14 +88,14 @@
     import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword }
                                from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp }
+    import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp }
                                from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const app  = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
-    const enrolData = JSON.parse(localStorage.getItem('enrolData') || '{}');
+    let enrolData = JSON.parse(localStorage.getItem('enrolData') || '{}');
 
     if (enrolData.email) {
       // We have stored data - show the summary box
@@ -169,6 +169,26 @@
       btn.disabled = true; btn.textContent = 'Creating your account...';
 
       try {
+        // If we don't have localStorage enrolment data (new device / cleared
+        // storage), recover the GDC/phone/workplace/experience/notes the
+        // learner submitted on enrol.html from the pendingEnrolments record.
+        if (!enrolData.email) {
+          try {
+            const pendingSnap = await getDoc(doc(db, 'pendingEnrolments', email.toLowerCase()));
+            if (pendingSnap.exists()) {
+              const pending = pendingSnap.data();
+              enrolData = {
+                ...enrolData,
+                gdc:        pending.gdc        || '',
+                phone:      pending.phone      || '',
+                workplace:  pending.workplace  || '',
+                experience: pending.experience || '',
+                notes:      pending.notes      || '',
+              };
+            }
+          } catch(e1) { /* best-effort recovery */ }
+        }
+
         // Create Firebase Auth user
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         const uid  = cred.user.uid;
