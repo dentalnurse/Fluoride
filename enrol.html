@@ -118,7 +118,7 @@
 
     document.getElementById('sidebarPrice').textContent = COURSE_PRICE;
 
-    window.submitEnrolment = () => {
+    window.submitEnrolment = async () => {
       const firstName  = document.getElementById('firstName').value.trim();
       const lastName   = document.getElementById('lastName').value.trim();
       const email      = document.getElementById('enrolEmail').value.trim();
@@ -146,12 +146,18 @@
       // Record the lead immediately so it's visible in admin even if the
       // learner never comes back to finish creating their account after
       // paying. Keyed by email so re-submitting (e.g. after abandoning
-      // checkout and trying again) updates the same record. Fire-and-forget
-      // so a Firestore hiccup never delays the redirect to payment.
-      setDoc(doc(db, 'pendingEnrolments', email.toLowerCase()), {
-        firstName, lastName, email, gdc, phone, workplace, experience, supervisor, indemnity, notes,
-        submittedAt: serverTimestamp()
-      }).catch(e => console.warn('Could not record enrolment lead:', e.message));
+      // checkout and trying again) updates the same record. Awaited (with
+      // a timeout cap) so the redirect below can't cancel the write mid-flight -
+      // navigating away tears down any in-flight Firestore request.
+      try {
+        await Promise.race([
+          setDoc(doc(db, 'pendingEnrolments', email.toLowerCase()), {
+            firstName, lastName, email, gdc, phone, workplace, experience, supervisor, indemnity, notes,
+            submittedAt: serverTimestamp()
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timed out')), 4000))
+        ]);
+      } catch (e) { console.warn('Could not record enrolment lead:', e.message); }
 
       // Redirect to Stripe Checkout
       window.location.href = STRIPE_PAYMENT_URL;
