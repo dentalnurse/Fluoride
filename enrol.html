@@ -46,8 +46,8 @@
           </div>
           <div class="form-group"><label>Email address *</label><input type="email" id="enrolEmail" placeholder="your@email.com"/></div>
           <div class="form-group"><label>GDC registration number *</label><input type="text" id="enrolGDC" placeholder="e.g. 123456"/></div>
-          <div class="form-group"><label>Phone number</label><input type="tel" id="enrolPhone" placeholder="Optional"/></div>
-          <div class="form-group"><label>Place of work</label><input type="text" id="enrolWorkplace" placeholder="Practice or employer name"/></div>
+          <div class="form-group"><label>Phone number *</label><input type="tel" id="enrolPhone"/></div>
+          <div class="form-group"><label>Place of work *</label><input type="text" id="enrolWorkplace" placeholder="Practice or employer name"/></div>
           <div class="form-group">
             <label>How long have you been qualified? *</label>
             <select id="enrolExperience">
@@ -118,7 +118,7 @@
 
     document.getElementById('sidebarPrice').textContent = COURSE_PRICE;
 
-    window.submitEnrolment = () => {
+    window.submitEnrolment = async () => {
       const firstName  = document.getElementById('firstName').value.trim();
       const lastName   = document.getElementById('lastName').value.trim();
       const email      = document.getElementById('enrolEmail').value.trim();
@@ -132,7 +132,7 @@
       const errEl      = document.getElementById('enrolError');
       errEl.style.display = 'none';
 
-      if (!firstName || !lastName || !email || !gdc || !experience || !supervisor || !indemnity) {
+      if (!firstName || !lastName || !email || !gdc || !phone || !workplace || !experience || !supervisor || !indemnity) {
         errEl.textContent = 'Please complete all required fields marked with *';
         errEl.style.display = 'block';
         return;
@@ -146,12 +146,18 @@
       // Record the lead immediately so it's visible in admin even if the
       // learner never comes back to finish creating their account after
       // paying. Keyed by email so re-submitting (e.g. after abandoning
-      // checkout and trying again) updates the same record. Fire-and-forget
-      // so a Firestore hiccup never delays the redirect to payment.
-      setDoc(doc(db, 'pendingEnrolments', email.toLowerCase()), {
-        firstName, lastName, email, gdc, phone, workplace, experience, supervisor, indemnity, notes,
-        submittedAt: serverTimestamp()
-      }).catch(e => console.warn('Could not record enrolment lead:', e.message));
+      // checkout and trying again) updates the same record. Awaited (with
+      // a timeout cap) so the redirect below can't cancel the write mid-flight -
+      // navigating away tears down any in-flight Firestore request.
+      try {
+        await Promise.race([
+          setDoc(doc(db, 'pendingEnrolments', email.toLowerCase()), {
+            firstName, lastName, email, gdc, phone, workplace, experience, supervisor, indemnity, notes,
+            submittedAt: serverTimestamp()
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timed out')), 4000))
+        ]);
+      } catch (e) { console.warn('Could not record enrolment lead:', e.message); }
 
       // Redirect to Stripe Checkout
       window.location.href = STRIPE_PAYMENT_URL;
