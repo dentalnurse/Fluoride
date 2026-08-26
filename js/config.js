@@ -28,11 +28,10 @@ const ADMIN_EMAILS = [
 const ADMIN_EMAIL = ADMIN_EMAILS[0]; // kept for backwards compatibility
 
 // ── Stripe payment links ─────────────────────────────────────────────────
-const STRIPE_PAYMENT_URL     = "https://buy.stripe.com/fZubJ24Uw8p23vrfptbZe06";
-const EXTENSION_STRIPE_LINK  = "https://buy.stripe.com/14AaEY2Mo5cQ4zvelpbZe07";
-const COURSE_PRICE           = "£120";
-const COURSE_ORIGINAL_PRICE  = "£150";
-const EXTENSION_FEE          = "£12";
+const STRIPE_PAYMENT_URL     = "https://buy.stripe.com/00wbJ21Ik48M0jf5OTbZe08";
+const EXTENSION_STRIPE_LINK  = "https://buy.stripe.com/8x2aEYdr2gVy4zvcdhbZe09";
+const COURSE_PRICE           = "£150";
+const EXTENSION_FEE          = "£15";
 const COURSE_DURATION_MONTHS = 4;
 
 // ── Course structure ─────────────────────────────────────────────────────

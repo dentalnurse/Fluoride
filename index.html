@@ -185,20 +185,10 @@
       <h2 style="margin-bottom:0.75rem">Ready to get started?</h2>
       <p>Fill in your details, pay securely online by card, and receive your confirmation email instantly. Your course login details will be sent within 1 working day.</p>
 
-      <!-- Limited time offer banner -->
-      <div style="background:#FFF3CD;border:1px solid #FBBF24;border-radius:var(--radius);padding:0.75rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.75rem;text-align:left">
-        <span style="font-size:1.3rem">🏷️</span>
-        <div>
-          <strong style="color:#92400E;font-size:0.95rem">Limited time offer - 20% off</strong>
-          <p style="color:#92400E;font-size:0.82rem;margin:0.1rem 0 0">Enrol now at the reduced rate. Original price £150.</p>
-        </div>
-      </div>
-
       <div class="pricing-box">
         <div>
           <div style="display:flex;align-items:baseline;gap:0.75rem">
             <div class="price-amount" id="coursePrice">TBC</div>
-            <div style="font-size:1.4rem;font-weight:700;color:var(--ink-light);text-decoration:line-through" id="originalPrice">TBC</div>
           </div>
           <div class="price-label">Course fee · 4 months access</div>
         </div>
@@ -240,7 +230,7 @@
 
       <!-- Extension info -->
       <div style="margin-top:1.5rem;padding:1rem 1.25rem;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);text-align:left;font-size:0.85rem;color:var(--ink-mid);line-height:1.7">
-        <strong>Need more time?</strong> A 1-month extension is available for <span id="extensionFee">£12</span> (10% of the course fee). In extenuating circumstances a free extension may be granted - <a href="mailto:emily@dentalnurse.training" style="color:var(--teal);font-weight:600">contact us</a>.
+        <strong>Need more time?</strong> A 1-month extension is available for <span id="extensionFee">£15</span> (10% of the course fee). In extenuating circumstances a free extension may be granted - <a href="mailto:emily@dentalnurse.training" style="color:var(--teal);font-weight:600">contact us</a>.
       </div>
     </div>
   </section>
@@ -288,14 +278,13 @@
   <script src="js/config.js"></script>
   <script>
     document.getElementById('coursePrice').textContent = COURSE_PRICE;
-    document.getElementById('originalPrice').textContent = COURSE_ORIGINAL_PRICE;
     document.getElementById('extensionFee').textContent = EXTENSION_FEE;
   </script>
   <script>
     const FAQS = [
       { q: ['what is included', 'what do i get', "what's included"], a: 'The course includes 5 theory modules with MCQ quizzes, 3 written tasks, a 10-entry clinical logbook, 2 case studies, and an end-of-course reflection. You also receive logbook and case study templates, and a Dental Nurse Training certificate on completion.' },
-      { q: ['how long', 'duration', 'how many months', 'time to complete'], a: 'The course duration is 4 months. If you need more time, a 1-month extension is available for £12. In extenuating circumstances a free extension may be granted - please contact us.' },
-      { q: ['cost', 'price', 'how much', 'fee'], a: 'The course fee is currently £120 (reduced from £150 - limited time offer). A 1-month extension, if needed, costs £12.' },
+      { q: ['how long', 'duration', 'how many months', 'time to complete'], a: 'The course duration is 4 months. If you need more time, a 1-month extension is available for £15. In extenuating circumstances a free extension may be granted - please contact us.' },
+      { q: ['cost', 'price', 'how much', 'fee'], a: 'The course fee is £150. A 1-month extension, if needed, costs £15.' },
       { q: ['entry requirements', 'can i enrol', 'who can apply', 'eligible'], a: 'You need: current GDC registration as a dental nurse, at least 6 months post-registration experience, a named clinical supervisor (dentist, hygienist or therapist), and appropriate indemnity cover for extended duties.' },
       { q: ['supervisor', 'supervise', 'supervisor requirements'], a: 'You need a named clinical supervisor - a dentist, dental hygienist, or dental therapist - who will oversee and sign off your supervised fluoride varnish applications. You can register multiple supervisors in your course dashboard.' },
       { q: ['how to enrol', 'sign up', 'register', 'start'], a: 'Click the "Enrol now" button, complete your details, and pay securely online. Your confirmation email is sent instantly, and your login details will follow within 1 working day.' },
