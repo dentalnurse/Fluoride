@@ -80,11 +80,35 @@
     let uid = null;
     let customContent = {};
     let courseExpiryDate = null;
+    const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
 
     function esc(s) {
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    function startPreviewMode() {
+      uid = 'preview-uid';
+      learner = {
+        name: 'Jordan Sample', email: 'preview@example.com', gdc: '123456', unlocked: true,
+        declarationSigned: true,
+        enrolledAt: { toDate: () => new Date() },
+        moduleProgress: { 1:0, 2:0, 3:0, 4:0, 5:0 },
+        pcasEntries: [], cpdLog: [], pdp: { strengths: '', areas: '', goals: '', timescale: '' },
+        supervisors: [],
+      };
+      document.getElementById('navName').textContent = 'Jordan';
+      document.body.insertAdjacentHTML('afterbegin',
+        '<div style="background:#F59E0B;color:#1a1a1a;text-align:center;padding:0.55rem 1rem;font-weight:700;font-size:0.85rem;position:sticky;top:0;z-index:9999">' +
+        '⚠ PREVIEW MODE — sample account, not a real login. Anything you fill in or save here is local to this browser tab only and will not persist after you reload.</div>');
+      renderSidebar();
+      showSection('home');
+    }
+
+    if (isPreview) {
+      // Defer until after the rest of this script has run, since startPreviewMode
+      // calls renderSidebar/showSection which are defined further down the file.
+      setTimeout(startPreviewMode, 0);
+    } else {
     onAuthStateChanged(auth, async (user) => {
       if (!user) { window.location.href = 'login.html'; return; }
       uid = user.uid;
@@ -158,8 +182,12 @@
         document.getElementById('dashMain').innerHTML = '<div style="padding:3rem;text-align:center"><h2>Could not load course data</h2><p>Please log out and back in.</p><button class="btn btn-primary" onclick="handleLogout()">Log out</button></div>';
       }
     });
+    }
 
-    window.handleLogout = async () => { await signOut(auth); window.location.href = 'login.html'; };
+    window.handleLogout = async () => {
+      if (isPreview) { window.location.href = 'dashboard.html?preview=1'; return; }
+      await signOut(auth); window.location.href = 'login.html';
+    };
 
     function renderSidebar() {
       const mp = learner.moduleProgress || {};
