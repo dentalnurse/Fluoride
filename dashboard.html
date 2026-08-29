@@ -704,6 +704,14 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
 
           <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Prescription</div>
           <div class="lb-grid-2">
+            ${approvedSups.length ? `
+            <div class="form-group span-2" style="margin:0"><label>Referring / prescribing clinician</label>
+              <select id="le-rxSelect" onchange="onRxSelect()">
+                <option value="">Select from your registered supervisors...</option>
+                ${supOptions}
+                <option value="other">Other (not a supervisor)</option>
+              </select>
+            </div>` : ''}
             <div class="form-group" style="margin:0"><label>Prescribing clinician name *</label><input type="text" id="le-rxName" placeholder="e.g. Dr A. Patel"/></div>
             <div class="form-group" style="margin:0"><label>Prescribing clinician GDC *</label><input type="text" id="le-rxGdc" placeholder="e.g. 123456"/></div>
             <div class="form-group" style="margin:0"><label>Date of prescription *</label><input type="date" id="le-rxDate" max="${new Date().toISOString().split('T')[0]}"/></div>
@@ -778,6 +786,20 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         document.getElementById('le-supGdc').value = '';
         const emailEl = document.getElementById('le-supEmail');
         if (emailEl) emailEl.value = '';
+      }
+    };
+
+    window.onRxSelect = () => {
+      const sel = document.getElementById('le-rxSelect');
+      if (!sel) return;
+      const val = sel.value;
+      if (val && val !== 'other') {
+        const [name, gdc] = val.split('|');
+        document.getElementById('le-rxName').value = name;
+        document.getElementById('le-rxGdc').value = gdc;
+      } else if (val === 'other') {
+        document.getElementById('le-rxName').value = '';
+        document.getElementById('le-rxGdc').value = '';
       }
     };
 
