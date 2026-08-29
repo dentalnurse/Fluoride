@@ -3,5 +3,6 @@ layout: none
 ---
 User-agent: *
 Allow: /
+Disallow: /ohe/
 
 Sitemap: {{ site.url }}{{ site.baseurl }}/sitemap.xml
