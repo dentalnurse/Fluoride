@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0L9NXXFBFR');
+  </script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Purchase Course Extension - Dental Nurse Training</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    .pay-layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 2.5rem;
+      align-items: start;
+      padding: 3rem 0 4rem;
+    }
+    .pay-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+    }
+    .pay-card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--ink-mid); }
+    .form-group input { width: 100%; padding: 0.7rem 1rem; border: 1.5px solid var(--border); border-radius: var(--radius); font-family: var(--font); font-size: 0.95rem; color: var(--ink); transition: border-color 0.15s; background: var(--white); }
+    .form-group input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,116,122,0.08); }
+    .card-icons { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .card-icon { background: var(--off-white); border: 1px solid var(--border); border-radius: 6px; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-weight: 700; color: var(--ink-light); letter-spacing: 0.03em; }
+    .card-icon.visa { color: #1a1f71; }
+    .card-icon.mc { color: #eb001b; }
+    .lock-note { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--ink-light); margin-top: 0.75rem; }
+    .order-summary { background: var(--teal-dark); border-radius: var(--radius-lg); padding: 1.75rem; color: var(--white); position: sticky; top: calc(var(--nav-h) + 1.5rem); }
+    .order-summary h3 { color: var(--white); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.6; margin-bottom: 1.25rem; }
+    .order-line { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.65rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; }
+    .order-line:last-of-type { border-bottom: none; }
+    .order-line .label { color: rgba(255,255,255,0.6); }
+    .order-line .val { color: var(--white); font-weight: 600; text-align: right; max-width: 180px; }
+    .order-total { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 2px solid rgba(255,255,255,0.2); display: flex; justify-content: space-between; align-items: center; }
+    .order-total .label { color: rgba(255,255,255,0.8); font-weight: 700; }
+    .order-total .amount { font-size: 1.75rem; font-weight: 800; color: var(--white); }
+    .preview-banner { background: #FFF3CD; border: 1px solid #FBBF24; border-radius: var(--radius); padding: 0.75rem 1rem; font-size: 0.83rem; color: #92400E; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .pay-btn { width: 100%; padding: 1rem; background: var(--teal); color: var(--white); border: none; border-radius: var(--radius); font-family: var(--font); font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: all 0.18s; margin-top: 0.5rem; }
+    .pay-btn:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
+    .pay-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .processing-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 999; align-items: center; justify-content: center; flex-direction: column; gap: 1.25rem; }
+    .processing-overlay.active { display: flex; }
+    .spinner { width: 52px; height: 52px; border: 4px solid rgba(255,255,255,0.2); border-top-color: var(--white); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .processing-overlay p { color: var(--white); font-weight: 600; font-size: 1.05rem; }
+    @media (max-width: 700px) { .pay-layout { grid-template-columns: 1fr; } .order-summary { position: static; } }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="Dental Nurse Training" style="height:56px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+        <span class="nav-logo-text" style="display:none">Dental Nurse Training</span>
+      </a>
+      <div class="nav-right">
+        <a href="dashboard.html" class="btn btn-outline btn-sm">My course</a>
+      </div>
+    </div>
+  </nav>
+
+  <div style="background:linear-gradient(135deg,var(--teal-dark),var(--teal));padding:2.5rem 0 2rem">
+    <div class="container">
+      <h1 style="color:var(--white);margin-bottom:0.4rem" id="heroTitle">Extend Your Course Access</h1>
+      <p style="color:rgba(255,255,255,0.75);max-width:500px" id="heroSubtitle">Purchase a 1-month extension at any time to give yourself more time to finish.</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="pay-layout">
+      <div>
+        <div id="graceWarning" style="display:none;background:#FFF8E7;border:1px solid rgba(245,158,11,0.4);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:0.88rem;color:#92400E">
+          <strong>⏰ Grace period:</strong> You have <span id="graceDaysLeft"></span> to purchase an extension before you will need to re-enrol and start the course again.
+        </div>
+
+        <div class="pay-card">
+          <h2>1-month extension - £15</h2>
+          <p style="color:var(--ink-mid);font-size:0.9rem;margin-bottom:1.5rem">All your progress, logbook entries, and written work will be waiting for you. Click below to pay securely via Stripe.</p>
+
+          <div style="background:var(--teal-pale);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:0.88rem;color:var(--ink-mid);line-height:1.6">
+            Enrolling as: <strong id="summaryName">-</strong> (<span id="summaryEmail">-</span>)
+          </div>
+
+          <button class="pay-btn" id="payBtn" onclick="goToStripe()">
+            Pay £15 securely via Stripe →
+          </button>
+          <div class="lock-note" style="margin-top:0.75rem">
+            <span>🔒</span>
+            <span>Secure payment powered by Stripe</span>
+          </div>
+        </div>
+
+        <div style="background:var(--off-white);border-radius:var(--radius);padding:1rem 1.25rem;margin-top:1.25rem;font-size:0.88rem;color:var(--ink-mid);text-align:center">
+          Have personal circumstances prevented you from finishing? <br/>
+          <a href="extenuating-circumstances.html" style="color:var(--teal);font-weight:700">Apply for a free extension instead →</a>
+        </div>
+        <p style="font-size:0.8rem;color:var(--ink-light);margin-top:1rem;text-align:center">
+          Questions? Email <a href="mailto:emily@dentalnurse.training" style="color:var(--teal)">emily@dentalnurse.training</a>
+        </p>
+      </div>
+
+      <div>
+        <div class="order-summary">
+          <h3>Order summary</h3>
+          <div class="order-line">
+            <span class="label">Item</span>
+            <span class="val">1-month course extension</span>
+          </div>
+          <div class="order-line">
+            <span class="label">Learner</span>
+            <span class="val" id="summaryNameSide">-</span>
+          </div>
+          <div class="order-line">
+            <span class="label">Email</span>
+            <span class="val" id="summaryEmailSide" style="word-break:break-all">-</span>
+          </div>
+          <div class="order-line" style="border-bottom:none">
+            <span class="label">Extends access by</span>
+            <span class="val">1 month</span>
+          </div>
+          <div class="order-total">
+            <span class="label">Total</span>
+            <span class="amount" id="summaryPrice">£15</span>
+          </div>
+        </div>
+
+        <div style="margin-top:1rem;background:var(--success-light);border-radius:var(--radius);padding:1rem 1.25rem;font-size:0.83rem;color:var(--success);line-height:1.6">
+          <strong>What happens next?</strong><br/>
+          Once payment is confirmed, your course access will be extended by 1 month immediately.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="processing-overlay" id="processingOverlay">
+    <div class="spinner"></div>
+    <p id="processingMsg">Processing your payment...</p>
+  </div>
+
+  <footer style="background:var(--teal-dark);color:rgba(255,255,255,0.7);padding:2rem 0 1.5rem;margin-top:2rem">
+    <div class="container">
+      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center">© 2025 Dental Nurse Training Ltd. This is a Dental Nurse Training certificate, awarded by Dental Nurse Training. · <a href="../privacy-policy.html" style="color:rgba(255,255,255,0.4)">Privacy Policy</a> &middot; <a href="../terms.html" style="color:rgba(255,255,255,0.4)">Terms</a></p>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const app  = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const storedInfo = JSON.parse(localStorage.getItem('expiryInfo') || '{}');
+
+    // Resolve name/email/daysExpired from (in priority order once auth loads):
+    // 1. The learner's live Firestore record, if logged in
+    // 2. Whatever's already in localStorage (set by the dashboard's expiry redirect)
+    // 3. The ?name=&email= query string (used by the expiry reminder email link)
+    let learnerName    = storedInfo.name  || params.get('name')  || '';
+    let learnerEmail   = storedInfo.email || params.get('email') || '';
+    let learnerUid     = localStorage.getItem('expiryUid') || null;
+    const daysExpired   = storedInfo.daysExpired || 0;
+    const graceDaysLeft = 7 - daysExpired;
+
+    function renderSummary() {
+      document.getElementById('summaryName').textContent     = learnerName  || '-';
+      document.getElementById('summaryEmail').textContent    = learnerEmail || '-';
+      document.getElementById('summaryNameSide').textContent = learnerName  || '-';
+      document.getElementById('summaryEmailSide').textContent= learnerEmail || '-';
+      document.getElementById('summaryPrice').textContent    = EXTENSION_FEE;
+    }
+    renderSummary();
+
+    if (graceDaysLeft > 0) {
+      document.getElementById('heroTitle').textContent    = 'Course Access Expired';
+      document.getElementById('heroSubtitle').textContent = 'Your 5-month course access has ended. Purchase a 1-month extension to pick up where you left off.';
+      document.getElementById('graceWarning').style.display = 'block';
+      document.getElementById('graceDaysLeft').textContent  =
+        graceDaysLeft === 1 ? '1 day' : graceDaysLeft + ' days';
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+      learnerUid = user.uid;
+      try {
+        const snap = await getDoc(doc(db, 'learners', user.uid));
+        if (snap.exists()) {
+          const learner = snap.data();
+          learnerName  = learner.name  || learnerName  || user.email;
+          learnerEmail = learner.email || learnerEmail || user.email;
+        } else if (!learnerEmail) {
+          learnerEmail = user.email;
+        }
+      } catch (e) {
+        console.error('Failed to load learner record:', e);
+      }
+      renderSummary();
+      // Keep localStorage in sync so extension-success.html has reliable data
+      // regardless of how this page was reached (expiry redirect, reminder
+      // email link, or the self-service link on the dashboard).
+      localStorage.setItem('expiryInfo', JSON.stringify({ name: learnerName, email: learnerEmail, daysExpired }));
+      localStorage.setItem('expiryUid', learnerUid);
+    });
+
+    window.goToStripe = function() {
+      // Best-effort sync even if onAuthStateChanged hasn't resolved yet
+      localStorage.setItem('expiryInfo', JSON.stringify({ name: learnerName, email: learnerEmail, daysExpired }));
+      if (learnerUid) localStorage.setItem('expiryUid', learnerUid);
+      window.location.href = EXTENSION_STRIPE_LINK;
+    };
+  </script>
+</body>
+</html>

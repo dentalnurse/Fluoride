@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0L9NXXFBFR');
+  </script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - Dental Nurse Training Oral Health Education Course</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../css/style.css"/>
+</head>
+<body>
+
+  <!-- Admin login screen (shown before auth) -->
+  <div id="adminLogin" class="auth-wrap">
+    <div class="auth-card" style="max-width:400px">
+      <div class="auth-logo">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
+             alt="Dental Nurse Training" style="height:56px;margin:0 auto 1rem" onerror="this.style.display='none'"/>
+        <h2>Admin Access</h2>
+        <p style="font-size:0.85rem;color:var(--ink-light);margin-top:0.25rem">Oral Health Education Course Platform</p>
+      </div>
+      <div class="form-group">
+        <label>Admin email</label>
+        <input type="email" id="adminEmail" value="emily@dentalnurse.training"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="adminPass" placeholder="••••••••"/>
+      </div>
+      <div id="adminLoginErr" class="form-error" style="display:none"></div>
+      <button class="btn btn-primary form-submit" onclick="adminLogin()">Log in to admin</button>
+    </div>
+  </div>
+
+  <!-- Admin panel (shown after auth) -->
+  <div id="adminPanel" style="display:none">
+    <div class="admin-header">
+      <div>
+        <h1>Dental Nurse Training - Admin Dashboard</h1>
+        <span style="font-size:0.8rem;opacity:0.6">Oral Health Education Course</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem">
+        <span style="font-size:0.85rem;color:rgba(255,255,255,0.6)">emily@dentalnurse.training</span>
+        <button class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.8)" onclick="adminLogout()">Log out</button>
+      </div>
+    </div>
+
+    <div class="admin-panel">
+      <!-- Needs-attention banner -->
+      <div id="attentionBanner" style="display:none;background:#FEF3C7;border:1.5px solid #F59E0B;border-radius:var(--radius);padding:0.85rem 1.25rem;margin-bottom:1.25rem;font-size:0.88rem;color:#92400E;align-items:center;gap:0.6rem;flex-wrap:wrap">
+        <span style="font-size:1.1rem">🔔</span>
+        <span id="attentionBannerText" style="font-weight:600"></span>
+      </div>
+
+      <!-- Stats row -->
+      <div class="admin-stat-row" id="statsRow">
+        <div class="admin-stat"><div class="as-n" id="statTotal">-</div><div class="as-lbl">Total learners</div></div>
+        <div class="admin-stat"><div class="as-n" id="statPending">-</div><div class="as-lbl">Awaiting approval</div></div>
+        <div class="admin-stat"><div class="as-n" id="statActive">-</div><div class="as-lbl">Active learners</div></div>
+        <div class="admin-stat"><div class="as-n" id="statCompleted">-</div><div class="as-lbl">Completed</div></div>
+        <div class="admin-stat"><div class="as-n" id="statSubmissions">-</div><div class="as-lbl">New submissions</div></div>
+        <div class="admin-stat" id="statSupervisorsTile"><div class="as-n" id="statSupervisors">-</div><div class="as-lbl">Supervisors to approve</div></div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="admin-tabs">
+        <div class="admin-tab" onclick="switchAdminTab('leads')">📝 Enrolment Leads <span id="leadsBadge" class="admin-tab-badge" style="display:none"></span></div>
+        <div class="admin-tab active" onclick="switchAdminTab('pending')">⏳ Awaiting Approval <span id="pendingBadge" class="admin-tab-badge" style="display:none"></span></div>
+        <div class="admin-tab" onclick="switchAdminTab('all')">👥 All Learners <span id="supervisorBadge" class="admin-tab-badge" style="display:none"></span></div>
+        <div class="admin-tab" onclick="switchAdminTab('completed')">🎓 Completed</div>
+        <div class="admin-tab" onclick="switchAdminTab('submissions')">📬 Submissions <span id="submissionsBadge" class="admin-tab-badge" style="display:none"></span></div>
+        <div class="admin-tab" onclick="switchAdminTab('content')">✏️ Course Content</div>
+        <div class="admin-tab" onclick="switchAdminTab('ec')">🏥 EC Requests <span id="ecBadge" class="admin-tab-badge" style="display:none"></span></div>
+        <div class="admin-tab" onclick="switchAdminTab('audit')">📋 Audit / QA</div>
+      </div>
+
+      <!-- Tab content -->
+      <div id="tabContent">
+        <div style="text-align:center;padding:3rem;color:var(--ink-light)">Loading learners…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Learner detail modal -->
+  <div class="modal-overlay hidden" id="learnerModal">
+    <div class="modal" id="learnerModalContent"></div>
+  </div>
+
+  <div class="modal-overlay hidden" id="feedbackModal">
+    <div class="modal" id="feedbackModalContent" style="max-width:700px;width:100%"></div>
+  </div>
+
+  <!-- Email prompt modal -->
+  <div class="modal-overlay hidden" id="emailPromptModal">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <h3>📧 Send email notification</h3>
+        <button class="modal-close" onclick="dismissEmailPrompt()">×</button>
+      </div>
+      <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:1.25rem">Click the button below to open this email in your email app. Everything is pre-filled - just review and hit send.</p>
+      <div style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:1.25rem;font-size:0.85rem">
+        <div style="margin-bottom:0.4rem"><strong>To:</strong> <span id="epTo" style="color:var(--teal-dark)"></span></div>
+        <div style="margin-bottom:0.4rem"><strong>Subject:</strong> <span id="epSubject"></span></div>
+        <div style="border-top:1px solid var(--border);margin-top:0.6rem;padding-top:0.6rem;white-space:pre-wrap;max-height:160px;overflow-y:auto;color:var(--ink-mid);line-height:1.55" id="epBody"></div>
+      </div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+        <a id="epMailtoBtn" href="#" class="btn btn-primary" style="flex:1;justify-content:center" target="_blank">📧 Open in email app</a>
+        <button class="btn btn-outline" onclick="copyEmailBody()" style="flex:1">📋 Copy email text</button>
+        <button class="btn btn-outline btn-sm" onclick="dismissEmailPrompt()" style="color:var(--ink-light)">Skip</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+                                from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, increment, serverTimestamp }
+                                from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const app  = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    let learners            = [];
+    let currentTab          = 'pending';
+    let supervisorAgreements = {};
+    let logbookSignoffs      = {};
+    let ecRequests           = [];
+    let pendingEnrolments    = [];
+
+    // Escape for HTML text/attribute content
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    // Escape for embedding inside a single-quoted JS string within a double-quoted onclick="" attribute
+    function escJsAttr(s) {
+      return String(s || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function isCourseCompleted(l) {
+      return !!l.certNumber || !!(l.writtenPassed && l.practicalPassed && l.reflectionPassed);
+    }
+
+    function getUniqueLogbookSupervisors(l) {
+      const seenGdc = new Set();
+      const uniqueSups = [];
+      for (const e of (l.logbookEntries || [])) {
+        if (e.supervisorGdc && !seenGdc.has(e.supervisorGdc)) {
+          seenGdc.add(e.supervisorGdc);
+          uniqueSups.push({ name: e.supervisorName, gdc: e.supervisorGdc });
+        }
+      }
+      return uniqueSups;
+    }
+
+    function allLogbookSupervisorsConfirmed(l) {
+      const uniqueSups = getUniqueLogbookSupervisors(l);
+      if (!uniqueSups.length) return false;
+      return uniqueSups.every(s =>
+        Object.values(logbookSignoffs).some(a => a.learnerUid === l.id && a.supervisorGdc === s.gdc && a.signedAt)
+      );
+    }
+
+    // 'approved' | 'signed' (signed by supervisor, awaiting admin approval) | 'sent' | 'pending'
+    function getSupervisorStatus(learnerId, s) {
+      const agrRaw = s.token ? (supervisorAgreements[s.token] || Object.values(supervisorAgreements).find(a => a.learnerUid === learnerId && a.supGdc === s.gdc && a.signedAt)) : null;
+      const agr = agrRaw && agrRaw.signedAt ? agrRaw : null;
+      return s.approved ? 'approved' : agr ? 'signed' : s.guidanceSent ? 'sent' : 'pending';
+    }
+
+    // Count of learners with at least one supervisor signed and awaiting admin approval
+    function countSupervisorsAwaitingApproval() {
+      return learners.filter(l => (l.supervisors || []).some(s => getSupervisorStatus(l.id, s) === 'signed')).length;
+    }
+
+    // ── Auth ───────────────────────────────────────────────────────────────
+    onAuthStateChanged(auth, (user) => {
+      if (user && ADMIN_EMAILS.includes(user.email)) {
+        document.getElementById('adminLogin').style.display  = 'none';
+        document.getElementById('adminPanel').style.display  = '';
+        loadLearners();
+      }
+    });
+
+    window.adminLogin = async () => {
+      const email = document.getElementById('adminEmail').value.trim();
+      const pass  = document.getElementById('adminPass').value;
+      const err   = document.getElementById('adminLoginErr');
+      if (!ADMIN_EMAILS.includes(email)) {
+        err.textContent = 'Invalid admin credentials.'; err.style.display = 'block'; return;
+      }
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch(e) {
+        err.textContent = 'Login failed. Please check your password.'; err.style.display = 'block';
+      }
+    };
+
+    window.adminLogout = async () => {
+      await signOut(auth);
+      document.getElementById('adminLogin').style.display  = '';
+      document.getElementById('adminPanel').style.display  = 'none';
+    };
+
+    // ── Load learners ──────────────────────────────────────────────────────
+    async function loadLearners() {
+      const snap = await getDocs(collection(db, 'learners'));
+      learners = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      try {
+        const agrSnap = await getDocs(collection(db, 'supervisorAgreements'));
+        agrSnap.docs.forEach(d => { supervisorAgreements[d.id] = d.data(); });
+      } catch(e) {
+        console.warn('Could not load supervisor agreements - check Firestore rules allow authenticated reads on supervisorAgreements:', e.message);
+      }
+      try {
+        const lsSnap = await getDocs(collection(db, 'logbookSignoffs'));
+        lsSnap.docs.forEach(d => { logbookSignoffs[d.id] = d.data(); });
+      } catch(e) {
+        console.warn('Could not load logbook signoffs:', e.message);
+      }
+      // Auto-promote to "submitted, awaiting review" once every supervisor has
+      // signed off - previously this required Emily to manually open each
+      // learner's modal and click a button, so learners saw a stale "awaiting
+      // sign-off" status until she happened to do that.
+      for (const l of learners) {
+        if (l.practicalPendingSignoff && !l.practicalSubmitted && allLogbookSupervisorsConfirmed(l)) {
+          try {
+            await updateDoc(doc(db, 'learners', l.id), { practicalSubmitted: true, practicalSubmittedAt: serverTimestamp() });
+            l.practicalSubmitted = true;
+          } catch(e) {
+            console.warn('Could not auto-promote practical portfolio for', l.id, e.message);
+          }
+        }
+      }
+      try {
+        const ecSnap = await getDocs(collection(db, 'ecRequests'));
+        ecRequests = ecSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      } catch(e) {
+        console.warn('Could not load EC requests:', e.message);
+      }
+      try {
+        const leadsSnap = await getDocs(collection(db, 'pendingEnrolments'));
+        const knownEmails = new Set(learners.map(l => (l.email || '').toLowerCase()).filter(Boolean));
+        // Filter out any lead whose account already exists, in case the
+        // cleanup delete in create-account.html didn't run for some reason
+        pendingEnrolments = leadsSnap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter(r => !knownEmails.has((r.email || '').toLowerCase()));
+      } catch(e) {
+        console.warn('Could not load pending enrolments - check Firestore rules allow authenticated reads on pendingEnrolments:', e.message);
+      }
+      updateStats();
+      renderTab(currentTab);
+    }
+
+    // Count of individual written/practical/reflection submissions not yet marked passed
+    function countSubmissionsAwaitingReview() {
+      return learners.reduce((n, l) =>
+        n + ['written','practical','reflection'].filter(type => l[type+'Submitted'] && !l[type+'Passed']).length
+      , 0);
+    }
+
+    function setBadge(id, count) {
+      const el = document.getElementById(id);
+      if (count > 0) { el.textContent = count; el.style.display = 'inline'; }
+      else { el.style.display = 'none'; }
+    }
+
+    function updateStats() {
+      const pending     = learners.filter(l => !l.unlocked).length;
+      const completed   = learners.filter(l => l.unlocked && isCourseCompleted(l)).length;
+      const active      = learners.filter(l => l.unlocked && !isCourseCompleted(l)).length;
+      const submissions = learners.filter(l =>
+        l.writtenSubmitted || l.practicalSubmitted || l.reflectionSubmitted
+      ).length;
+      const supervisorsToApprove   = countSupervisorsAwaitingApproval();
+      const submissionsToReview    = countSubmissionsAwaitingReview();
+      const pendingEC              = ecRequests.filter(r => r.status === 'pending').length;
+
+      document.getElementById('statTotal').textContent       = learners.length;
+      document.getElementById('statPending').textContent     = pending;
+      document.getElementById('statActive').textContent      = active;
+      document.getElementById('statCompleted').textContent   = completed;
+      document.getElementById('statSubmissions').textContent = submissions;
+      document.getElementById('statSupervisors').textContent = supervisorsToApprove;
+      document.getElementById('statSupervisorsTile').classList.toggle('needs-attention', supervisorsToApprove > 0);
+
+      setBadge('pendingBadge', pending);
+      setBadge('supervisorBadge', supervisorsToApprove);
+      setBadge('submissionsBadge', submissionsToReview);
+      setBadge('ecBadge', pendingEC);
+      setBadge('leadsBadge', pendingEnrolments.length);
+
+      // Combined "needs your attention" banner across everything at once
+      const items = [];
+      if (supervisorsToApprove > 0) items.push(supervisorsToApprove + ' supervisor' + (supervisorsToApprove===1?'':'s') + ' awaiting approval');
+      if (pending > 0)               items.push(pending + ' learner account' + (pending===1?'':'s') + ' awaiting approval');
+      if (submissionsToReview > 0)   items.push(submissionsToReview + ' submission' + (submissionsToReview===1?'':'s') + ' awaiting review');
+      if (pendingEC > 0)             items.push(pendingEC + ' extenuating circumstances request' + (pendingEC===1?'':'s'));
+      const banner = document.getElementById('attentionBanner');
+      if (items.length) {
+        document.getElementById('attentionBannerText').textContent = 'You have ' + items.join(', ') + '.';
+        banner.style.display = 'flex';
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+
+    // ── Tabs ──────────────────────────────────────────────────────────────
+    window.switchAdminTab = (tab) => {
+      currentTab = tab;
+      document.querySelectorAll('.admin-tab').forEach((t, i) => {
+        t.classList.toggle('active', ['leads','pending','all','completed','submissions','content','ec','audit'][i] === tab);
+      });
+      renderTab(tab);
+    };
+
+    function renderTab(tab) {
+      const el = document.getElementById('tabContent');
+      if (tab === 'leads')       { renderLeadsTab(el); return; }
+      if (tab === 'pending')     { renderPendingTab(el); return; }
+      if (tab === 'all')         { renderAllTab(el); return; }
+      if (tab === 'completed')   { renderCompletedTab(el); return; }
+      if (tab === 'submissions') { renderSubmissionsTab(el); return; }
+      if (tab === 'content')     { renderContentTab(el); return; }
+      if (tab === 'ec')          { renderECTab(el); return; }
+      if (tab === 'audit')       { renderAuditTab(el); return; }
+    }
+
+    // ── Pending tab ────────────────────────────────────────────────────────
+    function renderPendingTab(el) {
+      const pending = learners.filter(l => !l.unlocked);
+      if (!pending.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">✅ No accounts awaiting approval</div>';
+        return;
+      }
+      el.innerHTML = `
+        <p style="margin-bottom:1rem;color:var(--ink-light);font-size:0.9rem">${pending.length} account${pending.length>1?'s':''} awaiting approval. Once you have confirmed payment, click Approve to unlock access.</p>
+        <table class="admin-table">
+          <thead><tr>
+            <th>Name</th><th>Email / GDC</th><th>Registered</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${pending.map(l => `<tr>
+              <td><div class="td-name">${esc(l.name)}</div></td>
+              <td><div>${esc(l.email)||'-'}</div><div class="td-email">GDC: ${esc(l.gdc)||'-'}</div></td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'}</td>
+              <td>
+                <div class="admin-actions">
+                  <button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${escJsAttr(l.name)}')">✓ Approve</button>
+                  <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">View</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    // ── Enrolment leads tab ──────────────────────────────────────────────
+    // People who filled in enrol.html (and were sent to Stripe) but never
+    // came back to finish creating their account.
+    function renderLeadsTab(el) {
+      if (!pendingEnrolments.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">✅ No unfinished enrolments - everyone who started has either created an account or hasn\'t submitted the form yet.</div>';
+        return;
+      }
+      const fmt = (ts) => {
+        if (!ts) return '-';
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      };
+      el.innerHTML = `
+        <p style="margin-bottom:1rem;color:var(--ink-light);font-size:0.9rem">${pendingEnrolments.length} learner${pendingEnrolments.length>1?'s':''} submitted the enrolment form and were sent to payment, but have not come back to finish creating their account yet. If they paid, chase them to complete signup; if not, this may just be someone who didn't go through with it.</p>
+        <table class="admin-table">
+          <thead><tr>
+            <th>Name</th><th>Email / GDC</th><th>Workplace / Phone</th><th>Submitted</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${pendingEnrolments.map(r => `<tr>
+              <td><div class="td-name">${esc((r.firstName||'') + ' ' + (r.lastName||''))||'-'}</div></td>
+              <td><div>${esc(r.email)||'-'}</div><div class="td-email">GDC: ${esc(r.gdc)||'-'}</div></td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${esc(r.workplace)||'-'}<br/>${esc(r.phone)||'-'}</td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${fmt(r.submittedAt)}</td>
+              <td>
+                <div class="admin-actions">
+                  <button class="btn btn-outline btn-sm" onclick="remindEnrolmentLead('${r.id}')">📧 Remind</button>
+                  <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:1px solid #FECACA" onclick="removeEnrolmentLead('${r.id}')">🗑 Remove</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    window.remindEnrolmentLead = (id) => {
+      const r = pendingEnrolments.find(x => x.id === id);
+      if (!r) return;
+      const name = ((r.firstName||'') + ' ' + (r.lastName||'')).trim() || 'there';
+      promptEmail(
+        r.email,
+        'Finish setting up your Dental Nurse Training account',
+        'Hi ' + name + ',\n\nWe noticed you started enrolling on the Dental Nurse Training Oral Health Education Course but haven\'t finished setting up your account yet.\n\nIf you have already paid, please complete your account setup here so you can access the course:\nhttps://ohe.dentalnurse.training/create-account.html\n\nIf you did not intend to enrol, no action is needed - just let me know and I will remove your details.\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
+      );
+    };
+
+    window.removeEnrolmentLead = async (id) => {
+      const r = pendingEnrolments.find(x => x.id === id);
+      if (!r) return;
+      if (!confirm('Remove this enrolment lead (' + (r.email||'unknown') + ')? This just clears it from your list - it does not affect any payment.')) return;
+      await deleteDoc(doc(db, 'pendingEnrolments', id));
+      pendingEnrolments = pendingEnrolments.filter(x => x.id !== id);
+      showToast('Removed', 'success');
+      updateStats();
+      renderTab('leads');
+    };
+
+    // Returns a communication action flag for a learner, or null
+    function getCommFlag(l) {
+      const mp = l.moduleProgress || {};
+      const allQuizzesPassed = [1,2,3,4,5].every(i => mp[i] === 2 || mp[i] === '2');
+      const anyAssessmentStarted = l.writtenSubmitted || l.practicalSubmitted || l.reflectionSubmitted;
+      const allPassed = l.writtenPassed && l.practicalPassed && l.reflectionPassed;
+      const certIssued = !!l.certNumber;
+      const amendmentPending = (l.writtenAmendmentRequested || l.practicalAmendmentRequested || l.reflectionAmendmentRequested);
+
+      if (!l.unlocked) return null;
+      if (certIssued) return null;
+      if (allPassed) return {
+        colour: '#1A7F4B', bg: '#D1FAE5', label: '🎉 All passed',
+        emailSubject: 'Congratulations - Oral Health Education Certificate ready',
+        emailBody: (n, e) => `Hi ${n},\n\nFantastic news! You have successfully completed all elements of the Dental Nurse Training Oral Health Education Course.\n\nYour certificate is now available in your course dashboard. Please log in to view and download it:\nhttps://ohe.dentalnurse.training/login.html\n\nWell done - this is a great achievement and will be a valuable addition to your GDC CPD record.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
+      };
+      if (allQuizzesPassed && !anyAssessmentStarted) return {
+        colour: '#1D4ED8', bg: '#DBEAFE', label: '📝 Ready for assessments',
+        emailSubject: 'Great progress - time to start your assessments',
+        emailBody: (n, e) => `Hi ${n},\n\nWell done for completing all five theory modules and quizzes - that is a great achievement!\n\nYou can now begin your written assessments and practical portfolio. Both sections are available in your course dashboard:\nhttps://ohe.dentalnurse.training/login.html\n\nThe written tasks ask you to write 400-600 words on each of three topics. The practical portfolio requires 10 supervised logbook entries and two case studies. You can work on both at the same time.\n\nDo get in touch if you have any questions.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
+      };
+      if (amendmentPending) return {
+        colour: '#D97706', bg: '#FEF3C7', label: '✏ Awaiting amendment',
+        emailSubject: 'Gentle reminder - amendments outstanding',
+        emailBody: (n, e) => `Hi ${n},\n\nI just wanted to send a gentle reminder that I have requested some amendments on your submitted work. The feedback is visible in your course dashboard and your work has been unlocked for editing.\n\nPlease log in when you get a chance and resubmit your updated response:\nhttps://ohe.dentalnurse.training/login.html\n\nDo let me know if you have any questions about the feedback.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
+      };
+      return null;
+    }
+
+    // ── All learners tab ──────────────────────────────────────────────────
+    function renderAllTab(el) {
+      const active = learners.filter(l => !isCourseCompleted(l));
+      if (!active.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No active learners. Check the Completed tab.</div>';
+        return;
+      }
+      el.innerHTML = `
+        <div style="margin-bottom:1rem">
+          <input type="text" id="learnerSearch" placeholder="Search by name or email..." style="padding:0.6rem 1rem;border:1.5px solid var(--border);border-radius:var(--radius);font-family:var(--font);font-size:0.9rem;width:280px;outline:none" oninput="filterLearners(this.value)"/>
+        </div>
+        <table class="admin-table" id="allLearnersTable">
+          <thead><tr>
+            <th>Name</th><th>Email / GDC</th><th>Status</th><th>Theory</th><th>Written</th><th>Practical</th><th>Reflection</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="allLearnersBody">
+            ${renderAllRows(active)}
+          </tbody>
+        </table>`;
+    }
+
+    function renderCompletedTab(el) {
+      const completed = learners.filter(l => isCourseCompleted(l));
+      if (!completed.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No learners have completed the course yet.</div>';
+        return;
+      }
+      el.innerHTML = `
+        <table class="admin-table">
+          <thead><tr>
+            <th>Name</th><th>Email / GDC</th><th>Certificate No.</th><th>Issued</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${completed.map(l => {
+              const issuedAt = l.certIssuedAt?.toDate ? l.certIssuedAt.toDate().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) : '-';
+              return `<tr>
+                <td><div class="td-name">${esc(l.name)}</div></td>
+                <td><div style="font-size:0.82rem">${esc(l.email)||'-'}</div><div class="td-email">GDC: ${esc(l.gdc)||'-'}</div></td>
+                <td>${esc(l.certNumber) || 'Pending'}</td>
+                <td>${issuedAt}</td>
+                <td>
+                  <div class="admin-actions">
+                    <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">Manage</button>
+                    <a href="../certificate.html?uid=${l.id}" target="_blank" class="btn btn-outline btn-sm">🎓 View Certificate</a>
+                    <a href="../portfolio-export.html?uid=${l.id}" target="_blank" class="btn btn-outline btn-sm">📄 Portfolio</a>
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    function renderAllRows(list) {
+      return list.map(l => {
+        const mp   = l.moduleProgress || {};
+        const passed = [1,2,3,4,5].filter(i => mp[i]===2).length;
+        const days = daysUntilExpiry(l);
+        const rowStyle = expiryRowStyle(days);
+        const expBadge = expiryBadge(days);
+        const flag = getCommFlag(l);
+        const supAwaiting = (l.supervisors || []).some(s => getSupervisorStatus(l.id, s) === 'signed');
+        return `<tr style="${rowStyle}">
+          <td>
+            <div class="td-name" style="${flag ? 'color:'+flag.colour+';font-weight:700' : ''}">${esc(l.name)}</div>
+            ${flag ? `<div style="margin-top:0.25rem;display:flex;align-items:center;gap:0.4rem">
+              <span style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:9999px;background:${flag.bg};color:${flag.colour};font-weight:600">${flag.label}</span>
+              <button onclick="showEmailTemplate('${l.id}')" style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:9999px;background:#F3F4F6;border:1px solid var(--border);cursor:pointer;color:var(--ink-mid)">📧 Email</button>
+            </div>` : ''}
+            ${supAwaiting ? `<div style="margin-top:0.25rem">
+              <button onclick="openLearnerModal('${l.id}')" style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:9999px;background:#FEE2E2;border:1px solid #FCA5A5;color:#B91C1C;font-weight:600;cursor:pointer">👩‍⚕️ Supervisor awaiting approval</button>
+            </div>` : ''}
+          </td>
+          <td><div style="font-size:0.82rem">${esc(l.email)||'-'}</div><div class="td-email">GDC: ${esc(l.gdc)||'-'}</div></td>
+          <td style="display:flex;flex-wrap:wrap;gap:0.3rem;align-items:center;padding-top:0.6rem">
+            ${l.unlocked ? '<span class="pill pill-green">Active</span>' : '<span class="pill pill-orange">Pending</span>'}
+            ${expBadge}
+          </td>
+          <td><span class="pill ${passed===5?'pill-green':passed>0?'pill-teal':'pill-grey'}">${passed}/5</span></td>
+          <td>${l.writtenSubmitted    ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">-</span>'}</td>
+          <td>${l.practicalSubmitted  ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">-</span>'}</td>
+          <td>${l.reflectionSubmitted ? '<span class="pill pill-green">✓</span>' : '<span class="pill pill-grey">-</span>'}</td>
+          <td>
+            <div class="admin-actions">
+              <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">Manage</button>
+              ${!l.unlocked ? `<button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${escJsAttr(l.name)}')">Approve</button>` : ''}
+              ${days !== null && days <= 14 ? `<button class="btn btn-sm" style="background:#FFF3CD;color:#92400E;border:1px solid #F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Remind</button>` : ''}
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    window.filterLearners = (q) => {
+      const filtered = learners.filter(l => !isCourseCompleted(l) && (
+        l.name?.toLowerCase().includes(q.toLowerCase()) ||
+        l.email?.toLowerCase().includes(q.toLowerCase())
+      ));
+      const body = document.getElementById('allLearnersBody');
+      if (body) body.innerHTML = renderAllRows(filtered);
+    };
+
+    window.showEmailTemplate = (id) => {
+      const l = learners.find(x => x.id === id);
+      if (!l) return;
+      const flag = getCommFlag(l);
+      if (!flag) return;
+      const subject = flag.emailSubject;
+      const body = flag.emailBody(l.name || 'there', l.email || '');
+      document.getElementById('learnerModalContent').innerHTML = `
+        <div class="modal-header">
+          <h3>📧 Email template - ${esc(l.name)}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <p style="font-size:0.85rem;color:var(--ink-light);margin-bottom:1rem">Copy and send via your email client to <strong>${esc(l.email)||'learner'}</strong>.</p>
+        <div class="form-group">
+          <label>Subject</label>
+          <input type="text" id="etSubject" value="${esc(subject)}" readonly style="background:var(--off-white)"/>
+        </div>
+        <div class="form-group">
+          <label>Body</label>
+          <textarea id="etBody" style="min-height:220px;font-size:0.85rem;line-height:1.7" readonly>${esc(body)}</textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline btn-sm" onclick="copyToClip('etSubject','Subject copied!')">Copy subject</button>
+          <button class="btn btn-primary btn-sm" onclick="copyToClip('etBody','Email body copied!')">Copy email body</button>
+          <button class="btn btn-outline btn-sm" onclick="closeModal()">Close</button>
+        </div>`;
+      document.getElementById('learnerModal').classList.remove('hidden');
+    };
+
+    window.copyToClip = (elId, msg) => {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      navigator.clipboard.writeText(el.value).then(() => showToast(msg, 'success')).catch(() => {
+        el.select(); document.execCommand('copy'); showToast(msg, 'success');
+      });
+    };
+
+    // ── Submissions tab ──────────────────────────────────────────────────
+    let subFilter = 'all';
+
+    function renderSubmissionsTab(el) {
+      const allRows = learners.flatMap(l => {
+        const rows = [];
+        if (l.writtenSubmitted)    rows.push({ l, type:'written',    label:'Written Tasks',       url:l.writtenFileUrl,    feedback:l.writtenFeedback,    passed:l.writtenPassed,    amended:l.writtenAmendmentRequested,    at:l.writtenSubmittedAt });
+        if (l.practicalSubmitted)  rows.push({ l, type:'practical',  label:'Practical Portfolio', url:l.practicalFileUrl,  feedback:l.practicalFeedback,  passed:l.practicalPassed,  amended:l.practicalAmendmentRequested,  at:l.practicalSubmittedAt });
+        if (l.reflectionSubmitted) rows.push({ l, type:'reflection', label:'Final Reflection',    url:l.reflectionFileUrl, feedback:l.reflectionFeedback, passed:l.reflectionPassed, amended:l.reflectionAmendmentRequested, at:l.reflectionSubmittedAt });
+        return rows;
+      });
+      if (!allRows.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No submissions yet.</div>';
+        return;
+      }
+      const filtered = subFilter === 'pending' ? allRows.filter(r => !r.passed)
+                     : subFilter === 'passed'  ? allRows.filter(r =>  r.passed)
+                     : allRows;
+      const counts = { all: allRows.length, pending: allRows.filter(r=>!r.passed).length, passed: allRows.filter(r=>r.passed).length };
+      el.innerHTML = `
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
+          ${[['all','All'],['pending','Awaiting review'],['passed','Passed']].map(([v,lbl]) =>
+            `<button class="btn btn-sm ${subFilter===v?'btn-primary':'btn-outline'}" onclick="setSubFilter('${v}')">${lbl} <span style="opacity:0.7">(${counts[v]})</span></button>`
+          ).join('')}
+        </div>
+        <table class="admin-table">
+          <thead><tr>
+            <th>Learner</th><th>Submission</th><th>Submitted</th><th>File</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${filtered.length ? filtered.map(({ l, type, label, url, feedback, passed, amended, at }) => `<tr>
+              <td><div class="td-name">${esc(l.name)}</div><div class="td-email">${esc(l.email)||'-'}</div></td>
+              <td><span class="pill pill-teal">${label}</span></td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${at?.toDate ? at.toDate().toLocaleDateString('en-GB') : '-'}</td>
+              <td>${type === 'written'
+                ? `<button class="btn btn-outline btn-sm" onclick="viewWrittenResponses('${l.id}','${escJsAttr(l.name)}')">👁 View responses</button>`
+                : type === 'practical'
+                  ? `<button class="btn btn-outline btn-sm" onclick="viewPracticalPortfolio('${l.id}','${escJsAttr(l.name)}')">👁 View portfolio</button>`
+                  : url ? url.split(', ').map(u=>`<a href="${esc(u)}" target="_blank" class="submission-link" style="display:block;margin-bottom:2px">📥 Download</a>`).join('') : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'
+              }</td>
+              <td style="font-size:0.82rem">${passed ? '<span class="pill pill-green">Passed</span>' : amended ? '<span style="color:#D97706;font-weight:600">✏ Amendments requested</span>' : feedback ? '<span style="color:var(--teal-dark)">Feedback given</span>' : '<span style="color:var(--ink-light)">Awaiting review</span>'}</td>
+              <td>
+                <div class="admin-actions">
+                  <button class="btn btn-primary btn-sm" onclick="openFeedbackModal('${l.id}','${type}','${escJsAttr(l.name)}')">${feedback ? 'Edit feedback' : 'Add feedback'}</button>
+                  ${!passed ? `<button class="btn btn-outline btn-sm" style="color:#D97706;border-color:#D97706" onclick="requestAmendments('${l.id}','${type}','${escJsAttr(l.name)}')">✏ Request amendments</button>` : ''}
+                  ${!passed ? `<button class="btn btn-success btn-sm" onclick="markPassed('${l.id}','${type}','${escJsAttr(l.name)}')">✓ Mark passed</button>` : ''}
+                </div>
+              </td>
+            </tr>`).join('') : '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--ink-light)">No submissions in this category.</td></tr>'}
+          </tbody>
+        </table>`;
+    }
+
+    window.setSubFilter = (f) => { subFilter = f; renderSubmissionsTab(document.getElementById('tabContent')); };
+
+    // ── Course content editor tab ─────────────────────────────────────────
+    async function renderContentTab(el) {
+      el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--ink-light)">Loading course content...</div>';
+      const contentDocs = {};
+      for (let i = 1; i <= 5; i++) {
+        try {
+          const snap = await getDoc(doc(db, 'courseContent', 'module' + i));
+          if (snap.exists() && snap.data().html) contentDocs[i] = snap.data().html;
+        } catch(e) { /* no content saved yet */ }
+      }
+      let selectedModule = 1;
+      const moduleTitles = ['Principles of OHE','Diet & Caries','Oral Hygiene & Perio','Communication','Professional & GDC'];
+
+      function drawEditor() {
+        const current = contentDocs[selectedModule] || '';
+        el.innerHTML = `
+          <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:1rem">Edit the HTML content for each module. Changes are saved to the database and shown to learners immediately. Clear a module to revert to the built-in default.</p>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.25rem">
+            ${[1,2,3,4,5].map(i=>`<button class="btn btn-sm ${selectedModule===i?'btn-primary':'btn-outline'}" onclick="selectContentMod(${i})">Module ${i}${contentDocs[i]?'  ✏️':''}</button>`).join('')}
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;gap:1rem;flex-wrap:wrap">
+            <strong style="font-size:0.95rem">Module ${selectedModule}: ${moduleTitles[selectedModule-1]}</strong>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+              <button class="btn btn-outline btn-sm" onclick="previewContent()">👁 Preview</button>
+              <button class="btn btn-outline btn-sm" style="color:var(--warn)" onclick="clearContentMod(${selectedModule})">Reset to default</button>
+              <button class="btn btn-primary btn-sm" onclick="saveContent(${selectedModule})">💾 Save changes</button>
+            </div>
+          </div>
+          <textarea id="contentEditor" style="width:100%;height:420px;font-family:monospace;font-size:0.82rem;padding:0.75rem 1rem;border:1.5px solid var(--border);border-radius:var(--radius);resize:vertical;line-height:1.55;outline:none">${escHtml(current)}</textarea>
+          <p style="font-size:0.78rem;color:var(--ink-light);margin-top:0.5rem">Use standard HTML: &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;/&lt;li&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;table&gt;. If blank, the built-in module content is used.</p>`;
+      }
+
+      function escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }
+
+      window.selectContentMod = (i) => { selectedModule = i; drawEditor(); };
+
+      window.saveContent = async (modNum) => {
+        const html = document.getElementById('contentEditor').value.trim();
+        await setDoc(doc(db, 'courseContent', 'module' + modNum), { html, updatedAt: serverTimestamp() });
+        contentDocs[modNum] = html;
+        drawEditor();
+        showToast('Module ' + modNum + ' content saved ✅', 'success');
+      };
+
+      window.clearContentMod = async (modNum) => {
+        if (!confirm('Reset Module ' + modNum + ' to built-in default? The custom content will be deleted.')) return;
+        await setDoc(doc(db, 'courseContent', 'module' + modNum), { html: '', updatedAt: serverTimestamp() });
+        delete contentDocs[modNum];
+        drawEditor();
+        showToast('Module ' + modNum + ' reset to default ✓');
+      };
+
+      window.previewContent = () => {
+        const html = document.getElementById('contentEditor')?.value || '';
+        const win = window.open('', '_blank');
+        if (win) {
+          win.document.write('<html><head><meta charset="UTF-8"><style>body{font-family:Nunito Sans,system-ui,sans-serif;padding:2rem;max-width:780px;margin:0 auto;color:#1a1a1a}h2{color:#005A5F;margin:1.5rem 0 0.75rem}p{margin-bottom:0.85rem;line-height:1.7}ul,ol{margin:0.5rem 0 1rem 1.5rem}li{margin-bottom:0.35rem}table{width:100%;border-collapse:collapse;margin:1rem 0}th{background:#005A5F;color:white;padding:0.5rem 0.75rem;text-align:left}td{padding:0.5rem 0.75rem;border-bottom:1px solid #eee}</style></head><body>' + html + '</body></html>');
+          win.document.close();
+        }
+      };
+
+      drawEditor();
+    }
+
+    // ── EC Requests tab ───────────────────────────────────────────────────
+    function renderECTab(el) {
+      const fmt = (ts) => {
+        if (!ts) return '-';
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      };
+
+      if (!ecRequests.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No extenuating circumstances applications yet.</div>';
+        return;
+      }
+
+      const statusColour = { pending:'#FEF3C7', approved:'#D1FAE5', declined:'#FEE2E2' };
+      const statusText   = { pending:'⏳ Pending', approved:'✅ Approved', declined:'❌ Declined' };
+
+      el.innerHTML = '<div style="padding:1.5rem 0">'
+        + ecRequests.sort((a,b) => {
+            const ta = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(0);
+            const tb = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(0);
+            if (a.status==='pending' && b.status!=='pending') return -1;
+            if (b.status==='pending' && a.status!=='pending') return 1;
+            return tb - ta;
+          }).map(r => `
+          <div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+              <div>
+                <strong style="font-size:1rem">${esc(r.name)||'-'}</strong>
+                <span style="color:var(--ink-light);font-size:0.85rem;margin-left:0.5rem">${esc(r.email)||''}</span>
+                ${r.gdc ? `<span style="color:var(--ink-light);font-size:0.82rem"> &middot; GDC: ${esc(r.gdc)}</span>` : ''}
+                <div style="font-size:0.78rem;color:var(--ink-light);margin-top:0.2rem">Submitted: ${fmt(r.submittedAt)}</div>
+              </div>
+              <span style="background:${statusColour[r.status]||'#F3F4F6'};padding:0.3rem 0.85rem;border-radius:100px;font-size:0.8rem;font-weight:700;white-space:nowrap">${statusText[r.status]||r.status}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 1.5rem;font-size:0.85rem;margin-bottom:1rem;color:var(--ink-mid)">
+              <div><span style="color:var(--ink-light)">Type:</span> ${esc(r.type)||'-'}</div>
+              <div><span style="color:var(--ink-light)">Progress:</span> ${esc(r.progress)||'-'}</div>
+              <div><span style="color:var(--ink-light)">From:</span> ${esc(r.dateFrom)||'-'}</div>
+              <div><span style="color:var(--ink-light)">To:</span> ${esc(r.dateTo)||'-'}</div>
+              <div style="grid-column:1/-1"><span style="color:var(--ink-light)">Expected completion:</span> ${esc(r.expectedCompletion)||'-'}</div>
+            </div>
+            <div style="background:var(--off-white);border-radius:var(--radius);padding:0.85rem 1rem;font-size:0.88rem;color:var(--ink-mid);line-height:1.7;margin-bottom:${r.status==='pending'?'1rem':'0'}">
+              <strong style="color:var(--ink);display:block;margin-bottom:0.25rem">Description:</strong>
+              ${esc(r.description)||'-'}
+            </div>
+            ${r.adminNote ? `<div style="background:#FEF3C7;border-radius:var(--radius);padding:0.75rem 1rem;font-size:0.85rem;color:#92400E;margin-bottom:${r.status==='pending'?'1rem':'0'}"><strong>Your note:</strong> ${esc(r.adminNote)}</div>` : ''}
+            ${r.status === 'pending' ? `
+              <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center">
+                <input type="text" id="ecNote-${r.id}" placeholder="Optional note to learner..." style="flex:1;min-width:200px;padding:0.55rem 0.85rem;border:1.5px solid var(--border);border-radius:var(--radius);font-family:var(--font);font-size:0.85rem"/>
+                <button class="btn btn-success btn-sm" onclick="decideEC('${r.id}','approved','${r.uid}','${escJsAttr(r.email)}','${escJsAttr(r.name)}')">✅ Approve (grant free extension)</button>
+                <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:1px solid #FECACA" onclick="decideEC('${r.id}','declined','${r.uid}','${escJsAttr(r.email)}','${escJsAttr(r.name)}')">❌ Decline</button>
+              </div>` : ''}
+          </div>`).join('')
+        + '</div>';
+    }
+
+    window.decideEC = async (ecId, decision, learnerUid, learnerEmail, learnerName) => {
+      const note = document.getElementById('ecNote-' + ecId)?.value.trim() || '';
+      const confirmed = confirm(decision === 'approved'
+        ? 'Approve this application and grant a free 1-month extension?'
+        : 'Decline this application? The learner will be notified.');
+      if (!confirmed) return;
+
+      try {
+        // Update EC request status
+        await updateDoc(doc(db, 'ecRequests', ecId), {
+          status: decision, adminNote: note, decidedAt: serverTimestamp()
+        });
+
+        // If approved, grant extension in learner record
+        if (decision === 'approved' && learnerUid) {
+          await updateDoc(doc(db, 'learners', learnerUid), {
+            extensionMonths: increment(1),
+            extensionUpdatedAt: serverTimestamp(),
+            extensionReason: 'Extenuating circumstances approved'
+          });
+        }
+
+        // Email learner
+        if (typeof emailjs !== 'undefined') {
+          const approvedMsg = 'Hi ' + learnerName + ',\n\nWe have reviewed your extenuating circumstances application and are pleased to confirm that a free 1-month extension has been granted to your course.\n\n' + (note ? 'Note from your assessor: ' + note + '\n\n' : '') + 'Your access has been updated automatically. Please log in to continue your course:\nhttps://ohe.dentalnurse.training/login.html\n\nIf you have any questions, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training';
+          const declinedMsg = 'Hi ' + learnerName + ',\n\nThank you for submitting your extenuating circumstances application. Unfortunately, after careful consideration, we are unable to grant a free extension in this instance.\n\n' + (note ? 'Note from your assessor: ' + note + '\n\n' : '') + 'You can still purchase a 1-month extension for £15 at:\nhttps://ohe.dentalnurse.training/extension-payment.html\n\nIf you would like to discuss your situation further, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training';
+
+          emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+            to_email: learnerEmail, to_name: learnerName,
+            learner_name: learnerName, learner_email: learnerEmail, learner_gdc: '',
+            submission_type: 'EC Application ' + (decision === 'approved' ? 'Approved' : 'Declined'),
+            file_url: 'N/A', submitted_at: new Date().toLocaleString('en-GB'),
+            message: decision === 'approved' ? approvedMsg : declinedMsg
+          }).catch(() => {});
+        }
+
+        showToast(decision === 'approved' ? 'Extension granted ✅' : 'Application declined', decision === 'approved' ? 'success' : '');
+        await loadLearners();
+      } catch(e) {
+        console.error(e);
+        showToast('Something went wrong. Please try again.', 'error');
+      }
+    };
+
+    // ── Audit / QA tab ────────────────────────────────────────────────────
+    function renderAuditTab(el) {
+      const fmt = (ts) => {
+        if (!ts) return '-';
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleDateString('en-GB');
+      };
+
+      const rows = learners.map(l => {
+        const mp = l.moduleProgress || {};
+        const qp = l.quizPassedAt || {};
+        const status = l.certNumber ? 'Certificate issued'
+          : l.writtenPassed && l.practicalPassed ? 'Awaiting certificate'
+          : l.practicalSubmitted ? 'Practical under review'
+          : l.practicalPendingSignoff ? 'Awaiting supervisor sign-off'
+          : l.writtenSubmitted ? 'Written under review'
+          : l.unlocked ? 'In progress'
+          : 'Awaiting approval';
+
+        return {
+          certNumber:   l.certNumber || '-',
+          name:         l.name || '-',
+          email:        l.email || '-',
+          gdc:          l.gdc || '-',
+          workplace:    l.workplace || '-',
+          enrolled:     fmt(l.enrolledAt || l.approvedAt),
+          approved:     fmt(l.approvedAt),
+          m1: mp[1] === 2 ? fmt(qp[1]) || '✓' : '-',
+          m2: mp[2] === 2 ? fmt(qp[2]) || '✓' : '-',
+          m3: mp[3] === 2 ? fmt(qp[3]) || '✓' : '-',
+          m4: mp[4] === 2 ? fmt(qp[4]) || '✓' : '-',
+          m5: mp[5] === 2 ? fmt(qp[5]) || '✓' : '-',
+          written:      l.writtenSubmitted ? fmt(l.writtenSubmittedAt) || '✓' : '-',
+          writtenPassed:l.writtenPassed ? '✓ Passed' : l.writtenSubmitted ? 'Awaiting' : '-',
+          practical:    l.practicalSubmitted ? fmt(l.practicalSubmittedAt) || '✓' : l.practicalPendingSignoff ? 'Signoff pending' : '-',
+          practicalPassed: l.practicalPassed ? '✓ Passed' : l.practicalSubmitted ? 'Awaiting' : '-',
+          certIssued:   fmt(l.certIssuedAt),
+          status
+        };
+      });
+
+      const thStyle = 'padding:0.45rem 0.6rem;background:var(--teal-pale);color:var(--teal-dark);font-size:0.78rem;text-align:left;white-space:nowrap;border-bottom:2px solid var(--border)';
+      const tdStyle = 'padding:0.4rem 0.6rem;font-size:0.8rem;border-bottom:1px solid var(--border);vertical-align:top';
+
+      el.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+          <div>
+            <strong>${rows.length} learner${rows.length !== 1 ? 's' : ''} total</strong>
+            <span style="font-size:0.82rem;color:var(--ink-light);margin-left:1rem">${rows.filter(r=>r.certNumber!=='-').length} certificates issued · ${rows.filter(r=>r.status==='In progress').length} in progress · ${rows.filter(r=>r.status==='Awaiting approval').length} awaiting approval</span>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="exportAuditCSV()">⬇ Export CSV</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;min-width:1200px">
+            <thead><tr>
+              <th style="${thStyle}">Cert No.</th>
+              <th style="${thStyle}">Name</th>
+              <th style="${thStyle}">Email</th>
+              <th style="${thStyle}">GDC</th>
+              <th style="${thStyle}">Workplace</th>
+              <th style="${thStyle}">Enrolled</th>
+              <th style="${thStyle}">Approved</th>
+              <th style="${thStyle}">M1</th>
+              <th style="${thStyle}">M2</th>
+              <th style="${thStyle}">M3</th>
+              <th style="${thStyle}">M4</th>
+              <th style="${thStyle}">M5</th>
+              <th style="${thStyle}">Written</th>
+              <th style="${thStyle}">Practical</th>
+              <th style="${thStyle}">Cert Issued</th>
+              <th style="${thStyle}">Status</th>
+            </tr></thead>
+            <tbody>
+              ${rows.map(r => `<tr>
+                <td style="${tdStyle};font-family:monospace;font-size:0.75rem;color:var(--teal-dark)">${esc(r.certNumber)}</td>
+                <td style="${tdStyle};font-weight:600">${esc(r.name)}</td>
+                <td style="${tdStyle};color:var(--ink-mid)">${esc(r.email)}</td>
+                <td style="${tdStyle}">${esc(r.gdc)}</td>
+                <td style="${tdStyle};color:var(--ink-mid)">${esc(r.workplace)}</td>
+                <td style="${tdStyle}">${r.enrolled}</td>
+                <td style="${tdStyle}">${r.approved}</td>
+                <td style="${tdStyle};text-align:center;color:${r.m1!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m1}</td>
+                <td style="${tdStyle};text-align:center;color:${r.m2!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m2}</td>
+                <td style="${tdStyle};text-align:center;color:${r.m3!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m3}</td>
+                <td style="${tdStyle};text-align:center;color:${r.m4!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m4}</td>
+                <td style="${tdStyle};text-align:center;color:${r.m5!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m5}</td>
+                <td style="${tdStyle};color:${r.writtenPassed.includes('Passed')?'#1A7F4B':r.written!=='-'?'var(--warn)':'var(--ink-light)'}">${r.written}<br/><span style="font-size:0.73rem">${r.writtenPassed!=='-'?r.writtenPassed:''}</span></td>
+                <td style="${tdStyle};color:${r.practicalPassed.includes('Passed')?'#1A7F4B':r.practical!=='-'?'var(--warn)':'var(--ink-light)'}">${r.practical}<br/><span style="font-size:0.73rem">${r.practicalPassed!=='-'?r.practicalPassed:''}</span></td>
+                <td style="${tdStyle};font-family:monospace;font-size:0.75rem;color:${r.certIssued!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.certIssued}</td>
+                <td style="${tdStyle}"><span style="font-size:0.78rem;padding:0.2rem 0.5rem;border-radius:100px;background:${r.certNumber!=='-'?'#D1FAE5':r.status==='In progress'?'#FEF3C7':r.status.includes('review')||r.status.includes('sign-off')?'#DBEAFE':'#F3F4F6'};color:${r.certNumber!=='-'?'#065F46':r.status==='In progress'?'#92400E':r.status.includes('review')||r.status.includes('sign-off')?'#1E40AF':'#374151'}">${r.status}</span></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    window.exportAuditCSV = () => {
+      const headers = ['Cert No','Name','Email','GDC','Workplace','Enrolled','Approved','M1','M2','M3','M4','M5','Written Submitted','Written Status','Practical Submitted','Practical Status','Cert Issued','Status'];
+      const fmt = (ts) => {
+        if (!ts) return '';
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleDateString('en-GB');
+      };
+      const rows = learners.map(l => {
+        const mp = l.moduleProgress || {};
+        const qp = l.quizPassedAt || {};
+        const status = l.certNumber ? 'Certificate issued'
+          : l.writtenPassed && l.practicalPassed ? 'Awaiting certificate'
+          : l.practicalSubmitted ? 'Practical under review'
+          : l.practicalPendingSignoff ? 'Awaiting supervisor sign-off'
+          : l.writtenSubmitted ? 'Written under review'
+          : l.unlocked ? 'In progress'
+          : 'Awaiting approval';
+        return [
+          l.certNumber || '',
+          l.name || '',
+          l.email || '',
+          l.gdc || '',
+          l.workplace || '',
+          fmt(l.enrolledAt || l.approvedAt),
+          fmt(l.approvedAt),
+          mp[1]===2 ? fmt(qp[1]) || 'Passed' : '',
+          mp[2]===2 ? fmt(qp[2]) || 'Passed' : '',
+          mp[3]===2 ? fmt(qp[3]) || 'Passed' : '',
+          mp[4]===2 ? fmt(qp[4]) || 'Passed' : '',
+          mp[5]===2 ? fmt(qp[5]) || 'Passed' : '',
+          l.writtenSubmitted ? fmt(l.writtenSubmittedAt) || 'Yes' : '',
+          l.writtenPassed ? 'Passed' : l.writtenSubmitted ? 'Awaiting' : '',
+          l.practicalSubmitted ? fmt(l.practicalSubmittedAt) || 'Yes' : l.practicalPendingSignoff ? 'Signoff pending' : '',
+          l.practicalPassed ? 'Passed' : l.practicalSubmitted ? 'Awaiting' : '',
+          fmt(l.certIssuedAt),
+          status
+        ].map(v => '"' + String(v).replace(/"/g, '""') + '"');
+      });
+      const csv = [headers.map(h => '"'+h+'"').join(','), ...rows.map(r => r.join(','))].join('\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+      a.download = 'DNT_OHE_AuditLog_' + new Date().toISOString().slice(0,10) + '.csv';
+      a.click();
+    };
+
+    // ── Approve learner ──────────────────────────────────────────────────
+      window.approveLearner = async (id, name) => {
+      if (!confirm('Approve ' + name + ' and send them a welcome email?')) return;
+      await updateDoc(doc(db, 'learners', id), { unlocked: true, approvedAt: serverTimestamp() });
+      const l = learners.find(x => x.id === id);
+      if (l) l.unlocked = true;
+      showToast(name + ' approved ✅', 'success');
+      if (l) {
+        promptEmail(
+          l.email,
+          'Your Dental Nurse Training Oral Health Education Course is now active',
+          'Dear ' + l.name + ',\n\nCongratulations! Your Dental Nurse Training Oral Health Education Course course is now active.\n\nYou can log in at:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you were sent separately.\n\nWork through the 5 theory modules in order, pass each quiz, then complete your written tasks, practical logbook, case studies and final reflection.\n\nCourse duration: 5 months from today.\n\nIf you have any questions, please reply to this email or contact emily@dentalnurse.training.\n\nGood luck!\n\nEmily Bremner\nDental Nurse Training'
+        );
+      }
+      updateStats();
+      renderTab(currentTab);
+    };
+
+
+    // ── Learner detail modal ──────────────────────────────────────────────
+    window.openLearnerModal = (id) => {
+      const l  = learners.find(x => x.id === id);
+      if (!l) return;
+      const mp   = l.moduleProgress || {};
+      const sups = l.supervisors || [];
+
+      const supSection = `
+        <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.85rem">
+            <h4 style="margin:0;font-size:0.95rem">Clinical Supervisors (${sups.length})</h4>
+            ${sups.length ? `<button class="btn btn-outline btn-sm" onclick="reloadAndOpenModal('${id}')">↺ Refresh status</button>` : ''}
+          </div>
+          ${sups.length && !Object.keys(supervisorAgreements).length && sups.some(s=>s.guidanceSent&&!s.approved) ? `<div style="background:#FFF8E7;border:1px solid #FBBF24;border-radius:6px;padding:0.6rem 0.85rem;font-size:0.8rem;color:#92400E;margin-bottom:0.75rem">⚠️ Signed agreements could not be loaded. Check your Firestore rules allow authenticated reads on the <strong>supervisorAgreements</strong> collection, then click ↺ Refresh.</div>` : ''}
+          ${sups.length ? `<div style="display:flex;flex-direction:column;gap:0.6rem">
+            ${sups.map((s, i) => {
+              const agrRaw = s.token ? (supervisorAgreements[s.token] || Object.values(supervisorAgreements).find(a => a.learnerUid === id && a.supGdc === s.gdc && a.signedAt)) : null;
+              const agr = agrRaw && agrRaw.signedAt ? agrRaw : null;
+              const status = getSupervisorStatus(id, s);
+              const badge = {
+                approved: '<span class="pill pill-green">✓ Approved</span>',
+                signed:   '<span class="pill pill-teal">✍️ Signed - awaiting approval</span>',
+                sent:     '<span class="pill pill-orange">📧 Guidance sent - awaiting signature</span>',
+                pending:  '<span class="pill pill-grey">Not contacted</span>',
+              }[status];
+              const actionBtn = status === 'approved' ? ''
+                : status === 'signed'
+                  ? `<button class="btn btn-success btn-sm" onclick="approveSupervisor('${id}',${i})">✓ Approve</button>`
+                  : s.email
+                    ? `<button class="btn btn-primary btn-sm" onclick="sendSupGuidance('${id}',${i})">${s.guidanceSent ? '↺ Resend link' : '📧 Send guidance'}</button>`
+                    : '<span style="font-size:0.78rem;color:var(--warn)">No email on record</span>';
+              const signedPanel = agr ? `
+                <div style="margin-top:0.75rem;background:#F0FAF5;border:1px solid #A7D7C5;border-radius:6px;padding:0.75rem 1rem;font-size:0.82rem">
+                  <div style="font-weight:700;color:#1A7F4B;margin-bottom:0.4rem">✍️ Signed agreement</div>
+                  <div style="display:grid;grid-template-columns:auto 1fr;gap:0.2rem 0.75rem;color:var(--ink-mid)">
+                    <span style="color:var(--ink-light)">Name:</span><span>${esc(agr.signedName)||'-'}</span>
+                    <span style="color:var(--ink-light)">GDC:</span><span>${esc(agr.signedGdc)||'-'}</span>
+                    <span style="color:var(--ink-light)">Signed:</span><span>${agr.signedAt?.toDate ? agr.signedAt.toDate().toLocaleString('en-GB') : '-'}</span>
+                  </div>
+                  <div style="margin-top:0.5rem;color:var(--ink-light)">Confirmed: physical presence, GDC registration, countersigning responsibilities, authenticity declaration, availability to supervise.</div>
+                </div>` : '';
+              return `<div style="padding:0.75rem 1rem;background:var(--off-white);border-radius:var(--radius);border:1px solid var(--border)">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;flex-wrap:wrap">
+                  <div style="flex:1">
+                    <div style="font-weight:700;font-size:0.88rem">${esc(s.name)}</div>
+                    <div style="font-size:0.8rem;color:var(--ink-light)">${esc(s.email)||'No email'} &middot; GDC: ${esc(s.gdc)}</div>
+                    ${signedPanel}
+                  </div>
+                  <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">${badge} ${actionBtn}</div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>` : `<p style="font-size:0.88rem;color:var(--ink-light)">No supervisors registered yet.</p>`}
+        </div>`;
+
+      document.getElementById('learnerModalContent').innerHTML = `
+        <div class="modal-header">
+          <h3>${esc(l.name)||'Unnamed learner'}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+
+        <div style="margin-bottom:1rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+            <strong style="font-size:0.88rem">Learner details</strong>
+            <button class="btn btn-outline btn-sm" onclick="toggleEditLearner('${l.id}')">✏️ Edit details</button>
+          </div>
+          <div id="learnerViewMode">
+            <table style="width:100%;font-size:0.9rem;border-collapse:collapse">
+              ${[['Name', esc(l.name)||'-'],['Email', esc(l.email)||'-'],['GDC', esc(l.gdc)||'-'],['Phone', esc(l.phone)||'-'],['Workplace', esc(l.workplace)||'-'],
+                 ['Status', l.unlocked?'Active':'Pending approval'],
+                 ['Declaration', l.declarationSigned ? '✅ Signed (' + esc(l.declarationSignedName) + ')' : '⏳ Not yet signed'],
+                 ['Enrolled', l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'],
+                 ['Module 1', mp[1]===2?'✅ Passed':mp[1]===1?'In progress':'Not started'],
+                 ['Module 2', mp[2]===2?'✅ Passed':mp[2]===1?'In progress':'Not started'],
+                 ['Module 3', mp[3]===2?'✅ Passed':mp[3]===1?'In progress':'Not started'],
+                 ['Module 4', mp[4]===2?'✅ Passed':mp[4]===1?'In progress':'Not started'],
+                 ['Module 5', mp[5]===2?'✅ Passed':mp[5]===1?'In progress':'Not started'],
+                 ['Written',    l.writtenSubmitted ? (l.writtenPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
+                 ['Practical',  l.practicalSubmitted ? (l.practicalPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
+                 ['Reflection', l.reflectionSubmitted ? (l.reflectionPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
+               ].map(([k,v]) => `<tr style="border-bottom:1px solid var(--border)">
+                <td style="padding:0.55rem 0.75rem;color:var(--ink-light);font-weight:600;width:150px">${k}</td>
+                <td style="padding:0.55rem 0.75rem">${v}</td>
+               </tr>`).join('')}
+            </table>
+          </div>
+          <div id="learnerEditMode" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">
+              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">Full name</label><input type="text" id="edit-name" value="${esc(l.name)}"/></div>
+              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">Email address</label><input type="email" id="edit-email" value="${esc(l.email)}"/></div>
+              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">GDC number</label><input type="text" id="edit-gdc" value="${esc(l.gdc)}"/></div>
+              <div class="form-group" style="margin:0"><label style="font-size:0.8rem">Phone</label><input type="text" id="edit-phone" value="${esc(l.phone)}"/></div>
+              <div class="form-group" style="margin:0;grid-column:1/-1"><label style="font-size:0.8rem">Workplace</label><input type="text" id="edit-workplace" value="${esc(l.workplace)}"/></div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="saveAdminLearnerEdits('${l.id}')">Save changes</button>
+            <button class="btn btn-outline btn-sm" onclick="toggleEditLearner('${l.id}')">Cancel</button>
+          </div>
+        </div>
+
+        ${supSection}
+        ${(() => {
+          if (!l.practicalPendingSignoff || l.practicalPassed) return '';
+          const uniqueSups = getUniqueLogbookSupervisors(l);
+          if (!uniqueSups.length) return '';
+          const allConfirmed = allLogbookSupervisorsConfirmed(l);
+          return `<div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border)">
+            <h4 style="margin:0 0 0.85rem;font-size:0.95rem">Logbook Sign-off Status</h4>
+            <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.85rem">
+              ${uniqueSups.map(s => {
+                const confirmed = Object.values(logbookSignoffs).some(a => a.learnerUid === l.id && a.supervisorGdc === s.gdc && a.signedAt);
+                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1rem;background:var(--off-white);border-radius:var(--radius);border:1px solid var(--border);font-size:0.88rem">
+                  <div><strong>${esc(s.name)}</strong> <span style="color:var(--ink-light)">&middot; GDC: ${esc(s.gdc)}</span></div>
+                  ${confirmed
+                    ? '<span style="background:#D1FAE5;color:#065F46;font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px">Confirmed</span>'
+                    : '<span style="background:#FFF3CD;color:#92400E;font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px">Awaiting confirmation</span>'}
+                </div>`;
+              }).join('')}
+            </div>
+            ${allConfirmed && !l.practicalSubmitted ? `<button class="btn btn-success btn-sm" onclick="submitPracticalForReview('${l.id}')">✓ All confirmed - submit for Emily's review</button>` : ''}
+          </div>`;
+        })()}
+        <div class="form-group" style="margin-top:1.25rem">
+          <label>Internal notes (not visible to learner)</label>
+          <textarea id="adminNotes" style="min-height:80px">${esc(l.notes)}</textarea>
+        </div>
+        <div class="modal-footer">
+          ${!l.unlocked ? `<button class="btn btn-success" onclick="approveLearner('${l.id}','${escJsAttr(l.name)}');closeModal()">✓ Approve learner</button>` : ''}
+          <button class="btn btn-outline" onclick="sendWelcomeEmail('${l.id}')">📧 Send welcome email</button>
+          ${(() => { const d = daysUntilExpiry(l); return d !== null && d <= 14 ? `<button class="btn btn-outline" style="color:#92400E;border-color:#F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>` : `<button class="btn btn-outline" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>`; })()}
+          <button class="btn btn-outline" onclick="saveNotes('${l.id}')">Save notes</button>
+          <a href="../portfolio-export.html?uid=${id}" target="_blank" class="btn btn-outline">📄 Download Portfolio</a>
+          ${isCourseCompleted(l) ? `<a href="../certificate.html?uid=${id}" target="_blank" class="btn btn-outline">🎓 View Certificate</a>` : ''}
+          <button class="btn btn-primary" onclick="closeModal()">Close</button>
+        </div>`;
+      document.getElementById('learnerModal').classList.remove('hidden');
+    };
+
+    window.toggleEditLearner = (id) => {
+      const view = document.getElementById('learnerViewMode');
+      const edit = document.getElementById('learnerEditMode');
+      const isEditing = edit.style.display !== 'none';
+      view.style.display = isEditing ? '' : 'none';
+      edit.style.display = isEditing ? 'none' : '';
+    };
+
+    window.saveAdminLearnerEdits = async (id) => {
+      const name      = document.getElementById('edit-name').value.trim();
+      const email     = document.getElementById('edit-email').value.trim();
+      const gdc       = document.getElementById('edit-gdc').value.trim();
+      const phone     = document.getElementById('edit-phone').value.trim();
+      const workplace = document.getElementById('edit-workplace').value.trim();
+      const btn = document.querySelector('[onclick="saveAdminLearnerEdits(\'' + id + '\')"]');
+      btn.disabled = true; btn.textContent = 'Saving...';
+      try {
+        await setDoc(doc(db, 'learners', id), { name, email, gdc, phone, workplace }, { merge: true });
+        const l = learners.find(x => x.id === id);
+        if (l) Object.assign(l, { name, email, gdc, phone, workplace });
+        await reloadAndOpenModal(id);
+        showToast('Learner details updated ✅', 'success');
+      } catch(e) {
+        console.error(e);
+        showToast('Could not save changes.', 'error');
+        btn.disabled = false; btn.textContent = 'Save changes';
+      }
+    };
+
+    window.reloadAndOpenModal = async (id) => {
+      await loadLearners();
+      openLearnerModal(id);
+    };
+
+    window.submitPracticalForReview = async (id) => {
+      await setDoc(doc(db, 'learners', id), { practicalSubmitted: true, practicalSubmittedAt: serverTimestamp() }, { merge: true });
+      const l = learners.find(x => x.id === id);
+      if (l) l.practicalSubmitted = true;
+      showToast('Portfolio marked as submitted for review ✅', 'success');
+      reloadAndOpenModal(id);
+    };
+
+    window.closeModal = () => document.getElementById('learnerModal').classList.add('hidden');
+
+    window.sendWelcomeEmail = (id) => {
+      const l = learners.find(x => x.id === id);
+      if (!l) return;
+      promptEmail(
+        l.email,
+        'Welcome to your Dental Nurse Training Oral Health Education Course',
+        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Oral Health Education Course!\n\nYour course is now active. You can log in at any time here:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks, a practical logbook, and case studies\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 5 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck - we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+      );
+    };
+
+    window.sendExpiryReminder = (id) => {
+      const l = learners.find(x => x.id === id);
+      if (!l) return;
+      const days  = daysUntilExpiry(l);
+      const daysStr = days !== null ? days + ' days' : 'shortly';
+      const extLink = 'https://ohe.dentalnurse.training/extension-payment.html'
+        + '?name='  + encodeURIComponent(l.name)
+        + '&email=' + encodeURIComponent(l.email);
+      // Queue Emily's self-reminder second so it shows after the learner email is sent
+      _emailQueue.push({
+        to: 'emily@dentalnurse.training',
+        subject: 'Reminder: course expiry for ' + l.name,
+        body: 'Hi Emily,\n\nThis is an automated reminder that you have just sent a course expiry notice to:\n\nLearner: ' + l.name + '\nEmail: ' + l.email + '\nCourse expires in: ' + daysStr + '\n\nIf they do not purchase an extension, their access will expire and they will need to re-enrol to continue.\n\nDental Nurse Training',
+      });
+      promptEmail(
+        l.email,
+        'Your Dental Nurse Training course access is expiring soon',
+        'Dear ' + l.name + ',\n\nThis is a reminder that your access to the Dental Nurse Training Oral Health Education Course will expire in approximately ' + daysStr + '.\n\nIf you would like to continue, you can purchase a 1-month extension for £15 here:\n\n' + extLink + '\n\nOr pay directly via Stripe:\n\n' + EXTENSION_STRIPE_LINK + '\n\nAlternatively, if extenuating circumstances have prevented you from completing the course, you can apply for a free extension instead:\n\nhttps://ohe.dentalnurse.training/extenuating-circumstances.html\n\nIf you have already completed the course or do not wish to continue, no action is needed.\n\nIf you have any questions, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+      );
+    };
+
+    window.saveNotes = async (id) => {
+      const notes = document.getElementById('adminNotes').value;
+      await updateDoc(doc(db, 'learners', id), { notes });
+      const l = learners.find(x => x.id === id);
+      if (l) l.notes = notes;
+      showToast('Notes saved ✓');
+    };
+
+    // ── View written responses ────────────────────────────────────────────
+    window.viewWrittenResponses = async (id, name) => {
+      const snap = await getDoc(doc(db, 'learners', id));
+      const d = snap.exists() ? snap.data() : {};
+      const tasks = [
+        { label: 'Task 1 - Consent & record-keeping', key: 'writtenTask1' },
+        { label: 'Task 2 - GDC responsibilities', key: 'writtenTask2' },
+        { label: 'Task 3 - Evidence base', key: 'writtenTask3' },
+      ];
+      const modal = document.getElementById('feedbackModal');
+      document.getElementById('feedbackModalContent').innerHTML = `
+        <div class="modal-header">
+          <h3>Written Tasks - ${name}</h3>
+          <button class="modal-close" onclick="document.getElementById('feedbackModal').classList.add('hidden')">×</button>
+        </div>
+        <div style="max-height:60vh;overflow-y:auto;padding-right:0.5rem">
+          ${tasks.map(({ label, key }) => `
+            <div style="margin-bottom:1.5rem">
+              <strong style="font-size:0.9rem;color:var(--teal-dark)">${label}</strong>
+              <div style="margin-top:0.5rem;background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.88rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${d[key] ? d[key].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '<em style="color:var(--ink-light)">Not answered</em>'}</div>
+              <div style="font-size:0.78rem;color:var(--ink-light);margin-top:0.25rem">${d[key] ? (d[key].trim().split(/\s+/).filter(Boolean).length + ' words') : ''}</div>
+            </div>`).join('')}
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary btn-sm" onclick="document.getElementById('feedbackModal').classList.add('hidden');openFeedbackModal('${id}','written','${name.replace(/'/g,"\\'")}')">Add feedback</button>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('feedbackModal').classList.add('hidden')">Close</button>
+        </div>`;
+      modal.classList.remove('hidden');
+    };
+
+    window.viewPracticalPortfolio = async (id, name) => {
+      const snap = await getDoc(doc(db, 'learners', id));
+      const d = snap.exists() ? snap.data() : {};
+      const entries = d.logbookEntries || [];
+      const modal = document.getElementById('feedbackModal');
+      document.getElementById('feedbackModalContent').innerHTML = `
+        <div class="modal-header">
+          <h3>Practical Portfolio - ${name}</h3>
+          <button class="modal-close" onclick="document.getElementById('feedbackModal').classList.add('hidden')">×</button>
+        </div>
+        <div style="max-height:65vh;overflow-y:auto;padding-right:0.5rem">
+          <strong style="font-size:0.9rem;color:var(--teal-dark)">Practical Logbook (${entries.length}/10 entries)</strong>
+          ${entries.length ? `<table style="width:100%;font-size:0.82rem;border-collapse:collapse;margin:0.75rem 0 1.5rem">
+            <thead><tr style="background:var(--teal-pale)">
+              <th style="padding:0.5rem;text-align:left">#</th>
+              <th style="padding:0.5rem;text-align:left">Date</th>
+              <th style="padding:0.5rem;text-align:left">Patient</th>
+              <th style="padding:0.5rem;text-align:left">Topics covered</th>
+              <th style="padding:0.5rem;text-align:left">Supervisor</th>
+              <th style="padding:0.5rem;text-align:left">GDC</th>
+              <th style="padding:0.5rem;text-align:left">Notes</th>
+            </tr></thead>
+            <tbody>${entries.map((e,i)=>`<tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:0.4rem 0.5rem">${i+1}</td>
+              <td style="padding:0.4rem 0.5rem">${e.date||'-'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.patientType||'-'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.topics||'-'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.supervisorName||'-'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.supervisorGdc||'-'}</td>
+              <td style="padding:0.4rem 0.5rem;color:var(--ink-light)">${e.notes||''}</td>
+            </tr>`).join('')}</tbody>
+          </table>` : `<p style="font-size:0.85rem;color:var(--ink-light);margin:0.5rem 0 1.5rem">No logbook entries recorded.</p>`}
+          ${[['Case Study 1','caseStudy1'],['Case Study 2','caseStudy2']].map(([label,key])=>`
+            <div style="margin-bottom:1.25rem">
+              <strong style="font-size:0.9rem;color:var(--teal-dark)">${label}</strong>
+              <div style="margin-top:0.5rem;background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.88rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${d[key]?d[key].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):'<em style="color:var(--ink-light)">Not completed</em>'}</div>
+              ${d[key]?`<div style="font-size:0.78rem;color:var(--ink-light);margin-top:0.25rem">${d[key].trim().split(/\s+/).filter(Boolean).length} words</div>`:''}
+            </div>`).join('')}
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary btn-sm" onclick="document.getElementById('feedbackModal').classList.add('hidden');openFeedbackModal('${id}','practical','${name.replace(/'/g,"\\'")}')">Add feedback</button>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('feedbackModal').classList.add('hidden')">Close</button>
+        </div>`;
+      modal.classList.remove('hidden');
+    };
+
+    // ── Feedback modal ────────────────────────────────────────────────────
+    window.openFeedbackModal = (id, type, name) => {
+      const l = learners.find(x => x.id === id);
+      const existing = l?.[`${type}Feedback`] || '';
+      document.getElementById('learnerModalContent').innerHTML = `
+        <div class="modal-header">
+          <h3>Feedback - ${name}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <p style="font-size:0.9rem;color:var(--ink-light);margin-bottom:1rem">This feedback will be visible to the learner in their dashboard.</p>
+        <div class="form-group">
+          <label>Your feedback</label>
+          <textarea id="feedbackText" style="min-height:160px">${existing}</textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveFeedback('${id}','${type}')">Save feedback</button>
+        </div>`;
+      document.getElementById('learnerModal').classList.remove('hidden');
+    };
+
+    window.saveFeedback = async (id, type) => {
+      const text = document.getElementById('feedbackText').value;
+      await updateDoc(doc(db, 'learners', id), { [`${type}Feedback`]: text });
+      const l = learners.find(x => x.id === id);
+      if (l) l[`${type}Feedback`] = text;
+      closeModal();
+      showToast('Feedback saved and visible to learner ✅', 'success');
+      if (l) {
+        const typeLabels = { written: 'Written Tasks', practical: 'Practical Portfolio', reflection: 'Final Reflection' };
+        promptEmail(
+          l.email,
+          'Feedback available: ' + typeLabels[type] + ' - Dental Nurse Training Oral Health Education Course',
+          'Hi ' + l.name + ',\n\nI have reviewed your ' + typeLabels[type] + ' and feedback is now available in your course dashboard.\n\nPlease log in to view it:\nhttps://ohe.dentalnurse.training/login.html\n\nIf you have any questions, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
+        );
+      }
+    };
+
+    window.requestAmendments = async (id, type, name) => {
+      const l = learners.find(x => x.id === id);
+      const existing = l?.[`${type}Feedback`] || '';
+      document.getElementById('learnerModalContent').innerHTML = `
+        <div class="modal-header">
+          <h3>Request Amendments - ${name}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <p style="font-size:0.9rem;color:var(--ink-light);margin-bottom:0.5rem">The learner will be notified that amendments are required. Their work will be unlocked so they can edit and resubmit. Your feedback will be shown prominently on their dashboard.</p>
+        <div style="background:#FFF8E7;border-left:3px solid #D97706;border-radius:0 var(--radius) var(--radius) 0;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:#92400E">Feedback is required before requesting amendments.</div>
+        <div class="form-group">
+          <label>Feedback / what needs to be amended *</label>
+          <textarea id="amendFeedbackText" style="min-height:160px">${existing}</textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" style="background:#D97706;border-color:#D97706" onclick="confirmRequestAmendments('${id}','${type}','${name.replace(/'/g,"\\'")}')">✏ Request amendments &amp; notify learner</button>
+        </div>`;
+      document.getElementById('learnerModal').classList.remove('hidden');
+    };
+
+    window.confirmRequestAmendments = async (id, type, name) => {
+      const text = document.getElementById('amendFeedbackText').value.trim();
+      if (!text) { alert('Please add feedback before requesting amendments.'); return; }
+      const typeLabels = { written: 'Written Tasks', practical: 'Practical Portfolio', reflection: 'Final Reflection' };
+      await updateDoc(doc(db, 'learners', id), {
+        [`${type}Feedback`]: text,
+        [`${type}AmendmentRequested`]: true
+      });
+      const l = learners.find(x => x.id === id);
+      if (l) { l[`${type}Feedback`] = text; l[`${type}AmendmentRequested`] = true; }
+      closeModal();
+      showToast('Amendments requested - learner notified ✅', 'success');
+      if (l) {
+        promptEmail(
+          l.email,
+          'Amendments required: ' + typeLabels[type] + ' - Dental Nurse Training Oral Health Education Course',
+          'Hi ' + (l.name||name) + ',\n\nThank you for submitting your ' + typeLabels[type] + '. I have reviewed your work and would like you to make some amendments before it can be marked.\n\nPlease log in to your dashboard to view the feedback and resubmit:\nhttps://ohe.dentalnurse.training/login.html\n\nIf you have any questions, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
+        );
+      }
+      renderSubmissionsTab(document.getElementById('tabContent'));
+    };
+
+    window.markPassed = async (id, type, name) => {
+      if (!confirm('Mark ' + name + ' as passed for ' + type + '?')) return;
+      await updateDoc(doc(db, 'learners', id), { [type + 'Passed']: true });
+      const l = learners.find(x => x.id === id);
+      if (l) l[type + 'Passed'] = true;
+      showToast(name + ' marked as passed for ' + type + ' ✅', 'success');
+      if (l) {
+        const typeLabels = { written: 'Written Tasks', practical: 'Practical Portfolio', reflection: 'Final Reflection' };
+        const allNowPassed = l.writtenPassed && l.practicalPassed && l.reflectionPassed;
+        if (allNowPassed) {
+          promptEmail(
+            l.email,
+            'Congratulations - You have completed the Dental Nurse Training Oral Health Education Course!',
+            'Congratulations ' + l.name + '!\n\nWhat an achievement! You have successfully passed all three assessments for the Dental Nurse Training Oral Health Education Course.\n\nYour certificate is now available to view and download from your course dashboard:\nhttps://ohe.dentalnurse.training/login.html\n\nThis certificate records 15 hours of verifiable CPD against GDC Outcomes A, C and D. You can use it as evidence of your CPD in your GDC Enhanced CPD record.\n\nAs a final request - it would mean a great deal to us if you could take 2 minutes to share your feedback on the course. Your thoughts help us improve the experience for future learners:\nmailto:emily@dentalnurse.training?subject=OHE%20Course%20Feedback\n\nThank you for choosing Dental Nurse Training. It has been a pleasure supporting you through this qualification.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+          );
+        } else {
+          promptEmail(
+            l.email,
+            'Assessment passed: ' + typeLabels[type] + ' - Dental Nurse Training Oral Health Education Course',
+            'Congratulations ' + l.name + '!\n\nGreat news - your ' + typeLabels[type] + ' has been marked as passed!\n\nLog in to your dashboard to see your progress:\nhttps://ohe.dentalnurse.training/login.html\n\nWell done and keep up the great work!\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
+          );
+        }
+      }
+      updateStats();
+      renderTab(currentTab);
+    };
+
+    // ── Supervisor guidance & approval ───────────────────────────────────
+    window.sendSupGuidance = async (learnerId, supIdx) => {
+      const l = learners.find(x => x.id === learnerId);
+      if (!l?.supervisors?.[supIdx]) return;
+      const s = l.supervisors[supIdx];
+      if (!s.email) { showToast('No email address for this supervisor.', 'error'); return; }
+      // Generate a unique token
+      const token = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,'0')).join('');
+      // Update supervisor record
+      const updatedSups = l.supervisors.map((sup, i) =>
+        i === supIdx ? { ...sup, token, guidanceSent: true, guidanceSentAt: new Date().toISOString() } : sup
+      );
+      await updateDoc(doc(db, 'learners', learnerId), { supervisors: updatedSups });
+      l.supervisors = updatedSups;
+      // Store agreement data in Firestore so the link only needs the token
+      await setDoc(doc(db, 'supervisorAgreements', token), {
+        learnerUid: learnerId, supIndex: supIdx,
+        learnerName: l.name, supName: s.name, supGdc: s.gdc, supEmail: s.email,
+        token, pending: true,
+      });
+      const link = 'https://ohe.dentalnurse.training/supervisor-agreement.html?t=' + token;
+      showToast('Supervisor link generated ✅', 'success');
+      promptEmail(
+        s.email,
+        'Supervisor agreement - Dental Nurse Training Oral Health Education Course (' + l.name + ')',
+        'Dear ' + s.name + ',\n\nYou have been registered as a clinical supervisor by ' + l.name + ' for their Dental Nurse Training Oral Health Education Course.\n\nPlease click the link below to read the supervisor guidance and sign the online supervisor agreement (this takes approximately 5 minutes):\n\n' + link + '\n\nYou will be asked to confirm your GDC registration number as part of the agreement. Once you have signed, your details will be returned to the learner\'s course record and reviewed by our assessor.\n\nIf you have any questions, please do not hesitate to contact me.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+      );
+    };
+
+    window.approveSupervisor = async (learnerId, supIdx) => {
+      const l = learners.find(x => x.id === learnerId);
+      if (!l?.supervisors) return;
+      const s = l.supervisors[supIdx];
+      if (!confirm('Approve ' + s.name + ' as a supervisor for ' + l.name + '? The learner will be notified.')) return;
+      const updatedSups = l.supervisors.map((sup, i) =>
+        i === supIdx ? { ...sup, approved: true, approvedAt: new Date().toISOString() } : sup
+      );
+      await updateDoc(doc(db, 'learners', learnerId), { supervisors: updatedSups });
+      l.supervisors = updatedSups;
+      showToast(s.name + ' approved as supervisor ✅', 'success');
+      updateStats();
+      if (currentTab === 'all') renderTab('all');
+      promptEmail(
+        l.email,
+        'Supervisor approved - Dental Nurse Training Oral Health Education Course',
+        'Hi ' + l.name + ',\n\nGreat news! Your supervisor ' + s.name + ' has been approved and is now confirmed for your practical logbook.\n\nYou can view the status of all your supervisors in your course dashboard:\nhttps://ohe.dentalnurse.training/login.html\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
+      );
+      openLearnerModal(learnerId);
+    };
+
+    // ── Expiry helper ─────────────────────────────────────────────────────
+    function daysUntilExpiry(l) {
+      if (!l.enrolledAt?.toDate) return null;
+      const expiry = new Date(l.enrolledAt.toDate());
+      expiry.setMonth(expiry.getMonth() + 5 + (l.extensionMonths || 0));
+      return Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24));
+    }
+
+    function expiryBadge(days) {
+      if (days === null) return '';
+      if (days <= 0)  return '<span class="pill" style="background:#FEE2E2;color:#991B1B">Expired</span>';
+      if (days <= 7)  return '<span class="pill" style="background:#FEE2E2;color:#991B1B">⚠️ ' + days + 'd left</span>';
+      if (days <= 14) return '<span class="pill" style="background:#FFF3CD;color:#92400E">⏰ ' + days + 'd left</span>';
+      return '';
+    }
+
+    function expiryRowStyle(days) {
+      if (days === null) return '';
+      if (days <= 7)  return 'background:#FFF5F5;';
+      if (days <= 14) return 'background:#FFFBF0;';
+      return '';
+    }
+
+    // ── Email prompt helpers ──────────────────────────────────────────────
+    let _emailQueue = [];
+
+    window.promptEmail = (to, subject, body) => {
+      document.getElementById('epTo').textContent      = to;
+      document.getElementById('epSubject').textContent = subject;
+      document.getElementById('epBody').textContent    = body;
+      document.getElementById('epMailtoBtn').href =
+        'mailto:' + encodeURIComponent(to) +
+        '?subject=' + encodeURIComponent(subject) +
+        '&body='    + encodeURIComponent(body);
+      document.getElementById('emailPromptModal').classList.remove('hidden');
+    };
+
+    window.dismissEmailPrompt = () => {
+      document.getElementById('emailPromptModal').classList.add('hidden');
+      if (_emailQueue.length) {
+        const next = _emailQueue.shift();
+        setTimeout(() => promptEmail(next.to, next.subject, next.body), 200);
+      }
+    };
+
+    window.copyEmailBody = () => {
+      const body = document.getElementById('epBody').textContent;
+      navigator.clipboard.writeText(body).then(() => showToast('Email text copied ✓'));
+    };
+
+    // ── Keyboard shortcut for login ────────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && document.getElementById('adminLogin').style.display !== 'none') {
+        window.adminLogin();
+      }
+    });
+
+    // ── Toast ─────────────────────────────────────────────────────────────
+    window.showToast = (msg, type='') => {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = `toast show ${type}`;
+      setTimeout(() => t.classList.remove('show'), 4000);
+    };
+  </script>
+  <script src="../js/config.js"></script>
+</body>
+</html>

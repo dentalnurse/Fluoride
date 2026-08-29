@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0L9NXXFBFR');
+  </script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Log in - Dental Nurse Training Oral Health Education Course</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
+             alt="Dental Nurse Training" style="height:56px;margin:0 auto 0.75rem"
+             onerror="this.style.display='none'"/>
+        <h2>Oral Health Education<br/>Course</h2>
+      </div>
+
+      <div id="loginForm">
+        <div class="form-group">
+          <label for="loginEmail">Email address</label>
+          <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <div id="loginError" class="form-error" style="display:none"></div>
+        <button class="btn btn-primary form-submit" onclick="handleLogin()">Log in</button>
+        <div class="auth-switch">
+          <a href="#" onclick="handleForgotPassword()">Forgot password?</a>
+        </div>
+      </div>
+
+      <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);text-align:center">
+        <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:0.75rem">Don't have an account yet?</p>
+        <p style="font-size:0.88rem;color:var(--ink-mid);line-height:1.6;margin-bottom:1rem">
+          Enrol online and create your account instantly. You'll have access to your course straight away after payment.
+        </p>
+        <a href="enrol.html" class="btn btn-primary btn-sm" style="width:100%;justify-content:center">Enrol now</a>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail }
+                             from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const app  = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+
+    window.handleLogin = async () => {
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass  = document.getElementById('loginPassword').value;
+      const errEl = document.getElementById('loginError');
+      errEl.style.display = 'none';
+      if (!email || !pass) { errEl.textContent = 'Please enter your email and password.'; errEl.style.display = 'block'; return; }
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        if (ADMIN_EMAILS.includes(email)) { window.location.href = 'admin/index.html'; return; }
+        window.location.href = 'dashboard.html';
+      } catch(e) {
+        errEl.textContent = e.code === 'auth/invalid-credential' ? 'Incorrect email or password.' : 'Login failed. Please try again.';
+        errEl.style.display = 'block';
+      }
+    };
+
+    window.handleForgotPassword = async () => {
+      const email = document.getElementById('loginEmail').value.trim();
+      if (!email) { alert('Please enter your email address first.'); return; }
+      try {
+        await sendPasswordResetEmail(auth, email);
+        alert('Password reset email sent to ' + email + '.\n\nIt will arrive from a Firebase address, not @dentalnurse.training - if you don\'t see it within a few minutes, please check your spam/junk folder.');
+      } catch(e) {
+        alert('Could not send reset email. Please check the address and try again.');
+      }
+    };
+
+    document.addEventListener('keydown', (e) => { if (e.key === 'Enter') window.handleLogin(); });
+  </script>
+  <script src="js/config.js"></script>
+  <footer style="background:var(--teal-dark);padding:1.25rem 0;margin-top:2rem">
+    <div class="container">
+      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center;margin:0">© 2025 Dental Nurse Training Ltd · <a href="../privacy-policy.html" style="color:rgba(255,255,255,0.4)">Privacy Policy</a> &middot; <a href="../terms.html" style="color:rgba(255,255,255,0.4)">Terms</a></p>
+    </div>
+  </footer>
+  <script src="../js/cookies.js"></script>
+</body>
+</html>
