@@ -386,13 +386,14 @@
         <p style="margin-bottom:1rem;color:var(--ink-light);font-size:0.9rem">${pendingEnrolments.length} learner${pendingEnrolments.length>1?'s':''} submitted the enrolment form and were sent to payment, but have not come back to finish creating their account yet. If they paid, chase them to complete signup; if not, this may just be someone who didn't go through with it.</p>
         <table class="admin-table">
           <thead><tr>
-            <th>Name</th><th>Email / GDC</th><th>Workplace / Phone</th><th>Submitted</th><th>Actions</th>
+            <th>Name</th><th>Email / GDC</th><th>Workplace / Phone</th><th>Invoice</th><th>Submitted</th><th>Actions</th>
           </tr></thead>
           <tbody>
             ${pendingEnrolments.map(r => `<tr>
               <td><div class="td-name">${esc((r.firstName||'') + ' ' + (r.lastName||''))||'-'}</div></td>
               <td><div>${esc(r.email)||'-'}</div><div class="td-email">GDC: ${esc(r.gdc)||'-'}</div></td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${esc(r.workplace)||'-'}<br/>${esc(r.phone)||'-'}</td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${r.wantInvoice ? ('✅ ' + esc(r.invoiceName) + '<br/>' + esc(r.invoiceEmail) + '<br/>' + esc(r.invoiceAddress)) : '-'}</td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${fmt(r.submittedAt)}</td>
               <td>
                 <div class="admin-actions">
@@ -1045,6 +1046,7 @@
           <div id="learnerViewMode">
             <table style="width:100%;font-size:0.9rem;border-collapse:collapse">
               ${[['Name', esc(l.name)||'-'],['Email', esc(l.email)||'-'],['GDC', esc(l.gdc)||'-'],['Phone', esc(l.phone)||'-'],['Workplace', esc(l.workplace)||'-'],
+                 ['Invoice', l.wantInvoice ? ('✅ Requested - ' + esc(l.invoiceName) + ', ' + esc(l.invoiceEmail) + ', ' + esc(l.invoiceAddress)) : 'Not requested'],
                  ['Status', l.unlocked?'Active':'Pending approval'],
                  ['Declaration', l.declarationSigned ? '✅ Signed (' + esc(l.declarationSignedName) + ')' : '⏳ Not yet signed'],
                  ['Enrolled', l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'],
