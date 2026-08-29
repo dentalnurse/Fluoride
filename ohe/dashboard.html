@@ -45,6 +45,7 @@
       <button class="sidebar-item locked" id="sb-m3" onclick="showSection('m3')"><span class="si-icon">🦷</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 3<br/><span style="opacity:0.7;font-size:0.75rem">Oral Hygiene & Periodontal Health</span></span><span class="si-badge badge-lock" id="badge-m3">-</span></button>
       <button class="sidebar-item locked" id="sb-m4" onclick="showSection('m4')"><span class="si-icon">💬</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 4<br/><span style="opacity:0.7;font-size:0.75rem">Communication & Behaviour Change</span></span><span class="si-badge badge-lock" id="badge-m4">-</span></button>
       <button class="sidebar-item locked" id="sb-m5" onclick="showSection('m5')"><span class="si-icon">⚖️</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 5<br/><span style="opacity:0.7;font-size:0.75rem">Professional & GDC Responsibilities</span></span><span class="si-badge badge-lock" id="badge-m5">-</span></button>
+      <button class="sidebar-item locked" id="sb-m6" onclick="showSection('m6')"><span class="si-icon">📋</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 6<br/><span style="opacity:0.7;font-size:0.75rem">What a Session Looks Like</span></span><span class="si-badge badge-lock" id="badge-m6">-</span></button>
       <div class="sidebar-section-title">Setup</div>
       <button class="sidebar-item" id="sb-supervisors" onclick="showSection('supervisors')"><span class="si-icon">👩‍⚕️</span><span style="flex:1;text-align:left;font-size:0.82rem">My Supervisors</span><span class="si-badge" id="badge-supervisors">→</span></button>
       <button class="sidebar-item" id="sb-reflectStart" onclick="showSection('reflectStart')"><span class="si-icon">🪞</span><span style="flex:1;text-align:left;font-size:0.82rem">Reflection - Starting Out</span><span class="si-badge" id="badge-reflectStart">→</span></button>
@@ -92,7 +93,7 @@
         name: 'Jordan Sample', email: 'preview@example.com', gdc: '123456', unlocked: true,
         declarationSigned: true,
         enrolledAt: { toDate: () => new Date() },
-        moduleProgress: { 1:0, 2:0, 3:0, 4:0, 5:0 },
+        moduleProgress: { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 },
         pcasEntries: [], cpdLog: [], pdp: { strengths: '', areas: '', goals: '', timescale: '' },
         supervisors: [],
       };
@@ -115,7 +116,7 @@
       try {
         const snap = await getDoc(doc(db, 'learners', uid));
         learner = snap.exists() ? snap.data() : { name: user.email, email: user.email, gdc: '', unlocked: true };
-        if (!learner.moduleProgress) learner.moduleProgress = { 1:0, 2:0, 3:0, 4:0, 5:0 };
+        if (!learner.moduleProgress) learner.moduleProgress = { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 };
         if (!learner.pcasEntries) learner.pcasEntries = [];
         if (!learner.cpdLog) learner.cpdLog = [];
         if (!learner.pdp) learner.pdp = { strengths: '', areas: '', goals: '', timescale: '' };
@@ -164,7 +165,7 @@
 
         // Load any custom module content from Firestore
         try {
-          for (let i = 1; i <= 5; i++) {
+          for (let i = 1; i <= 6; i++) {
             const cs = await getDoc(doc(db, 'courseContent', 'module' + i));
             if (cs.exists() && cs.data().html) customContent[i] = cs.data().html;
           }
@@ -191,8 +192,8 @@
 
     function renderSidebar() {
       const mp = learner.moduleProgress || {};
-      const allPassed = [1,2,3,4,5].every(i => (mp[i] === 2 || mp[i] === '2'));
-      [1,2,3,4,5].forEach(i => {
+      const allPassed = [1,2,3,4,5,6].every(i => (mp[i] === 2 || mp[i] === '2'));
+      [1,2,3,4,5,6].forEach(i => {
         const btn = document.getElementById('sb-m'+i);
         const badge = document.getElementById('badge-m'+i);
         const accessible = i === 1 || mp[i-1] === 2 || mp[i-1] === '2';
@@ -262,7 +263,7 @@
       if (sb) sb.classList.add('active');
       const main = document.getElementById('dashMain');
       const mp = learner.moduleProgress || {};
-      const allPassed = [1,2,3,4,5].every(i => (mp[i] === 2 || mp[i] === '2'));
+      const allPassed = [1,2,3,4,5,6].every(i => (mp[i] === 2 || mp[i] === '2'));
       if (id === 'home') { renderHome(main, mp, allPassed); return; }
       if (id.startsWith('m') && id.length === 2) {
         const n = parseInt(id[1]);
@@ -275,7 +276,7 @@
       if (id === 'reflectStart') { renderReflectStart(main); return; }
       if (id === 'mywork') { renderMyWork(main); return; }
       if (id === 'certificate') { renderCertificate(main); return; }
-      if (!allPassed) { main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Locked</h3><p>Complete all five theory modules to unlock this section</p></div>'; return; }
+      if (!allPassed) { main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Locked</h3><p>Complete all six theory modules to unlock this section</p></div>'; return; }
       if (id === 'written') { renderWritten(main); return; }
       if (id === 'practical') {
         const approvedCount = (learner.supervisors || []).filter(s => s.approved).length;
@@ -302,9 +303,9 @@
       }
       if (id === 'profile') { renderProfile(main); return; }
     };function renderHome(el, mp, allPassed) {
-      const passed = [1,2,3,4,5].filter(i => mp[i] === 2 || mp[i] === '2').length;
+      const passed = [1,2,3,4,5,6].filter(i => mp[i] === 2 || mp[i] === '2').length;
       const pct = Math.round(passed / 5 * 100);
-      const icons = ['🪥','🍎','🦷','💬','⚖️'];
+      const icons = ['🪥','🍎','🦷','💬','⚖️','📋'];
       const courseCompleted = !!learner.certNumber || !!(learner.writtenPassed && learner.practicalPassed && learner.reflectionPassed);
       let timeRemainingHtml = '';
       if (courseExpiryDate && !courseCompleted) {
@@ -320,8 +321,8 @@
       el.innerHTML = '<div class="dash-header"><h1>Welcome back, ' + (learner.name||'').split(' ')[0] + ' 👋</h1><p>GDC: ' + (learner.gdc||'-') + '</p></div>'
         + timeRemainingHtml
         + '<div class="content-card" style="margin-bottom:1.25rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem"><strong>Theory progress</strong><span style="font-size:0.85rem;color:var(--teal-dark);font-weight:700">' + passed + '/5 modules complete</span></div><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div></div>'
-        + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.85rem;margin-bottom:1.5rem">'
-        + [1,2,3,4,5].map(i => {
+        + '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0.85rem;margin-bottom:1.5rem">'
+        + [1,2,3,4,5,6].map(i => {
             const accessible = i === 1 || mp[i-1] === 2 || mp[i-1] === '2';
             const done = mp[i] === 2 || mp[i] === '2';
             return '<div class="module-card ' + (accessible?'':'locked') + '" style="cursor:' + (accessible?'pointer':'default') + '" onclick="' + (accessible?'showSection(\'m'+i+'\')':'') + '"><div class="mc-header"><div class="mc-icon">' + icons[i-1] + '</div><div><div class="mc-mod">Module ' + i + '</div><div class="mc-title" style="font-size:0.82rem">' + MODULES[i-1].title + '</div></div></div><div class="mc-status"><div class="status-dot ' + (done?'dot-done':accessible?'dot-pend':'dot-lock') + '"></div><span style="font-size:0.8rem">' + (done?'Passed':accessible?'Not started':'Locked') + '</span></div></div>';
@@ -1574,7 +1575,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
             <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:0.85rem">Course Requirements</h2>
             <p style="margin-bottom:0.75rem">The <strong>Dental Nurse Training Oral Health Education Course</strong> is a ${CPD_HOURS}-hour verifiable CPD course. To receive your certificate you must complete all of the following:</p>
             <ul style="margin:0 0 1rem 1.25rem;line-height:1.9;font-size:0.9rem">
-              <li>Complete all <strong>five theory modules</strong> and pass each end-of-module MCQ (75% pass mark; unlimited retakes)</li>
+              <li>Complete all <strong>six theory modules</strong> and pass each end-of-module MCQ (75% pass mark; unlimited retakes)</li>
               <li>Complete <strong>three written tasks</strong> (400-600 words each), answered directly in your dashboard</li>
               <li>Write a short <strong>starting reflection</strong> (300+ words) before you begin seeing patients</li>
               <li>Complete a <strong>practical portfolio</strong>: 6 supervised patients across 9 sessions covering 6 topics and at least 4 patient groups, including an <strong>in-depth write-up</strong> (1,500-2,000 words) on your chosen focus topic, an <strong>exhibition</strong> you design, produce and evaluate (report 800-1,000 words), and a <strong>CPD log &amp; personal development plan</strong></li>
@@ -1782,7 +1783,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
 
       const anySubmitted = learner.writtenSubmitted || learner.practicalSubmitted || learner.reflectionSubmitted;
       el.innerHTML = '<div class="dash-header"><h1>My Work</h1><p>View your submitted assessments, assessor feedback, and download your files.</p></div>'
-        + (anySubmitted ? cards.join('') : '<div class="content-card" style="text-align:center;padding:2.5rem"><div style="font-size:2.5rem;margin-bottom:0.75rem">📭</div><p style="color:var(--ink-light)">You have not submitted any work yet. Complete all five theory modules to unlock your assessments.</p></div>');
+        + (anySubmitted ? cards.join('') : '<div class="content-card" style="text-align:center;padding:2.5rem"><div style="font-size:2.5rem;margin-bottom:0.75rem">📭</div><p style="color:var(--ink-light)">You have not submitted any work yet. Complete all six theory modules to unlock your assessments.</p></div>');
     }
 
     function renderCertificate(el) {

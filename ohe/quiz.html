@@ -56,7 +56,7 @@
     // Get module number from URL e.g. quiz.html?mod=1
     const params = new URLSearchParams(window.location.search);
     modNum = parseInt(params.get('mod'));
-    if (!modNum || modNum < 1 || modNum > 5) {
+    if (!modNum || modNum < 1 || modNum > 6) {
       window.location.href = 'dashboard.html';
     }
 
@@ -97,7 +97,7 @@
         + '<h2 style="color:var(--success)">You already passed this quiz!</h2>'
         + '<p style="margin:1rem 0">Module ' + modNum + ' is complete.</p>'
         + '<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem">'
-        + (modNum < 5 ? '<a href="quiz.html?mod=' + (modNum+1) + '" class="btn btn-primary">Go to Module ' + (modNum+1) + ' quiz →</a>' : '<a href="dashboard.html" class="btn btn-success">Go to written tasks →</a>')
+        + (modNum < 6 ? '<a href="quiz.html?mod=' + (modNum+1) + '" class="btn btn-primary">Go to Module ' + (modNum+1) + ' quiz →</a>' : '<a href="dashboard.html" class="btn btn-success">Go to written tasks →</a>')
         + '<a href="dashboard.html" class="btn btn-outline">Back to dashboard</a>'
         + '</div></div>';
     }
@@ -185,7 +185,7 @@
           + '<p style="color:var(--ink-light);margin-bottom:2rem">' + (passed ? 'Well done - Module ' + modNum + ' is now complete.' : 'You need 75% to pass. Review the module content and try again.') + '</p>'
           + '<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">'
           + (passed
-            ? (modNum < 5
+            ? (modNum < 6
               ? '<a href="dashboard.html?next=m' + (modNum+1) + '" class="btn btn-success">Continue to Module ' + (modNum+1) + ' →</a>'
               : '<a href="dashboard.html" class="btn btn-success">Go to written tasks →</a>')
             : '<button class="btn btn-primary" onclick="window.location.reload()">Retake quiz</button>')
