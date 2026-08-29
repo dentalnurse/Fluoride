@@ -198,7 +198,7 @@
 
     if (graceDaysLeft > 0) {
       document.getElementById('heroTitle').textContent    = 'Course Access Expired';
-      document.getElementById('heroSubtitle').textContent = 'Your 5-month course access has ended. Purchase a 1-month extension to pick up where you left off.';
+      document.getElementById('heroSubtitle').textContent = 'Your ' + COURSE_DURATION_MONTHS + '-month course access has ended. Purchase a 1-month extension to pick up where you left off.';
       document.getElementById('graceWarning').style.display = 'block';
       document.getElementById('graceDaysLeft').textContent  =
         graceDaysLeft === 1 ? '1 day' : graceDaysLeft + ' days';

@@ -45,6 +45,7 @@
       <button class="sidebar-item locked" id="sb-m5" onclick="showSection('m5')"><span class="si-icon">⚖️</span><span style="flex:1;text-align:left;line-height:1.3;font-size:0.82rem">Module 5<br/><span style="opacity:0.7;font-size:0.75rem">Professional & GDC Responsibilities</span></span><span class="si-badge badge-lock" id="badge-m5">-</span></button>
       <div class="sidebar-section-title">Setup</div>
       <button class="sidebar-item" id="sb-supervisors" onclick="showSection('supervisors')"><span class="si-icon">👩‍⚕️</span><span style="flex:1;text-align:left;font-size:0.82rem">My Supervisors</span><span class="si-badge" id="badge-supervisors">→</span></button>
+      <button class="sidebar-item" id="sb-reflectStart" onclick="showSection('reflectStart')"><span class="si-icon">🪞</span><span style="flex:1;text-align:left;font-size:0.82rem">Reflection - Starting Out</span><span class="si-badge" id="badge-reflectStart">→</span></button>
       <div class="sidebar-section-title">Assessment</div>
       <button class="sidebar-item locked" id="sb-written" onclick="showSection('written')"><span class="si-icon">✍️</span><span style="flex:1;text-align:left;font-size:0.82rem">Written Tasks</span><span class="si-badge badge-lock" id="badge-written">🔒</span></button>
       <button class="sidebar-item locked" id="sb-practical" onclick="showSection('practical')"><span class="si-icon">🦷</span><span style="flex:1;text-align:left;font-size:0.82rem">Practical Portfolio</span><span class="si-badge badge-lock" id="badge-practical">🔒</span></button>
@@ -89,8 +90,9 @@
         const snap = await getDoc(doc(db, 'learners', uid));
         learner = snap.exists() ? snap.data() : { name: user.email, email: user.email, gdc: '', unlocked: true };
         if (!learner.moduleProgress) learner.moduleProgress = { 1:0, 2:0, 3:0, 4:0, 5:0 };
-        if (!learner.logbookEntries) learner.logbookEntries = [];
-        if (learner.casestudyCount === undefined) learner.casestudyCount = 0;
+        if (!learner.pcasEntries) learner.pcasEntries = [];
+        if (!learner.cpdLog) learner.cpdLog = [];
+        if (!learner.pdp) learner.pdp = { strengths: '', areas: '', goals: '', timescale: '' };
         if (!learner.name) learner.name = user.email;
         if (!learner.enrolledAt) {
           const createdAt = user.metadata.creationTime ? new Date(user.metadata.creationTime) : new Date();
@@ -105,7 +107,7 @@
         const courseCompleted = !!learner.certNumber || !!(learner.writtenPassed && learner.practicalPassed && learner.reflectionPassed);
         if (enrolledAt) {
           courseExpiryDate = new Date(enrolledAt);
-          courseExpiryDate.setMonth(courseExpiryDate.getMonth() + 5 + extensionMonths);
+          courseExpiryDate.setMonth(courseExpiryDate.getMonth() + COURSE_DURATION_MONTHS + extensionMonths);
         }
         if (enrolledAt && !ADMIN_EMAILS.includes(user.email) && !courseCompleted) {
           const expiryDate = courseExpiryDate;
@@ -120,7 +122,7 @@
                 <div style="max-width:520px;margin:5rem auto;text-align:center;padding:2rem">
                   <div style="font-size:3.5rem;margin-bottom:1rem">⏰</div>
                   <h2 style="color:var(--ink);margin-bottom:0.75rem">Your course access has expired</h2>
-                  <p style="color:var(--ink-mid);margin-bottom:0.5rem">Your 5-month course access ended ${daysExpired} days ago. The 7-day extension window has now closed.</p>
+                  <p style="color:var(--ink-mid);margin-bottom:0.5rem">Your ${COURSE_DURATION_MONTHS}-month course access ended ${daysExpired} days ago. The 7-day extension window has now closed.</p>
                   <p style="color:var(--ink-mid);margin-bottom:1.75rem">To continue, you will need to re-enrol and start the course again. Please contact us first, and we can advise on the best option for you.</p>
                   <a href="mailto:emily@dentalnurse.training?subject=Course%20re-enrolment%20query&body=Hi%20Emily%2C%0A%0AMy%20course%20access%20has%20expired.%20I%20would%20like%20to%20discuss%20my%20options.%0A%0AMy%20name%3A%20${encodeURIComponent(learner.name||'')}%0AMy%20email%3A%20${encodeURIComponent(learner.email||'')}%0A" class="btn btn-primary btn-lg" style="margin-bottom:0.75rem">📧 Contact us to re-enrol</a>
                   <br/><button class="btn btn-outline" onclick="handleLogout()" style="margin-top:0.5rem">Log out</button>
@@ -184,6 +186,12 @@
         if (learner.supervisorsSubmitted) { supBadge.textContent='✓'; supBadge.className='si-badge badge-done'; }
         else { supBadge.textContent='→'; supBadge.className='si-badge badge-new'; }
       }
+      // Reflection - Starting Out badge (not gated, always accessible)
+      const rsBadge = document.getElementById('badge-reflectStart');
+      if (rsBadge) {
+        if (learner.reflectionStartSubmitted) { rsBadge.textContent='✓'; rsBadge.className='si-badge badge-done'; }
+        else { rsBadge.textContent='→'; rsBadge.className='si-badge badge-new'; }
+      }
       // My Work badge
       const mwBadge = document.getElementById('badge-mywork');
       if (mwBadge) {
@@ -234,6 +242,7 @@
         return;
       }
       if (id === 'supervisors') { renderSupervisors(main); return; }
+      if (id === 'reflectStart') { renderReflectStart(main); return; }
       if (id === 'mywork') { renderMyWork(main); return; }
       if (id === 'certificate') { renderCertificate(main); return; }
       if (!allPassed) { main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Locked</h3><p>Complete all five theory modules to unlock this section</p></div>'; return; }
@@ -245,7 +254,11 @@
           return;
         }
         if (approvedCount === 0) {
-          main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Awaiting supervisor approval</h3><p>Your logbook will unlock once at least one of your supervisors has been approved. Please check back shortly.</p><button class="btn btn-outline" style="margin-top:1rem" onclick="showSection(\'supervisors\')">View supervisors</button></div>';
+          main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Awaiting supervisor approval</h3><p>Your practical portfolio will unlock once at least one of your supervisors has been approved. Please check back shortly.</p><button class="btn btn-outline" style="margin-top:1rem" onclick="showSection(\'supervisors\')">View supervisors</button></div>';
+          return;
+        }
+        if (!learner.reflectionStartSubmitted) {
+          main.innerHTML = '<div class="locked-overlay"><div class="lock-icon">🔒</div><h3>Starting reflection required</h3><p>Please complete your short "Reflection - Starting Out" first - this records your baseline knowledge before you begin your supervised practical work.</p><button class="btn btn-primary" style="margin-top:1rem" onclick="showSection(\'reflectStart\')">Write my starting reflection</button></div>';
           return;
         }
         renderPractical(main); return;
@@ -368,6 +381,13 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       return (text || '').trim().split(/\s+/).filter(Boolean).length;
     }
 
+    function wcColourRange(wc, min, max) {
+      if (wc >= min && wc <= max) return '#1A7F4B';
+      if (wc > max) return '#D32F2F';
+      if (wc > 0) return '#92400E';
+      return 'var(--ink-light)';
+    }
+
     function renderWritten(el) {
       const amendmentRequested = !!learner.writtenAmendmentRequested;
       const submitted = learner.writtenSubmitted && !amendmentRequested;
@@ -386,7 +406,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       html += WRITTEN_TASKS.map(({ key, label, prompt }) => {
         const savedText = learner[key] || '';
         const wc = wordCount(savedText);
-        const wcColour = wc >= 400 && wc <= 600 ? '#1A7F4B' : wc > 600 ? '#D32F2F' : wc > 0 ? '#92400E' : 'var(--ink-light)';
+        const wcColour = wcColourRange(wc, 400, 600);
         return `<div class="content-card" style="margin-bottom:1.25rem">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
             <div>
@@ -423,7 +443,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       const wcEl = document.getElementById('wc-' + key);
       if (wcEl) {
         wcEl.textContent = wc + ' words';
-        wcEl.style.color = wc >= 400 && wc <= 600 ? '#1A7F4B' : wc > 600 ? '#D32F2F' : wc > 0 ? '#92400E' : 'var(--ink-light)';
+        wcEl.style.color = wcColourRange(wc, 400, 600);
       }
       updateWrittenSubmitBtn();
       clearTimeout(writtenSaveTimer);
@@ -481,16 +501,127 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       }
     };
 
+    // ═══════════════════════════════════════════════════════════════════
+    // REFLECTION - STARTING OUT (unlocked from day one, ungated)
+    // ═══════════════════════════════════════════════════════════════════
+    function renderReflectStart(el) {
+      const submitted = !!learner.reflectionStartSubmitted;
+      const text = learner.reflectionStartText || '';
+      const wc = wordCount(text);
+      el.innerHTML = `
+        <div class="dash-header"><h1>Reflection - Starting Out</h1><p>A short reflective account (at least 300 words), written before you begin your supervised practical work, capturing your starting point. This is required before your Practical Portfolio unlocks.</p></div>
+        ${submitted ? '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Submitted - thank you.</div>' : ''}
+        <div class="content-card">
+          <div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.25rem;overflow:hidden">
+            <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.rs-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="width:100%;text-align:left;padding:0.85rem 1rem;background:var(--teal-pale);border:none;cursor:pointer;font-size:0.9rem;font-weight:600;color:var(--teal-dark);display:flex;justify-content:space-between;align-items:center">
+              🪞 What to include <span class="rs-arrow">▼</span>
+            </button>
+            <div style="display:none;padding:1.25rem;font-size:0.88rem;line-height:1.8;color:var(--ink-mid)">
+              <p style="margin-bottom:0.6rem">Before you start seeing patients, take a few minutes to reflect honestly on:</p>
+              <ul style="padding-left:1.25rem;margin:0">
+                <li style="margin-bottom:0.6rem">What you already know about oral health education, and where your knowledge feels weaker</li>
+                <li style="margin-bottom:0.6rem">Any nerves, assumptions or expectations you have about delivering OHE sessions to real patients</li>
+                <li style="margin-bottom:0.6rem">What you hope to get out of the course, and how you think it will change your day-to-day practice</li>
+              </ul>
+              <p style="margin:0.75rem 0 0">You will write a second, longer reflection at the end of the course - it can be genuinely useful to compare the two.</p>
+            </div>
+          </div>
+          ${submitted
+            ? `<div style="background:var(--off-white);border-radius:var(--radius);padding:1.25rem;font-size:0.9rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${esc(text)}</div>`
+            : `<div class="form-group">
+                <label for="rs-text">Your reflection (minimum 300 words)</label>
+                <textarea id="rs-text" style="width:100%;box-sizing:border-box;min-height:260px" placeholder="Write your starting reflection here..." oninput="onReflectStartInput()">${esc(text)}</textarea>
+              </div>
+              <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+                <span id="rs-wc" style="font-size:0.82rem;font-weight:600;color:${wcColourRange(wc, 300, 99999)}">${wc} words</span>
+                <button class="btn btn-outline btn-sm" onclick="saveReflectStartDraft()">💾 Save draft</button>
+                <button class="btn btn-primary btn-sm" id="rsSubmitBtn" onclick="submitReflectStart()" ${wc >= 300 ? '' : 'disabled'}>Submit</button>
+                <span id="rs-save-status" style="font-size:0.82rem;color:var(--ink-light)"></span>
+              </div>`
+          }
+        </div>`;
+    }
+
+    let reflectStartSaveTimer = null;
+    window.onReflectStartInput = () => {
+      const ta = document.getElementById('rs-text');
+      if (!ta) return;
+      const wc = wordCount(ta.value);
+      const wcEl = document.getElementById('rs-wc');
+      if (wcEl) { wcEl.textContent = wc + ' words'; wcEl.style.color = wcColourRange(wc, 300, 99999); }
+      const btn = document.getElementById('rsSubmitBtn');
+      if (btn) btn.disabled = wc < 300;
+      clearTimeout(reflectStartSaveTimer);
+      reflectStartSaveTimer = setTimeout(() => saveReflectStartDraft(true), 3000);
+    };
+
+    window.saveReflectStartDraft = async (auto = false) => {
+      const ta = document.getElementById('rs-text');
+      if (!ta) return;
+      learner.reflectionStartText = ta.value;
+      try {
+        await setDoc(doc(db, 'learners', uid), { reflectionStartText: ta.value }, { merge: true });
+        const statusEl = document.getElementById('rs-save-status');
+        if (statusEl) { statusEl.textContent = auto ? 'Auto-saved ✓' : 'Draft saved ✓'; setTimeout(() => { if(statusEl) statusEl.textContent=''; }, 3000); }
+      } catch(e) { console.error(e); }
+    };
+
+    window.submitReflectStart = async () => {
+      const ta = document.getElementById('rs-text');
+      if (!ta || wordCount(ta.value) < 300) return;
+      const btn = document.getElementById('rsSubmitBtn');
+      btn.disabled = true; btn.textContent = 'Submitting...';
+      try {
+        await setDoc(doc(db, 'learners', uid), {
+          reflectionStartText: ta.value,
+          reflectionStartSubmitted: true,
+          reflectionStartSubmittedAt: serverTimestamp(),
+        }, { merge: true });
+        learner.reflectionStartText = ta.value;
+        learner.reflectionStartSubmitted = true;
+        renderSidebar(); showSection('reflectStart');
+        showToast('Starting reflection submitted ✅', 'success');
+      } catch(e) {
+        console.error(e); showToast('Could not submit. Please try again.', 'error');
+        btn.disabled = false; btn.textContent = 'Submit';
+      }
+    };
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PRACTICAL PORTFOLIO
+    // Four components, submitted together for review:
+    //  1. Practical Competence sessions (6 patients / 9 sessions, topics 1-6)
+    //  2. Case Study (one, expanded from a patient above, 2000-2500 words)
+    //  3. Exhibition (report 800-1000 words + optional photo evidence)
+    //  4. CPD Log & Personal Development Plan
+    // ═══════════════════════════════════════════════════════════════════
+
+    function pcasRequiredVisits(topicCode) {
+      return PCAS_TOPICS_TWICE.some(t => t.code === topicCode) ? 2 : 1;
+    }
+    function pcasEntriesFor(topicCode) {
+      return (learner.pcasEntries || []).filter(e => e.topic === topicCode).sort((a,b) => a.visit - b.visit);
+    }
+    function pcasComplete() {
+      return PCAS_TOPICS.every(t => pcasEntriesFor(t.code).length >= pcasRequiredVisits(t.code));
+    }
+    function pcasGroupsCovered() {
+      const groups = new Set();
+      PCAS_TOPICS.forEach(t => {
+        const first = pcasEntriesFor(t.code)[0];
+        if (first && first.patientGroup) groups.add(first.patientGroup);
+      });
+      return groups.size;
+    }
+
     function renderPractical(el) {
       const amendmentRequested = !!learner.practicalAmendmentRequested;
       const submitted  = learner.practicalSubmitted && !amendmentRequested;
       const passed     = learner.practicalPassed;
-      const entries    = learner.logbookEntries || [];
-      const approvedSups = (learner.supervisors || []).filter(s => s.approved);
-
       const pendingSignoff = learner.practicalPendingSignoff && !learner.practicalSubmitted && !amendmentRequested;
+      const locked = submitted || pendingSignoff; // read-only once sent onward
 
-      let html = '<div class="dash-header"><h1>Practical Portfolio</h1><p>Complete your 10-entry practical logbook and two case studies directly below.</p></div>';
+      let html = '<div class="dash-header"><h1>Practical Portfolio</h1><p>Complete all four parts below: your practical competence sessions, a case study, an exhibition, and your CPD log &amp; personal development plan.</p></div>';
       if (passed) {
         html += '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Practical portfolio passed! Well done.</div>';
       } else if (amendmentRequested) {
@@ -501,16 +632,15 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       } else if (submitted) {
         html += '<div class="submission-status status-submitted"><span>📬</span> Submitted. Your assessor will review and provide feedback.</div>';
       } else if (pendingSignoff) {
-        // Show pending sign-off status
         const uniqueSups = [];
         const seenGdc = new Set();
-        for (const e of entries) {
+        for (const e of (learner.pcasEntries || [])) {
           if (e.supervisorGdc && !seenGdc.has(e.supervisorGdc)) {
             seenGdc.add(e.supervisorGdc);
             uniqueSups.push({ name: e.supervisorName, gdc: e.supervisorGdc, email: e.supervisorEmail || '' });
           }
         }
-        html += `<div class="submission-status status-submitted" style="background:#FFF8E7;color:#92400E;border-color:rgba(245,158,11,0.3)"><span>⏳</span> Logbook sent for supervisor sign-off. Waiting for your supervisors to confirm their entries.</div>`;
+        html += `<div class="submission-status status-submitted" style="background:#FFF8E7;color:#92400E;border-color:rgba(245,158,11,0.3)"><span>⏳</span> Sent for supervisor sign-off. Waiting for your supervisors to confirm the sessions they witnessed.</div>`;
         if (uniqueSups.length) {
           html += `<div class="content-card" style="margin-bottom:1.25rem">
             <h2 style="font-size:1rem;margin-bottom:0.85rem">Sign-off Status</h2>
@@ -530,114 +660,38 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         }
       }
 
-      // ── Logbook ──
-      html += `<div class="content-card" style="margin-bottom:1.25rem">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-          <div><h2 style="margin:0">Practical Logbook</h2><p style="margin:0.25rem 0 0;font-size:0.88rem;color:var(--ink-light)">${entries.length}/10 entries completed</p></div>
-          ${!submitted && !pendingSignoff && entries.length < 10 ? `<button class="btn btn-primary btn-sm" onclick="addLogbookEntry()">+ Add entry</button>` : ''}
-        </div>`;
+      html += renderPcasSection(locked);
+      html += renderCaseStudySection(locked);
+      html += renderExhibitionSection(locked);
+      html += renderCpdPdpSection(locked);
 
-      const LOGBOOK_GUIDANCE = `<div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;overflow:hidden">
-        <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.lb-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="width:100%;text-align:left;padding:0.85rem 1rem;background:var(--teal-pale);border:none;cursor:pointer;font-size:0.9rem;font-weight:600;color:var(--teal-dark);display:flex;justify-content:space-between;align-items:center">
-          📋 Logbook instructions &amp; requirements <span class="lb-arrow">▼</span>
-        </button>
-        <div style="display:none;padding:1.25rem;font-size:0.88rem;line-height:1.8;color:var(--ink-mid)">
-          <p style="margin-bottom:0.75rem"><strong>You must complete 10 logbook entries</strong> before your portfolio can be submitted for assessment. Each entry records a single supervised oral health education session.</p>
-          <ol style="padding-left:1.25rem;margin:0 0 0.75rem">
-            <li style="margin-bottom:0.85rem"><strong>Supervisor must be physically present</strong><br/>Your clinical supervisor must be in the room and actively observing every session. A supervisor who is nearby but not watching does not meet the GDC requirement. Do not record an entry if your supervisor was not present throughout.</li>
-            <li style="margin-bottom:0.85rem"><strong>Record each entry within 14 days</strong><br/>Each entry must be completed within 14 days of the session taking place. Entries submitted after this window may not be accepted. Record as soon as possible after the appointment - ideally the same day.</li>
-            <li style="margin-bottom:0.85rem"><strong>All entries must be on different patients</strong><br/>Each of your 10 entries must relate to a different patient. You cannot record two sessions on the same patient, even if they were on different dates.</li>
-            <li style="margin-bottom:0.85rem"><strong>All fields are required</strong><br/>Every field in the form is required to support GDC record-keeping standards. This includes patient ID, age group, topics covered, session context, consent, assessment checks, and advice given.</li>
-            <li style="margin-bottom:0.85rem"><strong>Use a range of patient types</strong><br/>Your 10 entries should reflect a range of patient types (adult, child, mixed groups) where possible. Your assessor will review the spread of your experience.</li>
-            <li style="margin-bottom:0"><strong>Accuracy is a GDC matter</strong><br/>Your logbook forms part of your professional record. Falsifying or exaggerating entries is a fitness-to-practise issue and may result in referral to the GDC.</li>
-          </ol>
-          <p style="margin:0;font-size:0.82rem;color:var(--ink-light)">Once all 10 entries are complete and your two case studies are written, you will be able to submit your portfolio for supervisor sign-off and final assessment.</p>
-        </div>
-      </div>`;
-      html += LOGBOOK_GUIDANCE;
+      if (!locked) {
+        const groupsOk = pcasGroupsCovered() >= 4;
+        const csWc = wordCount(learner.caseStudy || '');
+        const exWc = wordCount(learner.exhibitionReport || '');
+        const pdp = learner.pdp || {};
+        const canSubmit = pcasComplete() && groupsOk
+          && csWc >= 2000 && csWc <= 2500
+          && exWc >= 800 && exWc <= 1000
+          && !!(learner.exhibitionTopic || '').trim() && !!(learner.exhibitionTargetGroup || '').trim()
+          && (learner.cpdLog || []).length >= 1
+          && !!(pdp.strengths||'').trim() && !!(pdp.areas||'').trim() && !!(pdp.goals||'').trim() && !!(pdp.timescale||'').trim();
 
-      if (entries.length === 0) {
-        html += `<p style="color:var(--ink-light);font-size:0.9rem">No entries yet. Click <strong>+ Add entry</strong> after each supervised session.</p>`;
-      } else {
-        html += entries.map((e, i) => {
-          const assessOk = e.assessmentChecks && e.assessmentChecks.assessed && e.assessmentChecks.adapted && e.assessmentChecks.scope;
-          const adviceOk = e.adviceGiven && e.adviceGiven.advice && e.adviceGiven.written && e.adviceGiven.recorded;
-          const consentLabel = e.consent
-            ? (e.consent.type === 'guardian' ? `Guardian (${e.consent.guardianName||''})` : 'Patient (self)')
-            : '-';
-          return `
-          <div style="border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.75rem;background:var(--off-white)">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.65rem">
-              <strong style="font-size:0.9rem">Entry ${i+1}: ${e.date||'No date'} &middot; <span style="color:var(--ink-mid);font-weight:500">${esc(e.patientId||'-')}</span></strong>
-              ${!submitted && !pendingSignoff ? `<button class="btn btn-outline btn-sm" style="padding:0.2rem 0.6rem;font-size:0.75rem;color:#D32F2F;border-color:#D32F2F" onclick="deleteLogbookEntry(${i})">Remove</button>` : ''}
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.35rem 1.5rem;font-size:0.85rem;color:var(--ink-mid)">
-              <div><span style="color:var(--ink-light)">Age group:</span> ${esc(e.patientType||'-')}</div>
-              <div><span style="color:var(--ink-light)">Topics covered:</span> ${esc(e.topics||'-')}</div>
-              <div><span style="color:var(--ink-light)">Session context:</span> ${esc(e.context||'-')}</div>
-              <div><span style="color:var(--ink-light)">Supervisor:</span> ${esc(e.supervisorName||'-')} (GDC: ${esc(e.supervisorGdc||'-')})</div>
-              <div><span style="color:var(--ink-light)">Consent:</span> ${consentLabel}</div>
-              <div><span style="color:var(--ink-light)">Assessment checks:</span> ${assessOk ? '<span style="color:#1A7F4B">All completed</span>' : '<span style="color:#D97706">Incomplete</span>'}</div>
-              <div><span style="color:var(--ink-light)">Advice &amp; follow-up:</span> ${adviceOk ? '<span style="color:#1A7F4B">All given</span>' : '<span style="color:#D97706">Incomplete</span>'}</div>
-              ${e.notes ? `<div style="grid-column:1/-1"><span style="color:var(--ink-light)">Notes:</span> ${esc(e.notes)}</div>` : ''}
-            </div>
-          </div>`;
-        }).join('');
-      }
-      html += `</div>`;
+        const missing = [];
+        if (!pcasComplete()) missing.push('all 6 patient topics (9 sessions)');
+        if (!groupsOk) missing.push('at least 4 different patient groups');
+        if (!(csWc >= 2000 && csWc <= 2500)) missing.push('a case study of 2,000-2,500 words');
+        if (!(exWc >= 800 && exWc <= 1000) || !(learner.exhibitionTopic||'').trim() || !(learner.exhibitionTargetGroup||'').trim()) missing.push('a complete exhibition report (800-1,000 words)');
+        if ((learner.cpdLog || []).length < 1) missing.push('at least one CPD log entry');
+        if (!canSubmit && (!(pdp.strengths||'').trim() || !(pdp.areas||'').trim() || !(pdp.goals||'').trim() || !(pdp.timescale||'').trim())) missing.push('your personal development plan');
 
-      // ── Case studies ──
-      const CASE_STUDY_GUIDANCE = `<div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.25rem;overflow:hidden">
-        <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.cs-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="width:100%;text-align:left;padding:0.85rem 1rem;background:var(--teal-pale);border:none;cursor:pointer;font-size:0.9rem;font-weight:600;color:var(--teal-dark);display:flex;justify-content:space-between;align-items:center">
-          📋 How to structure your case study <span class="cs-arrow">▼</span>
-        </button>
-        <div style="display:none;padding:1.25rem;font-size:0.88rem;line-height:1.8;color:var(--ink-mid)">
-          <p style="margin-bottom:0.75rem"><strong>Use the section headings below as subheadings in your case study.</strong> Write a paragraph or two under each one. Your assessor will be looking for clinical reasoning, not just description.</p>
-          <ol style="padding-left:1.25rem;margin:0">
-            <li style="margin-bottom:0.85rem"><strong>Patient Profile</strong><br/>Include relevant patient demographics and general health status. Confirm that consent was gained. Describe the patient's oral health risk factors and any barriers to good oral health you identified.</li>
-            <li style="margin-bottom:0.85rem"><strong>Assessment</strong><br/>Describe your assessment of the patient's oral hygiene habits, diet, and any communication or additional needs considerations. Summarise your findings.</li>
-            <li style="margin-bottom:0.85rem"><strong>The Education Session</strong><br/>Describe the topics you covered and the resources or techniques you used, including any adaptations made for this patient.</li>
-            <li style="margin-bottom:0.85rem"><strong>Advice &amp; Signposting Given</strong><br/>Describe the personalised advice you gave, any written information provided, and any onward referral or signposting made.</li>
-            <li style="margin-bottom:0"><strong>Reflection</strong><br/>Explain why this approach was appropriate for this patient. Reflect on your communication, any challenges you encountered, and what you would do differently. Reference relevant UK guidance (e.g. DBOH) or GDC Standards where appropriate.</li>
-          </ol>
-        </div>
-      </div>`;
-
-      const CASE_STUDIES = [
-        { key: 'caseStudy1', label: 'Case Study 1', prompt: 'Describe a patient you delivered oral health education to. Follow the structure in the guidance above.' },
-        { key: 'caseStudy2', label: 'Case Study 2', prompt: 'Describe a second patient, ideally one that presented a different challenge or patient type to your first.' },
-      ];
-      html += CASE_STUDY_GUIDANCE;
-      if (!submitted && !pendingSignoff) {
-        html += `<div class="callout" style="margin-bottom:1.25rem"><div class="callout-label">Reminder</div><p>Your case studies auto-save a few seconds after you stop typing. If you're adding to or editing one and about to navigate away, click <strong>💾 Save drafts</strong> below first to make sure your latest changes aren't lost.</p></div>`;
-      }
-      html += CASE_STUDIES.map(({ key, label, prompt }) => {
-        const savedText = learner[key] || '';
-        const wc = wordCount(savedText);
-        const wcColour = wc >= 200 ? '#1A7F4B' : wc > 0 ? '#92400E' : 'var(--ink-light)';
-        return `<div class="content-card" style="margin-bottom:1.25rem">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
-            <div>
-              <strong style="font-size:1rem">${label}</strong>
-              <p style="margin:0.25rem 0 0;color:var(--ink-mid);font-size:0.9rem">${prompt}</p>
-            </div>
-            <span id="wc-${key}" style="font-size:0.82rem;font-weight:600;color:${wcColour};white-space:nowrap">${wc} words</span>
+        html += `<div class="content-card" style="margin-top:0.5rem">
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+            <button class="btn btn-primary" id="practicalSubmitBtn" onclick="submitPractical()" ${canSubmit?'':'disabled'} ${amendmentRequested?'style="background:#D97706;border-color:#D97706"':''}>${amendmentRequested ? '↩ Resubmit for review' : 'Submit practical portfolio'}</button>
+            <span id="practical-save-status" style="font-size:0.82rem;color:var(--ink-light)"></span>
           </div>
-          ${(submitted || pendingSignoff)
-            ? `<div style="background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.9rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${esc(savedText)||'<em style="color:var(--ink-light)">Not completed</em>'}</div>`
-            : `<textarea id="ta-${key}" style="width:100%;box-sizing:border-box;min-height:480px;font-size:0.93rem;line-height:1.85" placeholder="Write your case study here..." oninput="onPracticalInput('${key}')">${esc(savedText)}</textarea>`
-          }
+          ${missing.length ? `<p style="font-size:0.82rem;color:var(--ink-light);margin-top:0.75rem">Still needed before you can submit: ${missing.join('; ')}.</p>` : ''}
         </div>`;
-      }).join('');
-
-      if (!submitted && !pendingSignoff) {
-        const canSubmit = entries.length >= 10 && (learner.caseStudy1||'').trim() && (learner.caseStudy2||'').trim();
-        html += `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
-          <button class="btn btn-outline" onclick="savePracticalDrafts()">💾 Save drafts</button>
-          <button class="btn btn-primary" id="practicalSubmitBtn" onclick="submitPractical()" ${canSubmit?'':'disabled'} ${amendmentRequested?'style="background:#D97706;border-color:#D97706"':''}>${amendmentRequested ? '↩ Resubmit for review' : 'Submit practical portfolio'}</button>
-          <span id="practical-save-status" style="font-size:0.82rem;color:var(--ink-light)"></span>
-        </div>
-        ${entries.length < 10 ? `<p style="font-size:0.82rem;color:var(--ink-light)">You need ${10-entries.length} more logbook ${10-entries.length===1?'entry':'entries'} before you can submit.</p>` : ''}`;
       }
 
       if (!amendmentRequested && learner.practicalFeedback) {
@@ -646,6 +700,468 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       el.innerHTML = html;
     }
 
+    // ── 1. PCAS patient sessions ──────────────────────────────────────────
+    function renderPcasSection(locked) {
+      let html = `<div class="content-card" style="margin-bottom:1.25rem">
+        <h2 style="margin:0 0 0.25rem">1. Practical Competence Sessions</h2>
+        <p style="margin:0 0 1rem;font-size:0.88rem;color:var(--ink-light)">6 patients, 9 supervised sessions in total, covering all 6 topics below and at least 4 different patient groups.</p>
+        <div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.25rem;overflow:hidden">
+          <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.pc-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="width:100%;text-align:left;padding:0.85rem 1rem;background:var(--teal-pale);border:none;cursor:pointer;font-size:0.9rem;font-weight:600;color:var(--teal-dark);display:flex;justify-content:space-between;align-items:center">
+            📋 How this section works <span class="pc-arrow">▼</span>
+          </button>
+          <div style="display:none;padding:1.25rem;font-size:0.88rem;line-height:1.8;color:var(--ink-mid)">
+            <ol style="padding-left:1.25rem;margin:0 0 0.75rem">
+              <li style="margin-bottom:0.85rem">Topics <strong>1-3</strong> (caries, periodontal disease, diet &amp; tooth wear) each need <strong>one patient seen for two sessions</strong> - an initial session and a follow-up.</li>
+              <li style="margin-bottom:0.85rem">Topics <strong>4-6</strong> (dentures/appliances, orthodontic appliances, additional needs) each need <strong>one patient seen for a single session</strong>.</li>
+              <li style="margin-bottom:0.85rem">Across your 6 patients, try to cover <strong>at least 4 of the 6 patient groups</strong> listed on each form - plan this in advance with your supervisor where you can.</li>
+              <li style="margin-bottom:0.85rem">Your supervising clinician must be <strong>physically present</strong> for every session and will be asked to countersign it.</li>
+              <li style="margin-bottom:0"><strong>Complete each write-up within 14 days</strong> of the session taking place, while it's fresh - not weeks later.</li>
+            </ol>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.75rem">`;
+
+      PCAS_TOPICS.forEach(t => {
+        const required = pcasRequiredVisits(t.code);
+        const entries = pcasEntriesFor(t.code);
+        const done = entries.length >= required;
+        html += `<div style="border:1px solid var(--border);border-radius:var(--radius);padding:1rem;background:${done?'#F0FAF5':'var(--off-white)'}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:${entries.length?'0.75rem':'0'}">
+            <div><strong style="font-size:0.9rem">Topic ${t.code} - ${esc(t.label)}</strong>
+              <div style="font-size:0.8rem;color:var(--ink-light);margin-top:0.15rem">${required===2?'2 sessions required (same patient)':'1 session required'}</div>
+            </div>
+            <span style="font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px;${done?'background:#D1FAE5;color:#065F46':'background:#F3F4F6;color:#6B7280'}">${entries.length}/${required} recorded</span>
+          </div>
+          ${entries.length ? `<div style="font-size:0.85rem;color:var(--ink-mid);margin-bottom:0.5rem">Patient ${esc(entries[0].patientId||'-')} &middot; ${esc(entries[0].patientGroup||'-')} &middot; age ${esc(entries[0].age||'-')}</div>` : ''}
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+            ${entries.map((e,i) => `<button class="btn btn-outline btn-sm" onclick="viewPcasEntry('${t.code}',${e.visit})">👁 Session ${e.visit}</button>`).join('')}
+            ${!locked && entries.length < required ? `<button class="btn btn-primary btn-sm" onclick="addPcasEntry('${t.code}',${entries.length+1})">+ ${entries.length===0?'Add patient (session 1)':'Add session 2 (follow-up)'}</button>` : ''}
+          </div>
+        </div>`;
+      });
+
+      const groupsOk = pcasGroupsCovered() >= 4;
+      html += `</div>
+        <p style="font-size:0.82rem;margin-top:1rem;color:${groupsOk?'#1A7F4B':'var(--ink-light)'}">Patient groups covered so far: ${pcasGroupsCovered()}/6 (need at least 4) ${groupsOk?'✓':''}</p>
+      </div>`;
+      return html;
+    }
+
+    window.viewPcasEntry = (topic, visit) => {
+      const e = pcasEntriesFor(topic).find(x => x.visit === visit);
+      if (!e) return;
+      const rows = [
+        ['Date', e.date], ['Patient ID', e.patientId], ['Patient group', e.patientGroup], ['Age', e.age], ['Gender', e.gender],
+        visit === 1 ? ['Reason for referral / need', e.referral] : null,
+        visit === 1 ? ['Medical & dental history', e.medHistory] : null,
+        visit === 1 ? ['Social factors / barriers', e.social] : null,
+        visit === 2 ? ['What has changed since the last visit', e.changes] : null,
+        ['Setting & resources used', e.setting],
+        ['Aim', e.aim], ['Objectives', e.objectives],
+        ['Advice given / session narrative', e.advice],
+        ['Methods of evaluation', e.evaluation],
+        ['Reflective account', e.reflectionText],
+        ['Supervisor', (e.supervisorName||'-') + ' (GDC: ' + (e.supervisorGdc||'-') + ')'],
+        ['Notes', e.notes],
+      ].filter(Boolean);
+      const modal = document.createElement('div');
+      modal.id = 'pcasViewModal';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem';
+      modal.innerHTML = `<div class="lb-form-wrap">
+        <h3 style="margin:0 0 1rem;color:var(--teal-dark)">Topic ${topic} - Session ${visit}</h3>
+        ${rows.map(([k,v]) => `<div style="margin-bottom:0.85rem"><div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--teal);margin-bottom:0.2rem">${esc(k)}</div><div style="font-size:0.9rem;color:var(--ink-mid);white-space:pre-wrap;line-height:1.6">${esc(v||'-')}</div></div>`).join('')}
+        <div style="display:flex;gap:0.75rem;margin-top:1rem">
+          <button class="btn btn-outline" onclick="document.getElementById('pcasViewModal').remove()">Close</button>
+        </div>
+      </div>`;
+      document.body.appendChild(modal);
+    };
+
+    window.addPcasEntry = (topic, visit) => {
+      const approvedSups = (learner.supervisors || []).filter(s => s.approved);
+      const supOptions = approvedSups.length
+        ? approvedSups.map(s => `<option value="${esc(s.name)}|${esc(s.gdc)}">${esc(s.name)} (GDC: ${esc(s.gdc)})</option>`).join('')
+        : '';
+      const priorEntry = pcasEntriesFor(topic)[0]; // for visit 2, carry over patient identity
+      const groupOptions = PATIENT_GROUPS.map(g => `<option value="${esc(g)}" ${priorEntry && priorEntry.patientGroup===g?'selected':''}>${esc(g)}</option>`).join('');
+      const topicInfo = PCAS_TOPICS.find(t => t.code === topic);
+
+      const formDiv = document.createElement('div');
+      formDiv.id = 'pcasEntryForm';
+      formDiv.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem';
+      formDiv.innerHTML = `
+        <div class="lb-form-wrap">
+          <h3 style="margin:0 0 0.35rem;color:var(--teal-dark)">Topic ${topic}: ${esc(topicInfo.label)} - Session ${visit}</h3>
+          <p style="font-size:0.82rem;color:var(--ink-light);margin:0 0 1.25rem">All fields marked * are required.</p>
+
+          ${visit === 1 ? `
+          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Patient Details</div>
+          <div class="lb-grid-2">
+            <div class="form-group" style="margin:0"><label>Date of session *</label><input type="date" id="pc-date" max="${new Date().toISOString().split('T')[0]}"/></div>
+            <div class="form-group" style="margin:0"><label>Patient identifier * <span style="font-weight:400;color:var(--ink-light)">(initials or code)</span></label><input type="text" id="pc-patientId" placeholder="e.g. J.S."/></div>
+            <div class="form-group" style="margin:0"><label>Patient group *</label><select id="pc-patientGroup"><option value="">Select...</option>${groupOptions}</select></div>
+            <div class="form-group" style="margin:0"><label>Age *</label><input type="text" id="pc-age" placeholder="e.g. 34"/></div>
+            <div class="form-group span-2" style="margin:0"><label>Gender *</label><input type="text" id="pc-gender" placeholder="e.g. Female"/></div>
+          </div>
+          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">The Patient &amp; Their Needs</div>
+          <div class="form-group"><label>Reason for referral / why this patient needs OHE *</label><textarea id="pc-referral" style="min-height:90px"></textarea></div>
+          <div class="form-group"><label>Relevant medical &amp; dental history *</label><textarea id="pc-medHistory" style="min-height:90px"></textarea></div>
+          <div class="form-group"><label>Social factors / barriers to care</label><textarea id="pc-social" style="min-height:70px"></textarea></div>
+          ` : `
+          <div style="background:var(--teal-pale);border-radius:var(--radius);padding:0.85rem 1rem;margin-bottom:1.25rem;font-size:0.88rem;color:var(--ink-mid)">
+            Follow-up for <strong>${esc(priorEntry?.patientId||'')}</strong> &middot; ${esc(priorEntry?.patientGroup||'')} &middot; age ${esc(priorEntry?.age||'')}
+          </div>
+          <div class="form-group"><label>Date of session *</label><input type="date" id="pc-date" max="${new Date().toISOString().split('T')[0]}"/></div>
+          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Review</div>
+          <div class="form-group"><label>What has changed since the last visit? *</label><textarea id="pc-changes" style="min-height:90px"></textarea></div>
+          `}
+
+          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">The Advice Provided</div>
+          <div class="form-group"><label>Setting &amp; resources used *</label><textarea id="pc-setting" style="min-height:70px" placeholder="Where the session took place, and what resources/teaching aids you used"></textarea></div>
+          <div class="form-group"><label>Aim *</label><input type="text" id="pc-aim" placeholder="Your overall goal for this session"/></div>
+          <div class="form-group"><label>Objectives *</label><textarea id="pc-objectives" style="min-height:70px" placeholder="A short numbered list of what you needed to do to reach your aim"></textarea></div>
+          <div class="form-group"><label>${visit===1?'Advice given / session narrative *':'Follow-up advice / session narrative *'}</label><textarea id="pc-advice" style="min-height:160px" placeholder="What you did and said during the session"></textarea></div>
+          <div class="form-group"><label>Methods of evaluation *</label><textarea id="pc-evaluation" style="min-height:70px"></textarea></div>
+
+          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Reflective Account</div>
+          <div class="form-group"><label>Strengths, weaknesses, and what you'd do differently *</label><textarea id="pc-reflection" style="min-height:90px"></textarea></div>
+
+          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Supervising Clinician</div>
+          <div class="lb-grid-2">
+            ${approvedSups.length ? `
+            <div class="form-group span-2" style="margin:0"><label>Select from approved supervisors</label>
+              <select id="pc-supSelect" onchange="onPcasSupSelect()">
+                <option value="">Select supervisor...</option>
+                ${supOptions}
+                <option value="other">Other (enter manually)</option>
+              </select>
+            </div>` : ''}
+            <div class="form-group" style="margin:0"><label>Supervisor name *</label><input type="text" id="pc-supName"/></div>
+            <div class="form-group" style="margin:0"><label>Supervisor GDC *</label><input type="text" id="pc-supGdc"/></div>
+            <div class="form-group span-2" style="margin:0"><label>Supervisor email *</label><input type="email" id="pc-supEmail"/></div>
+            <div class="form-group span-2" style="margin:0"><label>Notes (optional)</label><textarea id="pc-notes" style="min-height:60px"></textarea></div>
+          </div>
+
+          <div id="pc-err" style="display:none;color:#D32F2F;font-size:0.85rem;margin-top:0.75rem;padding:0.5rem 0.75rem;background:#FFF0F0;border-radius:var(--radius)"></div>
+          <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
+            <button class="btn btn-primary" onclick="savePcasEntry('${topic}',${visit})">Save session</button>
+            <button class="btn btn-outline" onclick="document.getElementById('pcasEntryForm').remove()">Cancel</button>
+          </div>
+        </div>`;
+      document.body.appendChild(formDiv);
+    };
+
+    window.onPcasSupSelect = () => {
+      const sel = document.getElementById('pc-supSelect');
+      if (!sel) return;
+      const val = sel.value;
+      if (val && val !== 'other') {
+        const [name, gdc] = val.split('|');
+        document.getElementById('pc-supName').value = name;
+        document.getElementById('pc-supGdc').value = gdc;
+        const sup = (learner.supervisors || []).find(s => s.name === name && s.gdc === gdc);
+        const emailEl = document.getElementById('pc-supEmail');
+        if (emailEl) emailEl.value = (sup && sup.email) ? sup.email : '';
+      }
+    };
+
+    window.savePcasEntry = async (topic, visit) => {
+      const errEl = document.getElementById('pc-err');
+      const val = id => document.getElementById(id)?.value.trim() || '';
+      const priorEntry = pcasEntriesFor(topic)[0];
+
+      const entry = {
+        topic, visit,
+        date: val('pc-date'),
+        patientId: visit === 1 ? val('pc-patientId') : (priorEntry?.patientId || ''),
+        patientGroup: visit === 1 ? val('pc-patientGroup') : (priorEntry?.patientGroup || ''),
+        age: visit === 1 ? val('pc-age') : (priorEntry?.age || ''),
+        gender: visit === 1 ? val('pc-gender') : (priorEntry?.gender || ''),
+        referral: visit === 1 ? val('pc-referral') : '',
+        medHistory: visit === 1 ? val('pc-medHistory') : '',
+        social: visit === 1 ? val('pc-social') : '',
+        changes: visit === 2 ? val('pc-changes') : '',
+        setting: val('pc-setting'),
+        aim: val('pc-aim'),
+        objectives: val('pc-objectives'),
+        advice: val('pc-advice'),
+        evaluation: val('pc-evaluation'),
+        reflectionText: val('pc-reflection'),
+        supervisorName: val('pc-supName'),
+        supervisorGdc: val('pc-supGdc'),
+        supervisorEmail: val('pc-supEmail'),
+        notes: val('pc-notes'),
+      };
+
+      const requiredCommon = ['date','setting','aim','objectives','advice','evaluation','reflectionText','supervisorName','supervisorGdc','supervisorEmail'];
+      const requiredV1 = ['patientId','patientGroup','age','gender','referral','medHistory'];
+      const requiredV2 = ['changes'];
+      const required = requiredCommon.concat(visit === 1 ? requiredV1 : requiredV2);
+      if (required.some(k => !entry[k])) {
+        errEl.textContent = 'Please complete all required fields marked *.';
+        errEl.style.display = 'block'; return;
+      }
+
+      if (!learner.pcasEntries) learner.pcasEntries = [];
+      learner.pcasEntries = learner.pcasEntries.filter(e => !(e.topic === topic && e.visit === visit));
+      learner.pcasEntries.push(entry);
+      try {
+        await setDoc(doc(db, 'learners', uid), { pcasEntries: learner.pcasEntries }, { merge: true });
+        document.getElementById('pcasEntryForm').remove();
+        showToast('Session saved ✅', 'success');
+        renderPractical(document.getElementById('dashMain'));
+      } catch(e) {
+        console.error(e);
+        errEl.textContent = 'Could not save. Please try again.';
+        errEl.style.display = 'block';
+      }
+    };
+
+    // ── 2. Case study ──────────────────────────────────────────────────────
+    function renderCaseStudySection(locked) {
+      const text = learner.caseStudy || '';
+      const wc = wordCount(text);
+      return `<div class="content-card" style="margin-bottom:1.25rem">
+        <h2 style="margin:0 0 0.25rem">2. Case Study</h2>
+        <p style="margin:0 0 1rem;font-size:0.88rem;color:var(--ink-light)">2,000-2,500 words. Choose ONE of your six patients above and expand their care into a full case study. Your chosen patient must be seen for a minimum of three visits (the third may be a follow-up phone call or questionnaire rather than a face-to-face session).</p>
+        <div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.25rem;overflow:hidden">
+          <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.cs-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="width:100%;text-align:left;padding:0.85rem 1rem;background:var(--teal-pale);border:none;cursor:pointer;font-size:0.9rem;font-weight:600;color:var(--teal-dark);display:flex;justify-content:space-between;align-items:center">
+            📋 Suggested structure <span class="cs-arrow">▼</span>
+          </button>
+          <div style="display:none;padding:1.25rem;font-size:0.88rem;line-height:1.85;color:var(--ink-mid)">
+            <p style="margin-bottom:0.6rem">Use headings for each of these - your assessor is looking for evidence-based clinical reasoning, not just description:</p>
+            <ol style="padding-left:1.25rem;margin:0">
+              <li>Source of referral, age, and the patient's presenting problem</li>
+              <li>Other health problems, social circumstances, and contact with other disciplines</li>
+              <li>The patient's needs, and your assessment of their existing knowledge, skills and attitude</li>
+              <li>Your aims and objectives</li>
+              <li>Planning and format - include a lesson plan for each session</li>
+              <li>Resources and teaching aids used, with evidence-based research to support your approach</li>
+              <li>Limitations, and your methods of evaluation</li>
+              <li>Results, and the changes you observed - in the patient, and in yourself</li>
+              <li>Follow-up visits arranged</li>
+              <li>Whether you achieved your aims and objectives - your learning outcomes</li>
+              <li>Self-reflection</li>
+              <li>References, in a consistent style, and appendices (charting, plaque scores, lesson plans) if relevant</li>
+            </ol>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="csText">Your case study</label>
+          ${locked
+            ? `<div style="background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.9rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${esc(text)||'<em style="color:var(--ink-light)">Not completed</em>'}</div>`
+            : `<textarea id="csText" style="width:100%;box-sizing:border-box;min-height:420px;font-size:0.93rem;line-height:1.85" placeholder="Write your case study here..." oninput="onPracticalTextInput('caseStudy','csText','csWc',2000,2500)">${esc(text)}</textarea>`
+          }
+        </div>
+        ${!locked ? `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+          <span id="csWc" style="font-size:0.82rem;font-weight:600;color:${wcColourRange(wc,2000,2500)}">${wc} words</span>
+          <button class="btn btn-outline btn-sm" onclick="savePracticalDrafts()">💾 Save draft</button>
+        </div>` : ''}
+      </div>`;
+    }
+
+    // ── 3. Exhibition ──────────────────────────────────────────────────────
+    function renderExhibitionSection(locked) {
+      const text = learner.exhibitionReport || '';
+      const wc = wordCount(text);
+      const topic = learner.exhibitionTopic || '';
+      const targetGroup = learner.exhibitionTargetGroup || '';
+      const photoUrl = learner.exhibitionPhotoUrl || '';
+      return `<div class="content-card" style="margin-bottom:1.25rem">
+        <h2 style="margin:0 0 0.25rem">3. Exhibition</h2>
+        <p style="margin:0 0 1rem;font-size:0.88rem;color:var(--ink-light)">Choose a target group and produce, display and evaluate a real oral health exhibition (a display board, presentation, or similar) - then write a report of 800-1,000 words about it.</p>
+        <div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.25rem;overflow:hidden">
+          <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.ex-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="width:100%;text-align:left;padding:0.85rem 1rem;background:var(--teal-pale);border:none;cursor:pointer;font-size:0.9rem;font-weight:600;color:var(--teal-dark);display:flex;justify-content:space-between;align-items:center">
+            📋 What your report should cover <span class="ex-arrow">▼</span>
+          </button>
+          <div style="display:none;padding:1.25rem;font-size:0.88rem;line-height:1.85;color:var(--ink-mid)">
+            <p style="margin-bottom:0.6rem">Start with a short lesson plan (topic, learning outcomes, resources, methods of evaluation) before you build it. Your report should cover:</p>
+            <ul style="padding-left:1.25rem;margin:0">
+              <li>Your topic, and why you chose it</li>
+              <li>Your target group, and why your exhibition suits them</li>
+              <li>Your objectives</li>
+              <li>Methods of planning and the resources you used</li>
+              <li>Methods of evaluation (e.g. a short patient questionnaire, colleague feedback)</li>
+              <li>Evidence of reflective practice - what worked, what you'd change next time</li>
+            </ul>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+          <div class="form-group" style="margin:0"><label>Topic</label>
+            ${locked ? `<div style="padding:0.6rem 0;color:var(--ink-mid)">${esc(topic)||'-'}</div>` : `<input type="text" id="exTopic" value="${esc(topic)}" placeholder="e.g. Hidden sugars" onchange="savePracticalField('exhibitionTopic','exTopic')"/>`}
+          </div>
+          <div class="form-group" style="margin:0"><label>Target group</label>
+            ${locked ? `<div style="padding:0.6rem 0;color:var(--ink-mid)">${esc(targetGroup)||'-'}</div>` : `<input type="text" id="exTargetGroup" value="${esc(targetGroup)}" placeholder="e.g. Parents of primary-school children" onchange="savePracticalField('exhibitionTargetGroup','exTargetGroup')"/>`}
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="exText">Your exhibition report</label>
+          ${locked
+            ? `<div style="background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.9rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${esc(text)||'<em style="color:var(--ink-light)">Not completed</em>'}</div>`
+            : `<textarea id="exText" style="width:100%;box-sizing:border-box;min-height:280px;font-size:0.93rem;line-height:1.85" placeholder="Write your exhibition report here..." oninput="onPracticalTextInput('exhibitionReport','exText','exWc',800,1000)">${esc(text)}</textarea>`
+          }
+        </div>
+        ${!locked ? `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+          <span id="exWc" style="font-size:0.82rem;font-weight:600;color:${wcColourRange(wc,800,1000)}">${wc} words</span>
+          <button class="btn btn-outline btn-sm" onclick="savePracticalDrafts()">💾 Save draft</button>
+        </div>` : ''}
+        <div class="form-group" style="margin-bottom:0">
+          <label>Photo evidence of your exhibition ${locked?'':'(optional)'}</label>
+          ${photoUrl ? `<a href="${esc(photoUrl)}" target="_blank" style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.85rem;color:var(--teal-dark);font-weight:600">📷 View uploaded photo</a>` : (locked ? '<div style="color:var(--ink-light);font-size:0.85rem">None uploaded</div>' : '')}
+          ${!locked ? `<input type="file" id="exPhoto" accept="image/*" onchange="uploadExhibitionPhoto(this)" style="display:block;margin-top:0.5rem;font-size:0.85rem"/>` : ''}
+        </div>
+      </div>`;
+    }
+
+    window.uploadExhibitionPhoto = async (input) => {
+      const file = input.files[0];
+      if (!file) return;
+      try {
+        const storageRef = ref(storage, 'submissions/' + uid + '/exhibition/' + Date.now() + '_' + file.name);
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+        await updateDoc(doc(db, 'learners', uid), { exhibitionPhotoUrl: url });
+        learner.exhibitionPhotoUrl = url;
+        showToast('Photo uploaded ✅', 'success');
+        renderPractical(document.getElementById('dashMain'));
+      } catch(e) {
+        console.error(e); showToast('Upload failed. Please try again.', 'error');
+      }
+    };
+
+    // ── 4. CPD log & PDP ────────────────────────────────────────────────────
+    function renderCpdPdpSection(locked) {
+      const log = learner.cpdLog || [];
+      const totalHours = log.reduce((n,e) => n + (parseFloat(e.hours)||0), 0);
+      const pdp = learner.pdp || {};
+      return `<div class="content-card" style="margin-bottom:1.25rem">
+        <h2 style="margin:0 0 0.25rem">4. CPD Log &amp; Personal Development Plan</h2>
+        <p style="margin:0 0 1rem;font-size:0.88rem;color:var(--ink-light)">A record of CPD activity relevant to oral health education completed in the last 12 months, plus a personal development plan (PDP).</p>
+
+        <h3 style="font-size:0.95rem;margin-bottom:0.5rem">CPD Log</h3>
+        ${log.length ? `<table style="width:100%;border-collapse:collapse;font-size:0.85rem;margin-bottom:0.85rem">
+          <thead><tr style="background:var(--teal-pale)">
+            <th style="padding:0.5rem;text-align:left">Date</th><th style="padding:0.5rem;text-align:left">Activity</th><th style="padding:0.5rem;text-align:left">Hours</th><th style="padding:0.5rem;text-align:left">Relevance to OHE</th>${locked?'':'<th></th>'}
+          </tr></thead>
+          <tbody>${log.map((e,i) => `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:0.4rem 0.5rem">${esc(e.date||'-')}</td>
+            <td style="padding:0.4rem 0.5rem">${esc(e.activity||'-')}</td>
+            <td style="padding:0.4rem 0.5rem">${esc(e.hours||'-')}</td>
+            <td style="padding:0.4rem 0.5rem;color:var(--ink-mid)">${esc(e.relevance||'-')}</td>
+            ${locked?'':`<td style="padding:0.4rem 0.5rem"><button class="btn btn-outline btn-sm" style="padding:0.15rem 0.5rem;font-size:0.72rem;color:#D32F2F;border-color:#D32F2F" onclick="deleteCpdEntry(${i})">Remove</button></td>`}
+          </tr>`).join('')}</tbody>
+        </table>
+        <p style="font-size:0.82rem;color:var(--ink-light);margin-bottom:1rem">Total: ${totalHours} hours logged</p>` : `<p style="color:var(--ink-light);font-size:0.9rem;margin-bottom:1rem">No CPD entries yet.</p>`}
+        ${!locked ? `<button class="btn btn-outline btn-sm" onclick="addCpdEntry()" style="margin-bottom:1.5rem">+ Add CPD entry</button>` : ''}
+
+        <h3 style="font-size:0.95rem;margin-bottom:0.75rem">Personal Development Plan</h3>
+        <div class="form-group"><label>Current strengths</label>
+          ${locked ? `<div style="color:var(--ink-mid);white-space:pre-wrap">${esc(pdp.strengths)||'-'}</div>` : `<textarea id="pdpStrengths" style="min-height:70px" onchange="savePdpField('strengths','pdpStrengths')">${esc(pdp.strengths)}</textarea>`}
+        </div>
+        <div class="form-group"><label>Areas to develop</label>
+          ${locked ? `<div style="color:var(--ink-mid);white-space:pre-wrap">${esc(pdp.areas)||'-'}</div>` : `<textarea id="pdpAreas" style="min-height:70px" onchange="savePdpField('areas','pdpAreas')">${esc(pdp.areas)}</textarea>`}
+        </div>
+        <div class="form-group"><label>Goals &amp; actions</label>
+          ${locked ? `<div style="color:var(--ink-mid);white-space:pre-wrap">${esc(pdp.goals)||'-'}</div>` : `<textarea id="pdpGoals" style="min-height:70px" onchange="savePdpField('goals','pdpGoals')">${esc(pdp.goals)}</textarea>`}
+        </div>
+        <div class="form-group" style="margin-bottom:0"><label>Timescale</label>
+          ${locked ? `<div style="color:var(--ink-mid);white-space:pre-wrap">${esc(pdp.timescale)||'-'}</div>` : `<textarea id="pdpTimescale" style="min-height:50px" onchange="savePdpField('timescale','pdpTimescale')">${esc(pdp.timescale)}</textarea>`}
+        </div>
+      </div>`;
+    }
+
+    window.addCpdEntry = () => {
+      const formDiv = document.createElement('div');
+      formDiv.id = 'cpdEntryForm';
+      formDiv.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem';
+      formDiv.innerHTML = `<div class="lb-form-wrap" style="max-width:480px">
+        <h3 style="margin:0 0 1.25rem;color:var(--teal-dark)">Add CPD Entry</h3>
+        <div class="form-group"><label>Date *</label><input type="date" id="cpd-date" max="${new Date().toISOString().split('T')[0]}"/></div>
+        <div class="form-group"><label>Activity *</label><input type="text" id="cpd-activity" placeholder="e.g. Read updated DBOH guidance"/></div>
+        <div class="form-group"><label>Hours *</label><input type="number" id="cpd-hours" min="0" step="0.25" placeholder="e.g. 1.5"/></div>
+        <div class="form-group"><label>Relevance to your OHE training *</label><textarea id="cpd-relevance" style="min-height:70px"></textarea></div>
+        <div id="cpd-err" style="display:none;color:#D32F2F;font-size:0.85rem;margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:#FFF0F0;border-radius:var(--radius)"></div>
+        <div style="display:flex;gap:0.75rem">
+          <button class="btn btn-primary" onclick="saveCpdEntry()">Save entry</button>
+          <button class="btn btn-outline" onclick="document.getElementById('cpdEntryForm').remove()">Cancel</button>
+        </div>
+      </div>`;
+      document.body.appendChild(formDiv);
+    };
+
+    window.saveCpdEntry = async () => {
+      const date = document.getElementById('cpd-date').value;
+      const activity = document.getElementById('cpd-activity').value.trim();
+      const hours = document.getElementById('cpd-hours').value;
+      const relevance = document.getElementById('cpd-relevance').value.trim();
+      const errEl = document.getElementById('cpd-err');
+      if (!date || !activity || !hours || !relevance) {
+        errEl.textContent = 'Please complete all fields.'; errEl.style.display = 'block'; return;
+      }
+      const oneYearAgo = new Date(); oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      if (new Date(date) < oneYearAgo) {
+        errEl.textContent = 'CPD entries should only include activity from the past 12 months.'; errEl.style.display = 'block'; return;
+      }
+      if (!learner.cpdLog) learner.cpdLog = [];
+      learner.cpdLog.push({ date, activity, hours, relevance });
+      try {
+        await setDoc(doc(db, 'learners', uid), { cpdLog: learner.cpdLog }, { merge: true });
+        document.getElementById('cpdEntryForm').remove();
+        showToast('CPD entry added ✅', 'success');
+        renderPractical(document.getElementById('dashMain'));
+      } catch(e) {
+        console.error(e);
+        errEl.textContent = 'Could not save. Please try again.'; errEl.style.display = 'block';
+      }
+    };
+
+    window.deleteCpdEntry = async (index) => {
+      if (!confirm('Remove this CPD entry?')) return;
+      learner.cpdLog.splice(index, 1);
+      await setDoc(doc(db, 'learners', uid), { cpdLog: learner.cpdLog }, { merge: true });
+      showToast('Entry removed');
+      renderPractical(document.getElementById('dashMain'));
+    };
+
+    window.savePdpField = async (field, elId) => {
+      const val = document.getElementById(elId)?.value || '';
+      if (!learner.pdp) learner.pdp = {};
+      learner.pdp[field] = val;
+      try {
+        await setDoc(doc(db, 'learners', uid), { ['pdp.'+field]: val }, { merge: true });
+      } catch(e) { console.error(e); }
+    };
+
+    let practicalSaveTimer = null;
+    window.onPracticalTextInput = (field, elId, wcElId, min, max) => {
+      const ta = document.getElementById(elId);
+      if (!ta) return;
+      const wc = wordCount(ta.value);
+      const wcEl = document.getElementById(wcElId);
+      if (wcEl) { wcEl.textContent = wc + ' words'; wcEl.style.color = wcColourRange(wc, min, max); }
+      clearTimeout(practicalSaveTimer);
+      practicalSaveTimer = setTimeout(() => savePracticalDrafts(true), 3000);
+    };
+
+    window.savePracticalField = async (field, elId) => {
+      const val = document.getElementById(elId)?.value || '';
+      learner[field] = val;
+      try { await setDoc(doc(db, 'learners', uid), { [field]: val }, { merge: true }); } catch(e) { console.error(e); }
+    };
+
+    window.savePracticalDrafts = async (auto = false) => {
+      const data = {};
+      const cs = document.getElementById('csText'); if (cs) { data.caseStudy = cs.value; learner.caseStudy = cs.value; }
+      const ex = document.getElementById('exText'); if (ex) { data.exhibitionReport = ex.value; learner.exhibitionReport = ex.value; }
+      const exT = document.getElementById('exTopic'); if (exT) { data.exhibitionTopic = exT.value; learner.exhibitionTopic = exT.value; }
+      const exG = document.getElementById('exTargetGroup'); if (exG) { data.exhibitionTargetGroup = exG.value; learner.exhibitionTargetGroup = exG.value; }
+      try {
+        await setDoc(doc(db, 'learners', uid), data, { merge: true });
+        const statusEl = document.getElementById('practical-save-status');
+        if (statusEl) { statusEl.textContent = auto ? 'Auto-saved ✓' : 'Draft saved ✓'; setTimeout(() => { if(statusEl) statusEl.textContent=''; }, 3000); }
+      } catch(e) { console.error(e); }
+    };
+
     window.resendSignoffEmail = async (token, supervisorEmail, supervisorName) => {
       if (!supervisorEmail) { showToast('No email address on record for this supervisor.', 'error'); return; }
       try {
@@ -653,14 +1169,14 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
           await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
             to_email: supervisorEmail,
             to_name: supervisorName,
-            subject: 'Reminder: logbook sign-off needed for ' + (learner.name || 'your learner'),
+            subject: 'Reminder: session sign-off needed for ' + (learner.name || 'your learner'),
             learner_name: learner.name || '',
             learner_email: learner.email || '',
             learner_gdc: learner.gdc || '',
-            submission_type: 'Logbook Sign-off Request (Resent)',
+            submission_type: 'Session Sign-off Request (Resent)',
             file_url: 'logbook-signoff.html?t=' + token,
             submitted_at: new Date().toLocaleString('en-GB'),
-            message: supervisorName + ',\n\nThis is a reminder that ' + (learner.name||'your learner') + ' has asked you to confirm their practical logbook entries on the Dental Nurse Training Oral Health Education Course.\n\nPlease click the link below to review and sign off:\n\n[replace with your OHE course domain]/logbook-signoff.html?t=' + token + '\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
+            message: supervisorName + ',\n\nThis is a reminder that ' + (learner.name||'your learner') + ' has asked you to confirm the practical sessions you supervised on the Dental Nurse Training Oral Health Education Course.\n\nPlease click the link below to review and sign off:\n\n[replace with your OHE course domain]/logbook-signoff.html?t=' + token + '\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
           });
           showToast('Sign-off email resent to ' + supervisorEmail + ' ✅', 'success');
         } else {
@@ -672,249 +1188,15 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       }
     };
 
-    window.addLogbookEntry = () => {
-      const approvedSups = (learner.supervisors || []).filter(s => s.approved);
-      const supOptions = approvedSups.length
-        ? approvedSups.map(s => `<option value="${esc(s.name)}|${esc(s.gdc)}">${esc(s.name)} (GDC: ${esc(s.gdc)})</option>`).join('')
-        : '';
-      const main = document.getElementById('dashMain');
-      const formDiv = document.createElement('div');
-      formDiv.id = 'logbookEntryForm';
-      formDiv.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem';
-      formDiv.innerHTML = `
-        <div class="lb-form-wrap">
-          <h3 style="margin:0 0 1.25rem;color:var(--teal-dark)">Add Logbook Entry</h3>
-
-          <p style="font-size:0.82rem;color:var(--ink-light);margin:0 0 1.25rem">All fields marked * are required to support GDC record-keeping standards.</p>
-
-          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Patient Details</div>
-          <div class="lb-grid-2">
-            <div class="form-group" style="margin:0"><label>Date of session *</label><input type="date" id="le-date" max="${new Date().toISOString().split('T')[0]}"/></div>
-            <div class="form-group" style="margin:0"><label>Patient identifier * <span style="font-weight:400;color:var(--ink-light)">(initials or log no.)</span></label><input type="text" id="le-patientId" placeholder="e.g. J.S. or P001"/></div>
-            <div class="form-group span-2" style="margin:0"><label>Patient age group *</label>
-              <select id="le-patientType">
-                <option value="">Select...</option>
-                <option>Child (under 16)</option>
-                <option>Young adult (16-18)</option>
-                <option>Adult (18+)</option>
-              </select>
-            </div>
-          </div>
-
-          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Session Details</div>
-          <div class="lb-grid-2">
-            <div class="form-group span-2" style="margin:0"><label>Topics covered *</label><input type="text" id="le-topics" placeholder="e.g. Toothbrushing technique, diet advice, interdental cleaning"/></div>
-            <div class="form-group span-2" style="margin:0"><label>Context of session *</label>
-              <select id="le-context">
-                <option value="">Select...</option>
-                <option>Following routine dental examination</option>
-                <option>As part of a structured dental health education programme</option>
-                <option>Referred by dentist/hygienist/therapist</option>
-                <option>Patient-initiated request</option>
-                <option>Other</option>
-              </select>
-            </div>
-          </div>
-
-          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Pre-Session Assessment</div>
-          <div style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius);padding:0.85rem 1rem;margin-bottom:1.25rem">
-            <p style="font-size:0.82rem;color:var(--ink-light);margin:0 0 0.65rem">Tick each check completed prior to giving advice:</p>
-            <label style="display:flex;align-items:flex-start;gap:0.6rem;margin-bottom:0.5rem;font-size:0.88rem;cursor:pointer"><input type="checkbox" id="le-ckAssessed" style="margin-top:0.15rem;width:16px;height:16px;flex-shrink:0"/> Assessed the patient's current oral health knowledge, habits and any barriers to good oral health</label>
-            <label style="display:flex;align-items:flex-start;gap:0.6rem;margin-bottom:0.5rem;font-size:0.88rem;cursor:pointer"><input type="checkbox" id="le-ckAdapted" style="margin-top:0.15rem;width:16px;height:16px;flex-shrink:0"/> Checked for factors affecting communication or understanding (e.g. language, additional needs, anxiety) and adapted approach accordingly</label>
-            <label style="display:flex;align-items:flex-start;gap:0.6rem;margin-bottom:0;font-size:0.88rem;cursor:pointer"><input type="checkbox" id="le-ckScope" style="margin-top:0.15rem;width:16px;height:16px;flex-shrink:0"/> Identified any signs, symptoms or risk factors outside my scope of practice and referred/escalated to the supervising clinician where needed</label>
-          </div>
-
-          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Consent</div>
-          <div style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius);padding:0.85rem 1rem;margin-bottom:1.25rem">
-            <p style="font-size:0.82rem;color:var(--ink-light);margin:0 0 0.65rem">Consent given by:</p>
-            <label style="display:inline-flex;align-items:center;gap:0.5rem;margin-right:1.5rem;font-size:0.88rem;cursor:pointer"><input type="radio" name="le-consent" value="self" id="le-consentSelf" onchange="toggleGuardian()"/> Patient (self)</label>
-            <label style="display:inline-flex;align-items:center;gap:0.5rem;font-size:0.88rem;cursor:pointer"><input type="radio" name="le-consent" value="guardian" id="le-consentGuardian" onchange="toggleGuardian()"/> Parent / Legal guardian</label>
-            <div id="le-guardianFields" style="display:none;margin-top:0.75rem;display:none;grid-template-columns:1fr 1fr;gap:0.6rem">
-              <div class="form-group" style="margin:0"><label>Guardian full name *</label><input type="text" id="le-guardianName" placeholder="e.g. Sarah Smith"/></div>
-              <div class="form-group" style="margin:0"><label>Relationship to patient *</label><input type="text" id="le-guardianRel" placeholder="e.g. Mother"/></div>
-            </div>
-          </div>
-
-          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Advice &amp; Follow-up Given</div>
-          <div style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius);padding:0.85rem 1rem;margin-bottom:1.25rem">
-            <p style="font-size:0.82rem;color:var(--ink-light);margin:0 0 0.65rem">Tick each item completed with the patient (or guardian):</p>
-            <label style="display:flex;align-items:flex-start;gap:0.6rem;margin-bottom:0.5rem;font-size:0.88rem;cursor:pointer"><input type="checkbox" id="le-poAdvice" style="margin-top:0.15rem;width:16px;height:16px;flex-shrink:0"/> Personalised oral health advice given, based on the assessment</label>
-            <label style="display:flex;align-items:flex-start;gap:0.6rem;margin-bottom:0.5rem;font-size:0.88rem;cursor:pointer"><input type="checkbox" id="le-poWritten" style="margin-top:0.15rem;width:16px;height:16px;flex-shrink:0"/> Written/printed information or signposting provided (aftercare card, leaflet, or referral signposting)</label>
-            <label style="display:flex;align-items:flex-start;gap:0.6rem;margin-bottom:0;font-size:0.88rem;cursor:pointer"><input type="checkbox" id="le-poRecorded" style="margin-top:0.15rem;width:16px;height:16px;flex-shrink:0"/> Advice and outcome recorded in the patient's clinical notes</label>
-          </div>
-
-          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Supervising Clinician</div>
-          <div class="lb-grid-2">
-            ${approvedSups.length ? `
-            <div class="form-group span-2" style="margin:0"><label>Select from approved supervisors</label>
-              <select id="le-supSelect" onchange="onSupSelect()">
-                <option value="">Select supervisor...</option>
-                ${supOptions}
-                <option value="other">Other (enter manually)</option>
-              </select>
-            </div>` : ''}
-            <div class="form-group" style="margin:0"><label>Supervisor name *</label><input type="text" id="le-supName" placeholder="e.g. Dr Jane Smith"/></div>
-            <div class="form-group" style="margin:0"><label>Supervisor GDC *</label><input type="text" id="le-supGdc" placeholder="e.g. 123456"/></div>
-            <div class="form-group span-2" style="margin:0"><label>Supervisor email address *</label><input type="email" id="le-supEmail" placeholder="e.g. dr.smith@practice.com"/></div>
-            <div class="form-group span-2" style="margin:0"><label>Session notes / observations</label><textarea id="le-notes" style="min-height:90px" placeholder="Patient response, communication notes, any challenges..."></textarea></div>
-          </div>
-
-          <div id="le-err" style="display:none;color:#D32F2F;font-size:0.85rem;margin-top:0.75rem;padding:0.5rem 0.75rem;background:#FFF0F0;border-radius:var(--radius)"></div>
-          <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
-            <button class="btn btn-primary" onclick="saveLogbookEntry()">Save entry</button>
-            <button class="btn btn-outline" onclick="document.getElementById('logbookEntryForm').remove()">Cancel</button>
-          </div>
-        </div>`;
-      document.body.appendChild(formDiv);
-    };
-
-    window.onSupSelect = () => {
-      const sel = document.getElementById('le-supSelect');
-      if (!sel) return;
-      const val = sel.value;
-      if (val && val !== 'other') {
-        const [name, gdc] = val.split('|');
-        document.getElementById('le-supName').value = name;
-        document.getElementById('le-supGdc').value = gdc;
-        const sup = (learner.supervisors || []).find(s => s.name === name && s.gdc === gdc);
-        const emailEl = document.getElementById('le-supEmail');
-        if (emailEl) emailEl.value = (sup && sup.email) ? sup.email : '';
-      } else if (val === 'other') {
-        document.getElementById('le-supName').value = '';
-        document.getElementById('le-supGdc').value = '';
-        const emailEl = document.getElementById('le-supEmail');
-        if (emailEl) emailEl.value = '';
-      }
-    };
-
-    window.toggleGuardian = () => {
-      const gf = document.getElementById('le-guardianFields');
-      if (!gf) return;
-      const isGuardian = document.getElementById('le-consentGuardian')?.checked;
-      gf.style.display = isGuardian ? 'grid' : 'none';
-    };
-
-    window.saveLogbookEntry = async () => {
-      const date             = document.getElementById('le-date').value;
-      const patientId        = document.getElementById('le-patientId').value.trim();
-      const patientType      = document.getElementById('le-patientType').value;
-      const topics            = document.getElementById('le-topics').value.trim();
-      const context           = document.getElementById('le-context').value;
-      const ckAssessed        = document.getElementById('le-ckAssessed').checked;
-      const ckAdapted         = document.getElementById('le-ckAdapted').checked;
-      const ckScope           = document.getElementById('le-ckScope').checked;
-      const consentType      = document.querySelector('input[name="le-consent"]:checked')?.value || '';
-      const guardianName     = document.getElementById('le-guardianName')?.value.trim() || '';
-      const guardianRel      = document.getElementById('le-guardianRel')?.value.trim() || '';
-      const poAdvice          = document.getElementById('le-poAdvice').checked;
-      const poWritten         = document.getElementById('le-poWritten').checked;
-      const poRecorded        = document.getElementById('le-poRecorded').checked;
-      const supervisorName   = document.getElementById('le-supName').value.trim();
-      const supervisorGdc    = document.getElementById('le-supGdc').value.trim();
-      const supervisorEmail  = document.getElementById('le-supEmail').value.trim();
-      const notes            = document.getElementById('le-notes').value.trim();
-      const errEl            = document.getElementById('le-err');
-
-      if (!date || !patientId || !patientType || !topics || !context || !supervisorName || !supervisorGdc || !supervisorEmail) {
-        errEl.textContent = 'Please complete all required fields (date, patient ID, age group, topics covered, session context, and supervisor details).';
-        errEl.style.display = 'block'; return;
-      }
-      // Validate entry date falls within active course period
-      const enrolledAt = learner.enrolledAt?.toDate ? learner.enrolledAt.toDate() : null;
-      if (enrolledAt) {
-        const entryDate = new Date(date);
-        const courseStart = new Date(enrolledAt); courseStart.setHours(0,0,0,0);
-        const courseEnd   = new Date(enrolledAt);
-        courseEnd.setMonth(courseEnd.getMonth() + 5 + (learner.extensionMonths || 0));
-        if (entryDate < courseStart) {
-          errEl.textContent = 'Entry date cannot be before your enrolment date (' + courseStart.toLocaleDateString('en-GB') + ').';
-          errEl.style.display = 'block'; return;
-        }
-        if (entryDate > courseEnd) {
-          errEl.textContent = 'Entry date falls outside your active course period (expired ' + courseEnd.toLocaleDateString('en-GB') + '). Entries cannot be backdated into an expired period.';
-          errEl.style.display = 'block'; return;
-        }
-      }
-      if (!ckAssessed || !ckAdapted || !ckScope) {
-        errEl.textContent = 'Please tick all three pre-session assessment checks.';
-        errEl.style.display = 'block'; return;
-      }
-      if (!consentType) {
-        errEl.textContent = 'Please indicate who gave consent.';
-        errEl.style.display = 'block'; return;
-      }
-      if (consentType === 'guardian' && (!guardianName || !guardianRel)) {
-        errEl.textContent = 'Please enter the guardian name and relationship.';
-        errEl.style.display = 'block'; return;
-      }
-      if (!poAdvice || !poWritten || !poRecorded) {
-        errEl.textContent = 'Please confirm all three advice & follow-up items were completed.';
-        errEl.style.display = 'block'; return;
-      }
-      errEl.style.display = 'none';
-
-      const entry = {
-        date, patientId, patientType,
-        topics, context,
-        assessmentChecks: { assessed: ckAssessed, adapted: ckAdapted, scope: ckScope },
-        consent: { type: consentType, guardianName: guardianName || '', guardianRel: guardianRel || '' },
-        adviceGiven: { advice: poAdvice, written: poWritten, recorded: poRecorded },
-        supervisorName, supervisorGdc, supervisorEmail, notes
-      };
-      if (!learner.logbookEntries) learner.logbookEntries = [];
-      learner.logbookEntries.push(entry);
-      try {
-        await setDoc(doc(db, 'learners', uid), { logbookEntries: learner.logbookEntries }, { merge: true });
-        document.getElementById('logbookEntryForm').remove();
-        showToast('Entry saved ✅', 'success');
-        renderPractical(document.getElementById('dashMain'));
-        renderSidebar();
-      } catch(e) {
-        console.error(e);
-        errEl.textContent = 'Could not save. Please try again.';
-        errEl.style.display = 'block';
-        learner.logbookEntries.pop();
-      }
-    };
-
-    window.deleteLogbookEntry = async (index) => {
-      if (!confirm('Remove this logbook entry?')) return;
-      learner.logbookEntries.splice(index, 1);
-      await setDoc(doc(db, 'learners', uid), { logbookEntries: learner.logbookEntries }, { merge: true });
-      showToast('Entry removed');
-      renderPractical(document.getElementById('dashMain'));
-    };
-
-    let practicalSaveTimer = null;
-    window.onPracticalInput = (key) => {
-      const ta = document.getElementById('ta-' + key);
-      if (!ta) return;
-      const wc = wordCount(ta.value);
-      const wcEl = document.getElementById('wc-' + key);
-      if (wcEl) { wcEl.textContent = wc + ' words'; wcEl.style.color = wc >= 200 ? '#1A7F4B' : wc > 0 ? '#92400E' : 'var(--ink-light)'; }
-      clearTimeout(practicalSaveTimer);
-      practicalSaveTimer = setTimeout(() => savePracticalDrafts(true), 3000);
-    };
-
-    window.savePracticalDrafts = async (auto = false) => {
-      const data = {};
-      ['caseStudy1','caseStudy2'].forEach(key => {
-        const ta = document.getElementById('ta-' + key);
-        if (ta) { data[key] = ta.value; learner[key] = ta.value; }
-      });
-      try {
-        await setDoc(doc(db, 'learners', uid), data, { merge: true });
-        const statusEl = document.getElementById('practical-save-status');
-        if (statusEl) { statusEl.textContent = auto ? 'Auto-saved ✓' : 'Drafts saved ✓'; setTimeout(() => { if(statusEl) statusEl.textContent=''; }, 3000); }
-      } catch(e) { console.error(e); }
-    };
-
     window.submitPractical = async () => {
       const btn = document.getElementById('practicalSubmitBtn');
       btn.disabled = true; btn.textContent = 'Submitting...';
       try {
-        const entries = learner.logbookEntries || [];
-        // Group entries by unique supervisorGdc
+        // Save any unsaved draft fields first
+        await savePracticalDrafts();
+
+        const entries = learner.pcasEntries || [];
+        // Group entries by unique supervisorGdc (each session may have a different supervisor)
         const supMap = {};
         for (const e of entries) {
           const gdc = e.supervisorGdc || '';
@@ -924,7 +1206,6 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         const uniqueSupervisors = Object.keys(supMap);
         const tokenMap = {};
 
-        // For each unique supervisor, generate a token and write a signoff doc + send email
         for (const supervisorGdc of uniqueSupervisors) {
           const supEntries = supMap[supervisorGdc];
           const supervisorName  = supEntries[0].supervisorName  || '';
@@ -946,24 +1227,19 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
             emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
               to_email: supervisorEmail,
               to_name: supervisorName,
-              subject: 'Logbook sign-off needed for ' + (learner.name || 'your learner'),
+              subject: 'Session sign-off needed for ' + (learner.name || 'your learner'),
               learner_name: learner.name,
               learner_email: learner.email || '',
               learner_gdc: learner.gdc || '',
-              submission_type: 'Logbook Sign-off Request',
+              submission_type: 'Session Sign-off Request',
               file_url: 'logbook-signoff.html?t=' + token,
               submitted_at: new Date().toLocaleString('en-GB'),
-              message: supervisorName + ',\n\n' + (learner.name||'Your learner') + ' has completed their practical logbook on the Dental Nurse Training Oral Health Education Course and requires your confirmation that the entries you supervised are accurate.\n\nPlease click the link below to review your entries and sign off the logbook:\n\n[replace with your OHE course domain]/logbook-signoff.html?t=' + token + '\n\nThis should only take a few minutes. You will be asked to confirm that you were physically present for each session and that the details recorded are accurate.\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
+              message: supervisorName + ',\n\n' + (learner.name||'Your learner') + ' has completed their practical portfolio on the Dental Nurse Training Oral Health Education Course and requires your confirmation that the sessions you supervised are accurate.\n\nPlease click the link below to review and sign off:\n\n[replace with your OHE course domain]/logbook-signoff.html?t=' + token + '\n\nThis should only take a few minutes. You will be asked to confirm that you were physically present for each session and that the details recorded are accurate.\n\nThank you,\nDental Nurse Training\nemily@dentalnurse.training',
             });
           }
         }
 
-        // Save case studies, set pending signoff flag, and store tokens for resend
         const data = { practicalPendingSignoff: true, practicalSignoffSentAt: serverTimestamp(), practicalAmendmentRequested: false, logbookSignoffTokens: tokenMap };
-        ['caseStudy1','caseStudy2'].forEach(key => {
-          const ta = document.getElementById('ta-' + key);
-          if (ta) { data[key] = ta.value; learner[key] = ta.value; }
-        });
         await setDoc(doc(db, 'learners', uid), data, { merge: true });
         learner.practicalPendingSignoff = true;
         renderSidebar(); showSection('practical');
@@ -980,13 +1256,13 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
           🪞 How to write your reflective account <span class="rf-arrow">▼</span>
         </button>
         <div style="display:none;padding:1.25rem;font-size:0.88rem;line-height:1.8;color:var(--ink-mid)">
-          <p style="margin-bottom:0.75rem">Your reflective account should be <strong>300-500 words</strong>. It is not a summary of the course content - it is a personal reflection on your learning experience and how it will change your practice. Your assessor is looking for genuine insight, not a list of facts.</p>
+          <p style="margin-bottom:0.75rem">This is your second reflective practice document - written at the end of the course, to compare against your "Reflection - Starting Out" from before you began seeing patients. It should be <strong>300-500 words</strong>. It is not a summary of the course content - it is a personal reflection on your learning experience and how it will change your practice.</p>
           <p style="margin-bottom:0.6rem"><strong>Use these headings to structure your response:</strong></p>
           <ol style="padding-left:1.25rem;margin:0">
-            <li style="margin-bottom:0.85rem"><strong>Prior knowledge and starting point</strong><br/>What did you already know about oral health education before starting this course? Were there any gaps in your understanding or areas of uncertainty?</li>
+            <li style="margin-bottom:0.85rem"><strong>Prior knowledge and starting point</strong><br/>Look back at your starting reflection - what has changed?</li>
             <li style="margin-bottom:0.85rem"><strong>Key learning points</strong><br/>What were the most significant things you learned? Focus on two or three specific points - for example, aspects of the GDC scope of practice, behaviour change technique, or diet and caries prevention - and explain why they were meaningful to you.</li>
             <li style="margin-bottom:0.85rem"><strong>Impact on clinical practice</strong><br/>How will this course change the way you work? Be specific. Reference GDC Standards for the Dental Team or DBOH guidance where relevant to demonstrate that your reflection is evidence-based.</li>
-            <li style="margin-bottom:0.85rem"><strong>Challenges encountered</strong><br/>Were there any aspects of the course you found difficult or that raised questions for you? How did you address them?</li>
+            <li style="margin-bottom:0.85rem"><strong>Challenges encountered</strong><br/>Were there any aspects of the course - theory, or your practical sessions - you found difficult or that raised questions for you? How did you address them?</li>
             <li style="margin-bottom:0"><strong>CPD development outcomes</strong><br/>This course contributes to GDC Development Outcomes A (Communication), C (Maintenance and development of knowledge and skill) and D (Patient safety and quality of care). Explain briefly how your learning maps to these outcomes.</li>
           </ol>
           <div style="margin-top:1rem;padding:0.75rem 1rem;background:#FFF8E7;border-radius:var(--radius);border-left:3px solid #D97706;font-size:0.85rem;color:#92400E">
@@ -1204,15 +1480,15 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
 
           <div class="content-card" style="margin-bottom:1.25rem">
             <h2 style="color:#005A5F;font-size:1.05rem;margin-bottom:0.85rem">Course Requirements</h2>
-            <p style="margin-bottom:0.75rem">The <strong>Dental Nurse Training Oral Health Education Course</strong> is a 15-hour verifiable CPD course. To receive your certificate you must complete all of the following:</p>
+            <p style="margin-bottom:0.75rem">The <strong>Dental Nurse Training Oral Health Education Course</strong> is a ${CPD_HOURS}-hour verifiable CPD course. To receive your certificate you must complete all of the following:</p>
             <ul style="margin:0 0 1rem 1.25rem;line-height:1.9;font-size:0.9rem">
               <li>Complete all <strong>five theory modules</strong> and pass each end-of-module MCQ (75% pass mark; unlimited retakes)</li>
               <li>Complete <strong>three written tasks</strong> (400-600 words each), answered directly in your dashboard</li>
-              <li>Complete a <strong>practical logbook</strong> of <strong>10 supervised oral health education sessions</strong>, each countersigned by a GDC-registered supervisor who was physically present</li>
-              <li>Complete <strong>two case studies</strong></li>
-              <li>Write a <strong>final reflective account</strong> (300-500 words)</li>
+              <li>Write a short <strong>starting reflection</strong> (300+ words) before you begin seeing patients</li>
+              <li>Complete a <strong>practical portfolio</strong>: 6 supervised patients across 9 sessions covering 6 topics and at least 4 patient groups, a <strong>case study</strong> (2,000-2,500 words), an <strong>exhibition</strong> you design, produce and evaluate (report 800-1,000 words), and a <strong>CPD log &amp; personal development plan</strong></li>
+              <li>Write a <strong>final reflective account</strong> (300-500 words) at the end of the course</li>
             </ul>
-            <p style="margin-bottom:0;font-size:0.9rem">Course access: <strong>5 months</strong> from enrolment. Extensions are available at £15 per additional month.</p>
+            <p style="margin-bottom:0;font-size:0.9rem">Course access: <strong>${COURSE_DURATION_MONTHS} months</strong> from enrolment. Extensions are available at £15 per additional month.</p>
           </div>
 
           <div class="content-card" style="margin-bottom:1.25rem">
@@ -1220,7 +1496,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
             <ul style="margin:0 0 0 1.25rem;line-height:1.9;font-size:0.9rem">
               <li><strong>Professional conduct:</strong> You must act in accordance with your GDC Standards throughout this course</li>
               <li><strong>Authentic written work:</strong> All submissions must be entirely your own. Using AI tools (such as ChatGPT) to write or substantially complete your assignments is not permitted</li>
-              <li><strong>Genuine supervised practice:</strong> Each logbook entry must represent a real, supervised oral health education session you delivered. Falsifying entries is a serious professional matter that may be referred to the GDC</li>
+              <li><strong>Genuine supervised practice:</strong> Each practical session must represent a real, supervised patient encounter. Falsifying entries is a serious professional matter that may be referred to the GDC</li>
               <li><strong>Appropriate supervisors:</strong> Your supervisor must be a GDC-registered dentist, dental hygienist, or dental therapist who was physically present during the session</li>
               <li><strong>Timely completion:</strong> You are responsible for managing your time to complete the course within your access period</li>
             </ul>
@@ -1234,9 +1510,9 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
                 ['d1','I am currently registered with the General Dental Council (GDC) and my registration is in good standing'],
                 ['d2','I understand and accept all course requirements and commit to completing every component to the required standard'],
                 ['d3','All work I submit will be entirely my own. I will not use AI-generated content, plagiarise, or present others\' work as my own'],
-                ['d4','I understand that falsifying logbook entries or supervised practice records is a serious breach of GDC Standards that could result in fitness to practise proceedings'],
+                ['d4','I understand that falsifying practical session records is a serious breach of GDC Standards that could result in fitness to practise proceedings'],
                 ['d5','I will ensure all clinical supervisors I register are GDC-registered and were physically present during the sessions I record'],
-                ['d6','I understand the course lasts 5 months from enrolment and that I am responsible for managing my time accordingly'],
+                ['d6','I understand the course lasts ' + COURSE_DURATION_MONTHS + ' months from enrolment and that I am responsible for managing my time accordingly'],
                 ['d7','I consent to Dental Nurse Training storing and processing my personal data for the purpose of administering this course and issuing my CPD certificate'],
               ].map(([id,txt]) => `<label style="display:flex;align-items:flex-start;gap:0.75rem;margin-bottom:0.85rem;cursor:pointer;font-size:0.9rem;line-height:1.55">
                 <input type="checkbox" id="${id}" style="width:18px;height:18px;flex-shrink:0;margin-top:0.18rem;accent-color:#005A5F" onchange="checkDecReady()"/>

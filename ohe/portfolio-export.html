@@ -167,7 +167,7 @@
 
   function render(l, uid) {
     const mp      = l.moduleProgress || {};
-    const entries = l.logbookEntries || [];
+    const entries = l.pcasEntries || [];
     const now     = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' });
 
     const overallStatus =
@@ -206,53 +206,64 @@
       </div>`;
     }).join('<hr style="border:none;border-top:1px solid #e5e7eb;margin:1.25rem 0"/>');
 
-    // ── Logbook entries ───────────────────────────────────────────────────
+    // ── PCAS practical sessions ─────────────────────────────────────────────
+    const sortedEntries = [...entries].sort((a,b) => (a.topic||'').localeCompare(b.topic||'') || (a.visit-b.visit));
     const lbHtml = entries.length === 0
-      ? `<p class="empty">No logbook entries recorded yet.</p>`
+      ? `<p class="empty">No practical sessions recorded yet.</p>`
       : `<table class="lb-table">
           <thead><tr>
-            <th>#</th><th>Date</th><th>Patient ID</th><th>Age group</th>
-            <th>Topics / Context</th><th>Supervisor</th>
-            <th>Consent</th><th>Assessment</th><th>Advice given</th><th>Notes</th>
+            <th>Topic</th><th>Session</th><th>Date</th><th>Patient</th><th>Group</th>
+            <th>Supervisor</th><th>Aim</th><th>Notes</th>
           </tr></thead>
-          <tbody>${entries.map((e, i) => {
-            const assessOk = e.assessmentChecks && e.assessmentChecks.assessed && e.assessmentChecks.adapted && e.assessmentChecks.scope;
-            const adviceOk = e.adviceGiven  && e.adviceGiven.advice   && e.adviceGiven.written  && e.adviceGiven.recorded;
-            const consent = e.consent
-              ? (e.consent.type === 'guardian' ? `Guardian (${e.consent.guardianName||''})` : 'Patient')
-              : '-';
+          <tbody>${sortedEntries.map((e) => {
             return `<tr>
-              <td>${i+1}</td>
+              <td>${esc(e.topic||'-')}</td>
+              <td>${esc(e.visit||'-')}</td>
               <td>${esc(e.date||'-')}</td>
               <td>${esc(e.patientId||'-')}</td>
-              <td>${esc(e.patientType||'-')}</td>
-              <td>${esc(e.topics||'-')} <br><span style="color:#9ca3af">${esc(e.context||'-')}</span></td>
+              <td>${esc(e.patientGroup||'-')}</td>
               <td>${esc(e.supervisorName||'-')} (GDC: ${esc(e.supervisorGdc||'-')})</td>
-              <td>${esc(consent)}</td>
-              <td class="${assessOk?'check-yes':'check-no'}">${assessOk ? '✓ All' : '✗ Incomplete'}</td>
-              <td class="${adviceOk?'check-yes':'check-no'}">${adviceOk ? '✓ All' : '✗ Incomplete'}</td>
+              <td>${esc(e.aim||'-')}</td>
               <td>${esc(e.notes||'-')}</td>
             </tr>`;
           }).join('')}</tbody>
         </table>`;
 
-    // ── Case studies ──────────────────────────────────────────────────────
-    const caseStudies = [
-      { key: 'caseStudy1', label: 'Case Study 1' },
-      { key: 'caseStudy2', label: 'Case Study 2' },
-    ];
-    const csHtml = caseStudies.map(c => {
-      const text = l[c.key] || '';
-      const count = wc(text);
-      return `<div class="task-block">
-        <div class="task-label">${c.label}</div>
-        ${text
-          ? `<div class="task-body">${esc(text)}</div><div class="task-wc">${count} words</div>`
-          : `<div class="task-body empty">Not yet written.</div>`}
-      </div>`;
-    }).join('<hr style="border:none;border-top:1px solid #e5e7eb;margin:1.25rem 0"/>');
+    // ── Case study ───────────────────────────────────────────────────────────
+    const csText = l.caseStudy || '';
+    const csHtml = csText
+      ? `<div class="task-body">${esc(csText)}</div><div class="task-wc">${wc(csText)} words</div>`
+      : `<div class="task-body empty">Not yet written.</div>`;
 
-    // ── Reflection ────────────────────────────────────────────────────────
+    // ── Exhibition ───────────────────────────────────────────────────────────
+    const exText = l.exhibitionReport || '';
+    const exHtml = `<div class="task-block">
+        <div class="task-label">Topic: ${esc(l.exhibitionTopic||'-')} &middot; Target group: ${esc(l.exhibitionTargetGroup||'-')}</div>
+        ${exText
+          ? `<div class="task-body">${esc(exText)}</div><div class="task-wc">${wc(exText)} words</div>`
+          : `<div class="task-body empty">Not yet written.</div>`}
+        ${l.exhibitionPhotoUrl ? `<div class="task-wc"><a href="${esc(l.exhibitionPhotoUrl)}" target="_blank">📷 Photo evidence</a></div>` : ''}
+      </div>`;
+
+    // ── CPD log & PDP ────────────────────────────────────────────────────────
+    const cpdLog = l.cpdLog || [];
+    const cpdHtml = cpdLog.length === 0 ? `<p class="empty">No CPD entries yet.</p>` : `<table class="lb-table">
+        <thead><tr><th>Date</th><th>Activity</th><th>Hours</th><th>Relevance</th></tr></thead>
+        <tbody>${cpdLog.map(e => `<tr><td>${esc(e.date||'-')}</td><td>${esc(e.activity||'-')}</td><td>${esc(e.hours||'-')}</td><td>${esc(e.relevance||'-')}</td></tr>`).join('')}</tbody>
+      </table>`;
+    const pdp = l.pdp || {};
+    const pdpHtml = `<div class="task-block" style="margin-top:1rem">
+      <div class="task-label">Current strengths</div><div class="task-body">${esc(pdp.strengths)||'<em class="empty">Not completed</em>'}</div>
+      <div class="task-label" style="margin-top:0.85rem">Areas to develop</div><div class="task-body">${esc(pdp.areas)||'<em class="empty">Not completed</em>'}</div>
+      <div class="task-label" style="margin-top:0.85rem">Goals & actions</div><div class="task-body">${esc(pdp.goals)||'<em class="empty">Not completed</em>'}</div>
+      <div class="task-label" style="margin-top:0.85rem">Timescale</div><div class="task-body">${esc(pdp.timescale)||'<em class="empty">Not completed</em>'}</div>
+    </div>`;
+
+    // ── Reflections ────────────────────────────────────────────────────────
+    const reflStartText = l.reflectionStartText || '';
+    const reflStartHtml = reflStartText
+      ? `<div class="task-body">${esc(reflStartText)}</div><div class="task-wc">${wc(reflStartText)} words</div>`
+      : `<p class="empty">Not yet written.</p>`;
     const reflText = l.reflectionText || l.reflectionDraft || '';
     const reflHtml = reflText
       ? `<div class="task-body">${esc(reflText)}</div><div class="task-wc">${wc(reflText)} words</div>`
@@ -294,19 +305,38 @@
       </div>
 
       <div class="section">
-        <div class="section-title">🦷 Practical Logbook
-          <span style="font-size:0.82rem;color:#6b7280;font-weight:600;text-transform:none;letter-spacing:0;margin-left:0.5rem">${entries.length}/10 entries</span>
+        <div class="section-title">🪞 Reflection - Starting Out
+          <span class="badge ${l.reflectionStartSubmitted?'badge-green':'badge-grey'}" style="margin-left:0.5rem;text-transform:none;letter-spacing:0">
+            ${l.reflectionStartSubmitted ? 'Submitted' : 'Not submitted'}
+          </span>
+        </div>
+        ${reflStartHtml}
+      </div>
+
+      <div class="section">
+        <div class="section-title">🦷 Practical Sessions
+          <span style="font-size:0.82rem;color:#6b7280;font-weight:600;text-transform:none;letter-spacing:0;margin-left:0.5rem">${entries.length}/9 sessions</span>
+          <span class="badge ${l.practicalPassed?'badge-green':l.practicalSubmitted?'badge-amber':'badge-grey'}" style="margin-left:0.5rem;text-transform:none;letter-spacing:0">
+            ${l.practicalPassed ? 'Passed' : l.practicalSubmitted ? 'Under review' : 'Not submitted'}
+          </span>
         </div>
         ${lbHtml}
       </div>
 
       <div class="section">
-        <div class="section-title">📋 Case Studies
-          <span class="badge ${l.practicalPassed?'badge-green':l.practicalSubmitted?'badge-amber':'badge-grey'}" style="margin-left:0.5rem;text-transform:none;letter-spacing:0">
-            ${l.practicalPassed ? 'Passed' : l.practicalSubmitted ? 'Under review' : 'Not submitted'}
-          </span>
-        </div>
+        <div class="section-title">📋 Case Study</div>
         ${csHtml}
+      </div>
+
+      <div class="section">
+        <div class="section-title">🎨 Exhibition</div>
+        ${exHtml}
+      </div>
+
+      <div class="section">
+        <div class="section-title">📈 CPD Log &amp; Personal Development Plan</div>
+        ${cpdHtml}
+        ${pdpHtml}
       </div>
 
       <div class="section">

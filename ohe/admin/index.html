@@ -157,7 +157,7 @@
     function getUniqueLogbookSupervisors(l) {
       const seenGdc = new Set();
       const uniqueSups = [];
-      for (const e of (l.logbookEntries || [])) {
+      for (const e of (l.pcasEntries || [])) {
         if (e.supervisorGdc && !seenGdc.has(e.supervisorGdc)) {
           seenGdc.add(e.supervisorGdc);
           uniqueSups.push({ name: e.supervisorName, gdc: e.supervisorGdc });
@@ -446,7 +446,7 @@
       if (allQuizzesPassed && !anyAssessmentStarted) return {
         colour: '#1D4ED8', bg: '#DBEAFE', label: '📝 Ready for assessments',
         emailSubject: 'Great progress - time to start your assessments',
-        emailBody: (n, e) => `Hi ${n},\n\nWell done for completing all five theory modules and quizzes - that is a great achievement!\n\nYou can now begin your written assessments and practical portfolio. Both sections are available in your course dashboard:\nhttps://ohe.dentalnurse.training/login.html\n\nThe written tasks ask you to write 400-600 words on each of three topics. The practical portfolio requires 10 supervised logbook entries and two case studies. You can work on both at the same time.\n\nDo get in touch if you have any questions.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
+        emailBody: (n, e) => `Hi ${n},\n\nWell done for completing all five theory modules and quizzes - that is a great achievement!\n\nYou can now begin your written assessments and practical portfolio. Both sections are available in your course dashboard:\nhttps://ohe.dentalnurse.training/login.html\n\nThe written tasks ask you to write 400-600 words on each of three topics. The practical portfolio requires 6 supervised patients across 9 sessions, a case study, an exhibition, and your CPD log & Personal Development Plan. You can work on both at the same time.\n\nDo get in touch if you have any questions.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
       };
       if (amendmentPending) return {
         colour: '#D97706', bg: '#FEF3C7', label: '✏ Awaiting amendment',
@@ -968,7 +968,7 @@
         promptEmail(
           l.email,
           'Your Dental Nurse Training Oral Health Education Course is now active',
-          'Dear ' + l.name + ',\n\nCongratulations! Your Dental Nurse Training Oral Health Education Course course is now active.\n\nYou can log in at:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you were sent separately.\n\nWork through the 5 theory modules in order, pass each quiz, then complete your written tasks, practical logbook, case studies and final reflection.\n\nCourse duration: 5 months from today.\n\nIf you have any questions, please reply to this email or contact emily@dentalnurse.training.\n\nGood luck!\n\nEmily Bremner\nDental Nurse Training'
+          'Dear ' + l.name + ',\n\nCongratulations! Your Dental Nurse Training Oral Health Education Course course is now active.\n\nYou can log in at:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you were sent separately.\n\nWork through the 5 theory modules in order, pass each quiz, then complete your written tasks, your "Reflection - Starting Out", your practical portfolio (patient sessions, case study, exhibition and CPD log/PDP) and your final reflective account.\n\nCourse duration: 9 months from today.\n\nIf you have any questions, please reply to this email or contact emily@dentalnurse.training.\n\nGood luck!\n\nEmily Bremner\nDental Nurse Training'
         );
       }
       updateStats();
@@ -1163,7 +1163,7 @@
       promptEmail(
         l.email,
         'Welcome to your Dental Nurse Training Oral Health Education Course',
-        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Oral Health Education Course!\n\nYour course is now active. You can log in at any time here:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks, a practical logbook, and case studies\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 5 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck - we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Oral Health Education Course!\n\nYour course is now active. You can log in at any time here:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks and a self-certified "Reflection - Starting Out"\n• A practical portfolio: 6 supervised patients across 9 sessions, a case study, an exhibition, and a CPD log & Personal Development Plan\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 9 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck - we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
       );
     };
 
@@ -1229,7 +1229,17 @@
     window.viewPracticalPortfolio = async (id, name) => {
       const snap = await getDoc(doc(db, 'learners', id));
       const d = snap.exists() ? snap.data() : {};
-      const entries = d.logbookEntries || [];
+      const entries = (d.pcasEntries || []).slice().sort((a,b) => (a.topic-b.topic) || (a.visit-b.visit));
+      const cpdLog = d.cpdLog || [];
+      const pdp = d.pdp || {};
+      const esc = s => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+      const wc = s => s ? s.trim().split(/\s+/).filter(Boolean).length : 0;
+      const textBlock = (label, text) => `
+            <div style="margin-bottom:1.25rem">
+              <strong style="font-size:0.9rem;color:var(--teal-dark)">${label}</strong>
+              <div style="margin-top:0.5rem;background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.88rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${text?esc(text):'<em style="color:var(--ink-light)">Not completed</em>'}</div>
+              ${text?`<div style="font-size:0.78rem;color:var(--ink-light);margin-top:0.25rem">${wc(text)} words</div>`:''}
+            </div>`;
       const modal = document.getElementById('feedbackModal');
       document.getElementById('feedbackModalContent').innerHTML = `
         <div class="modal-header">
@@ -1237,33 +1247,50 @@
           <button class="modal-close" onclick="document.getElementById('feedbackModal').classList.add('hidden')">×</button>
         </div>
         <div style="max-height:65vh;overflow-y:auto;padding-right:0.5rem">
-          <strong style="font-size:0.9rem;color:var(--teal-dark)">Practical Logbook (${entries.length}/10 entries)</strong>
+          <strong style="font-size:0.9rem;color:var(--teal-dark)">PCAS Patient Sessions (${entries.length}/9)</strong>
           ${entries.length ? `<table style="width:100%;font-size:0.82rem;border-collapse:collapse;margin:0.75rem 0 1.5rem">
             <thead><tr style="background:var(--teal-pale)">
-              <th style="padding:0.5rem;text-align:left">#</th>
+              <th style="padding:0.5rem;text-align:left">Topic</th>
+              <th style="padding:0.5rem;text-align:left">Session</th>
               <th style="padding:0.5rem;text-align:left">Date</th>
               <th style="padding:0.5rem;text-align:left">Patient</th>
-              <th style="padding:0.5rem;text-align:left">Topics covered</th>
+              <th style="padding:0.5rem;text-align:left">Group</th>
               <th style="padding:0.5rem;text-align:left">Supervisor</th>
               <th style="padding:0.5rem;text-align:left">GDC</th>
               <th style="padding:0.5rem;text-align:left">Notes</th>
             </tr></thead>
-            <tbody>${entries.map((e,i)=>`<tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:0.4rem 0.5rem">${i+1}</td>
+            <tbody>${entries.map(e=>`<tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:0.4rem 0.5rem">${e.topic||'-'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.visit||'-'}</td>
               <td style="padding:0.4rem 0.5rem">${e.date||'-'}</td>
-              <td style="padding:0.4rem 0.5rem">${e.patientType||'-'}</td>
-              <td style="padding:0.4rem 0.5rem">${e.topics||'-'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.patientId||'-'}</td>
+              <td style="padding:0.4rem 0.5rem">${e.patientGroup||'-'}</td>
               <td style="padding:0.4rem 0.5rem">${e.supervisorName||'-'}</td>
               <td style="padding:0.4rem 0.5rem">${e.supervisorGdc||'-'}</td>
               <td style="padding:0.4rem 0.5rem;color:var(--ink-light)">${e.notes||''}</td>
             </tr>`).join('')}</tbody>
-          </table>` : `<p style="font-size:0.85rem;color:var(--ink-light);margin:0.5rem 0 1.5rem">No logbook entries recorded.</p>`}
-          ${[['Case Study 1','caseStudy1'],['Case Study 2','caseStudy2']].map(([label,key])=>`
-            <div style="margin-bottom:1.25rem">
-              <strong style="font-size:0.9rem;color:var(--teal-dark)">${label}</strong>
-              <div style="margin-top:0.5rem;background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.88rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${d[key]?d[key].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):'<em style="color:var(--ink-light)">Not completed</em>'}</div>
-              ${d[key]?`<div style="font-size:0.78rem;color:var(--ink-light);margin-top:0.25rem">${d[key].trim().split(/\s+/).filter(Boolean).length} words</div>`:''}
-            </div>`).join('')}
+          </table>` : `<p style="font-size:0.85rem;color:var(--ink-light);margin:0.5rem 0 1.5rem">No PCAS sessions recorded.</p>`}
+          ${textBlock('Case Study', d.caseStudy)}
+          <div style="margin-bottom:1.25rem">
+            <strong style="font-size:0.9rem;color:var(--teal-dark)">Exhibition</strong>
+            <div style="font-size:0.82rem;color:var(--ink-light);margin-top:0.4rem">Topic: ${esc(d.exhibitionTopic)||'-'} &nbsp;|&nbsp; Target group: ${esc(d.exhibitionTargetGroup)||'-'}</div>
+            <div style="margin-top:0.5rem;background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.88rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${d.exhibitionReport?esc(d.exhibitionReport):'<em style="color:var(--ink-light)">Not completed</em>'}</div>
+            ${d.exhibitionReport?`<div style="font-size:0.78rem;color:var(--ink-light);margin-top:0.25rem">${wc(d.exhibitionReport)} words</div>`:''}
+            ${d.exhibitionPhotoUrl?`<div style="margin-top:0.5rem"><a href="${d.exhibitionPhotoUrl}" target="_blank" rel="noopener">View uploaded photo</a></div>`:''}
+          </div>
+          <div style="margin-bottom:1.25rem">
+            <strong style="font-size:0.9rem;color:var(--teal-dark)">CPD Log (${cpdLog.length} entries)</strong>
+            ${cpdLog.length ? `<table style="width:100%;font-size:0.82rem;border-collapse:collapse;margin:0.75rem 0"><thead><tr style="background:var(--teal-pale)"><th style="padding:0.5rem;text-align:left">Date</th><th style="padding:0.5rem;text-align:left">Activity</th><th style="padding:0.5rem;text-align:left">Hours</th><th style="padding:0.5rem;text-align:left">Relevance</th></tr></thead><tbody>${cpdLog.map(c=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:0.4rem 0.5rem">${c.date||'-'}</td><td style="padding:0.4rem 0.5rem">${esc(c.activity)}</td><td style="padding:0.4rem 0.5rem">${c.hours||'-'}</td><td style="padding:0.4rem 0.5rem;color:var(--ink-light)">${esc(c.relevance)}</td></tr>`).join('')}</tbody></table>` : `<p style="font-size:0.85rem;color:var(--ink-light);margin:0.5rem 0">No CPD entries recorded.</p>`}
+          </div>
+          <div style="margin-bottom:1.25rem">
+            <strong style="font-size:0.9rem;color:var(--teal-dark)">Personal Development Plan</strong>
+            <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--ink-mid);line-height:1.6">
+              <div><strong>Strengths:</strong> ${esc(pdp.strengths)||'-'}</div>
+              <div><strong>Areas to develop:</strong> ${esc(pdp.areas)||'-'}</div>
+              <div><strong>Goals:</strong> ${esc(pdp.goals)||'-'}</div>
+              <div><strong>Timescale:</strong> ${esc(pdp.timescale)||'-'}</div>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-primary btn-sm" onclick="document.getElementById('feedbackModal').classList.add('hidden');openFeedbackModal('${id}','practical','${name.replace(/'/g,"\\'")}')">Add feedback</button>
@@ -1366,7 +1393,7 @@
           promptEmail(
             l.email,
             'Congratulations - You have completed the Dental Nurse Training Oral Health Education Course!',
-            'Congratulations ' + l.name + '!\n\nWhat an achievement! You have successfully passed all three assessments for the Dental Nurse Training Oral Health Education Course.\n\nYour certificate is now available to view and download from your course dashboard:\nhttps://ohe.dentalnurse.training/login.html\n\nThis certificate records 15 hours of verifiable CPD against GDC Outcomes A, C and D. You can use it as evidence of your CPD in your GDC Enhanced CPD record.\n\nAs a final request - it would mean a great deal to us if you could take 2 minutes to share your feedback on the course. Your thoughts help us improve the experience for future learners:\nmailto:emily@dentalnurse.training?subject=OHE%20Course%20Feedback\n\nThank you for choosing Dental Nurse Training. It has been a pleasure supporting you through this qualification.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+            'Congratulations ' + l.name + '!\n\nWhat an achievement! You have successfully passed all three assessments for the Dental Nurse Training Oral Health Education Course.\n\nYour certificate is now available to view and download from your course dashboard:\nhttps://ohe.dentalnurse.training/login.html\n\nThis certificate records 25 hours of verifiable CPD against GDC Outcomes A, C and D. You can use it as evidence of your CPD in your GDC Enhanced CPD record.\n\nAs a final request - it would mean a great deal to us if you could take 2 minutes to share your feedback on the course. Your thoughts help us improve the experience for future learners:\nmailto:emily@dentalnurse.training?subject=OHE%20Course%20Feedback\n\nThank you for choosing Dental Nurse Training. It has been a pleasure supporting you through this qualification.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
           );
         } else {
           promptEmail(
@@ -1425,7 +1452,7 @@
       promptEmail(
         l.email,
         'Supervisor approved - Dental Nurse Training Oral Health Education Course',
-        'Hi ' + l.name + ',\n\nGreat news! Your supervisor ' + s.name + ' has been approved and is now confirmed for your practical logbook.\n\nYou can view the status of all your supervisors in your course dashboard:\nhttps://ohe.dentalnurse.training/login.html\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
+        'Hi ' + l.name + ',\n\nGreat news! Your supervisor ' + s.name + ' has been approved and is now confirmed for your practical portfolio.\n\nYou can view the status of all your supervisors in your course dashboard:\nhttps://ohe.dentalnurse.training/login.html\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
       );
       openLearnerModal(learnerId);
     };
