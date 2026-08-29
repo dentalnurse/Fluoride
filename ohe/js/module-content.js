@@ -385,5 +385,90 @@ const MODULE_CONTENT = {
   <li><strong>Principle 9</strong> - Raise concerns if patients are at risk</li>
 </ul>
 <p>Delivering oral health education competently, honestly and within your scope of practice touches almost every one of these principles - it is genuinely a professional, accountable extension of your role, not an informal "chat" with patients.</p>
+`,
+
+6: `
+<h2>Module 6 - What an Oral Health Education Session Looks Like</h2>
+
+<p>Modules 1-5 covered the knowledge you need: prevention science, diet and caries, oral hygiene and periodontal health, communication and behaviour change, and your professional responsibilities. This module brings that knowledge together into a practical structure - what an actual OHE session looks like from the moment you prepare for it to the moment you write it up. Use it as your template for every supervised session in your practical portfolio.</p>
+
+<h3>Before the session: preparation</h3>
+<p>A good OHE session starts before the patient sits down.</p>
+<ul>
+  <li><strong>Know why the patient is in front of you.</strong> Is this a routine chairside session following an examination, a referral for a specific concern (e.g. high caries risk, poor plaque control, a new appliance), or part of a structured programme? The reason for referral shapes your whole session.</li>
+  <li><strong>Review what you already know.</strong> Medical history, dental history, any relevant social factors or barriers to care (cost, access, caring responsibilities, anxiety, language, additional needs) - gather this from records and from the referring clinician before you start, not by interrogating the patient on arrival.</li>
+  <li><strong>Set a clear aim and objectives.</strong> Your <em>aim</em> is the overall goal of the session in one sentence (e.g. "to reduce this patient's caries risk through improved plaque control and dietary advice"). Your <em>objectives</em> are the specific, achievable steps that get you there (e.g. "assess current toothbrushing technique", "identify frequency of sugar intake", "agree one realistic dietary change"). Vague aims ("talk about oral health") produce vague sessions.</li>
+  <li><strong>Choose your setting and resources.</strong> A private, appropriately equipped area; a mirror for demonstrating technique; disclosing tablets or plaque-disclosing solution if assessing plaque control; DBOH-aligned leaflets or visual aids appropriate to the patient's age and needs; any translated or easy-read materials required.</li>
+</ul>
+<div class="callout">
+  <div class="callout-label">Key clinical point</div>
+  <p>Every field on your practical portfolio session form - setting, aim, objectives - maps directly onto this preparation stage. If you can't fill those fields in confidently before the patient arrives, you're not ready to start the session.</p>
+</div>
+
+<h3>Starting the session</h3>
+<ul>
+  <li><strong>Introduce yourself and your role</strong> clearly, including that you are a dental nurse trained to deliver oral health education under the direction of the supervising clinician.</li>
+  <li><strong>Confirm identity and obtain valid consent</strong> before you begin - verbally, and from the patient themselves or their parent/guardian where relevant (see Module 5). Explain what the session will involve and roughly how long it will take.</li>
+  <li><strong>Build rapport</strong> before diving into clinical content. A minute of genuine, unhurried conversation sets the tone for an honest, two-way session rather than a lecture.</li>
+</ul>
+
+<h3>Assessing the patient</h3>
+<p>Before giving any advice, find out where the patient actually is - not where you assume they are.</p>
+<ul>
+  <li>Current oral hygiene routine: what, how, how often, and for how long</li>
+  <li>Diet: frequency and timing of sugar and acid exposure, not just quantity (see Module 2)</li>
+  <li>Relevant risk factors: medical conditions, medications causing dry mouth, smoking, alcohol, appliances, dentures</li>
+  <li>Existing knowledge, beliefs and motivation - use open questions ("what do you usually do for your teeth at home?") rather than closed ones, and listen for where the COM-B and Health Belief Model barriers from Module 1 and Module 4 might apply</li>
+  <li>Clinical observation within your scope - visible plaque, staining, obvious decay or gum inflammation you can point out to reinforce your advice (remembering you are not diagnosing - see Module 5 on scope)</li>
+</ul>
+
+<h3>Delivering the advice</h3>
+<p>This is the core of the session, built directly on Modules 1-4.</p>
+<ul>
+  <li><strong>Individualise it.</strong> Base what you say on what you actually found in the assessment, not a generic script.</li>
+  <li><strong>Keep it DBOH-aligned.</strong> Anchor your core messages - fluoride, plaque control, diet, tobacco/alcohol where relevant - to the current edition of Delivering Better Oral Health.</li>
+  <li><strong>Demonstrate, don't just describe.</strong> Show toothbrushing or interdental cleaning technique on a model or with the patient's own brush where appropriate, rather than only explaining it verbally.</li>
+  <li><strong>Keep it small and achievable.</strong> Agree one or two realistic changes rather than a long list (Module 1).</li>
+  <li><strong>Use plain language</strong> and check understanding as you go - ask the patient to reflect back what they've understood, rather than simply asking "does that make sense?" (Module 4).</li>
+  <li><strong>Provide take-home support.</strong> Written or visual information reinforces what was said verbally and gives the patient something to refer back to.</li>
+</ul>
+
+<h3>Closing the session</h3>
+<ul>
+  <li>Summarise the key points and the specific goal(s) you've agreed together</li>
+  <li>Check the patient is happy and ask if they have any remaining questions</li>
+  <li>Agree what happens next - a follow-up session, a routine recall, or referral back to the supervising clinician for anything outside your scope</li>
+  <li>Thank the patient for their time and end professionally</li>
+</ul>
+
+<h3>After the session: evaluation, reflection and record-keeping</h3>
+<p>The session isn't finished when the patient leaves the room.</p>
+<ul>
+  <li><strong>Evaluate</strong> against your original aim and objectives - did the session achieve what you set out to do? How will you know at the next visit (e.g. reduced plaque score, patient-reported change, follow-up questionnaire)?</li>
+  <li><strong>Reflect</strong> honestly on your own performance - what went well, what you'd do differently, and what you learned, in line with the reflective practice you'll build on throughout your practical portfolio.</li>
+  <li><strong>Document promptly and objectively</strong> - what was assessed, what advice was given, what was agreed, and any concerns raised or escalated - in line with the record-keeping standards covered in Module 5. Complete your write-up within 14 days of the session while it's fresh, as set out in your practical portfolio guidance.</li>
+</ul>
+
+<h3>A worked example</h3>
+<p>Patient: adult, referred by the dentist following an examination showing early interproximal caries and visible plaque accumulation.</p>
+<ul>
+  <li><strong>Setting:</strong> private surgery room, patient's own toothbrush, disclosing tablets, interdental brush samples, DBOH adult leaflet</li>
+  <li><strong>Aim:</strong> to reduce this patient's caries risk through improved plaque control and reduced frequency of sugar intake</li>
+  <li><strong>Objectives:</strong> assess current toothbrushing and interdental cleaning technique; identify frequency and timing of sugar exposure; agree one achievable change to technique and one to diet; provide take-home written support</li>
+  <li><strong>Advice given:</strong> disclosed plaque to show missed areas, demonstrated modified bass technique and interdental brush use, discussed frequency of sugary tea between meals and agreed to move sugar intake to mealtimes only, provided DBOH leaflet</li>
+  <li><strong>Evaluation:</strong> patient demonstrated improved technique back to the nurse by the end of the session; plan to review plaque score and ask about the dietary change at the next visit</li>
+  <li><strong>Reflection:</strong> the disclosing tablets were a highly effective visual aid and made the conversation more collaborative; next time, agree the dietary change earlier in the session so there is more time to problem-solve barriers with the patient</li>
+</ul>
+<p>Notice how directly this maps onto the fields you'll complete for every session in your practical portfolio.</p>
+
+<h3>Common pitfalls to avoid</h3>
+<ul>
+  <li>Starting with advice before you've assessed the patient's actual starting point</li>
+  <li>Giving a long list of generic changes instead of one or two individualised, achievable goals</li>
+  <li>Talking <em>at</em> the patient rather than checking understanding and inviting questions</li>
+  <li>Vague aims and objectives that make it impossible to evaluate whether the session worked</li>
+  <li>Delayed, non-contemporaneous record-keeping</li>
+  <li>Continuing when something falls outside your scope, rather than recognising it and escalating (Module 5)</li>
+</ul>
 `
 };

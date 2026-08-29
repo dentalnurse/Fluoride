@@ -48,10 +48,11 @@ const MODULES = [
   { id: 3, title: "Oral Hygiene Techniques and Periodontal Health",             icon: "🦷" },
   { id: 4, title: "Communication, Behaviour Change and Special Groups",         icon: "💬" },
   { id: 5, title: "Professional, Legal and GDC Responsibilities in OHE",        icon: "⚖️" },
+  { id: 6, title: "What an Oral Health Education Session Looks Like",           icon: "📋" },
 ];
 
 const STAGES = [
-  { id: "theory",    label: "Theory & MCQs",    icon: "📚", modules: [1,2,3,4,5] },
+  { id: "theory",    label: "Theory & MCQs",    icon: "📚", modules: [1,2,3,4,5,6] },
   { id: "written",   label: "Written Tasks",     icon: "✍️", modules: [] },
   { id: "practical", label: "Practical Work",    icon: "🦷", modules: [] },
   { id: "reflection",label: "Final Reflection",  icon: "🪞", modules: [] },

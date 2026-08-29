@@ -432,7 +432,7 @@
     // Returns a communication action flag for a learner, or null
     function getCommFlag(l) {
       const mp = l.moduleProgress || {};
-      const allQuizzesPassed = [1,2,3,4,5].every(i => mp[i] === 2 || mp[i] === '2');
+      const allQuizzesPassed = [1,2,3,4,5,6].every(i => mp[i] === 2 || mp[i] === '2');
       const anyAssessmentStarted = l.writtenSubmitted || l.practicalSubmitted || l.reflectionSubmitted;
       const allPassed = l.writtenPassed && l.practicalPassed && l.reflectionPassed;
       const certIssued = !!l.certNumber;
@@ -448,7 +448,7 @@
       if (allQuizzesPassed && !anyAssessmentStarted) return {
         colour: '#1D4ED8', bg: '#DBEAFE', label: '📝 Ready for assessments',
         emailSubject: 'Great progress - time to start your assessments',
-        emailBody: (n, e) => `Hi ${n},\n\nWell done for completing all five theory modules and quizzes - that is a great achievement!\n\nYou can now begin your written assessments and practical portfolio. Both sections are available in your course dashboard:\nhttps://ohe.dentalnurse.training/login.html\n\nThe written tasks ask you to write 400-600 words on each of three topics. The practical portfolio requires 6 supervised patients across 9 sessions (including an in-depth write-up on your chosen focus topic), an exhibition, and your CPD log & Personal Development Plan. You can work on both at the same time.\n\nDo get in touch if you have any questions.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
+        emailBody: (n, e) => `Hi ${n},\n\nWell done for completing all six theory modules and quizzes - that is a great achievement!\n\nYou can now begin your written assessments and practical portfolio. Both sections are available in your course dashboard:\nhttps://ohe.dentalnurse.training/login.html\n\nThe written tasks ask you to write 400-600 words on each of three topics. The practical portfolio requires 6 supervised patients across 9 sessions (including an in-depth write-up on your chosen focus topic), an exhibition, and your CPD log & Personal Development Plan. You can work on both at the same time.\n\nDo get in touch if you have any questions.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
       };
       if (amendmentPending) return {
         colour: '#D97706', bg: '#FEF3C7', label: '✏ Awaiting amendment',
@@ -514,7 +514,7 @@
     function renderAllRows(list) {
       return list.map(l => {
         const mp   = l.moduleProgress || {};
-        const passed = [1,2,3,4,5].filter(i => mp[i]===2).length;
+        const passed = [1,2,3,4,5,6].filter(i => mp[i]===2).length;
         const days = daysUntilExpiry(l);
         const rowStyle = expiryRowStyle(days);
         const expBadge = expiryBadge(days);
@@ -656,7 +656,7 @@
     async function renderContentTab(el) {
       el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--ink-light)">Loading course content...</div>';
       const contentDocs = {};
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= 6; i++) {
         try {
           const snap = await getDoc(doc(db, 'courseContent', 'module' + i));
           if (snap.exists() && snap.data().html) contentDocs[i] = snap.data().html;
@@ -670,7 +670,7 @@
         el.innerHTML = `
           <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:1rem">Edit the HTML content for each module. Changes are saved to the database and shown to learners immediately. Clear a module to revert to the built-in default.</p>
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.25rem">
-            ${[1,2,3,4,5].map(i=>`<button class="btn btn-sm ${selectedModule===i?'btn-primary':'btn-outline'}" onclick="selectContentMod(${i})">Module ${i}${contentDocs[i]?'  ✏️':''}</button>`).join('')}
+            ${[1,2,3,4,5,6].map(i=>`<button class="btn btn-sm ${selectedModule===i?'btn-primary':'btn-outline'}" onclick="selectContentMod(${i})">Module ${i}${contentDocs[i]?'  ✏️':''}</button>`).join('')}
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;gap:1rem;flex-wrap:wrap">
             <strong style="font-size:0.95rem">Module ${selectedModule}: ${moduleTitles[selectedModule-1]}</strong>
@@ -970,7 +970,7 @@
         promptEmail(
           l.email,
           'Your Dental Nurse Training Oral Health Education Course is now active',
-          'Dear ' + l.name + ',\n\nCongratulations! Your Dental Nurse Training Oral Health Education Course course is now active.\n\nYou can log in at:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you were sent separately.\n\nWork through the 5 theory modules in order, pass each quiz, then complete your written tasks, your "Reflection - Starting Out", your practical portfolio (patient sessions with an in-depth write-up on your focus topic, exhibition, and CPD log/PDP) and your final reflective account.\n\nCourse duration: 9 months from today.\n\nIf you have any questions, please reply to this email or contact emily@dentalnurse.training.\n\nGood luck!\n\nEmily Bremner\nDental Nurse Training'
+          'Dear ' + l.name + ',\n\nCongratulations! Your Dental Nurse Training Oral Health Education Course course is now active.\n\nYou can log in at:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you were sent separately.\n\nWork through the 6 theory modules in order, pass each quiz, then complete your written tasks, your "Reflection - Starting Out", your practical portfolio (patient sessions with an in-depth write-up on your focus topic, exhibition, and CPD log/PDP) and your final reflective account.\n\nCourse duration: 9 months from today.\n\nIf you have any questions, please reply to this email or contact emily@dentalnurse.training.\n\nGood luck!\n\nEmily Bremner\nDental Nurse Training'
         );
       }
       updateStats();
@@ -1165,7 +1165,7 @@
       promptEmail(
         l.email,
         'Welcome to your Dental Nurse Training Oral Health Education Course',
-        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Oral Health Education Course!\n\nYour course is now active. You can log in at any time here:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks and a self-certified "Reflection - Starting Out"\n• A practical portfolio: 6 supervised patients across 9 sessions (with an in-depth write-up on your chosen focus topic), an exhibition, and a CPD log & Personal Development Plan\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 9 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck - we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Oral Health Education Course!\n\nYour course is now active. You can log in at any time here:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 6 theory modules with end-of-module quizzes\n• Written tasks and a self-certified "Reflection - Starting Out"\n• A practical portfolio: 6 supervised patients across 9 sessions (with an in-depth write-up on your chosen focus topic), an exhibition, and a CPD log & Personal Development Plan\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 9 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck - we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
       );
     };
 
