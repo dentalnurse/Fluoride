@@ -446,7 +446,7 @@
       if (allQuizzesPassed && !anyAssessmentStarted) return {
         colour: '#1D4ED8', bg: '#DBEAFE', label: '📝 Ready for assessments',
         emailSubject: 'Great progress - time to start your assessments',
-        emailBody: (n, e) => `Hi ${n},\n\nWell done for completing all five theory modules and quizzes - that is a great achievement!\n\nYou can now begin your written assessments and practical portfolio. Both sections are available in your course dashboard:\nhttps://ohe.dentalnurse.training/login.html\n\nThe written tasks ask you to write 400-600 words on each of three topics. The practical portfolio requires 6 supervised patients across 9 sessions, a case study, an exhibition, and your CPD log & Personal Development Plan. You can work on both at the same time.\n\nDo get in touch if you have any questions.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
+        emailBody: (n, e) => `Hi ${n},\n\nWell done for completing all five theory modules and quizzes - that is a great achievement!\n\nYou can now begin your written assessments and practical portfolio. Both sections are available in your course dashboard:\nhttps://ohe.dentalnurse.training/login.html\n\nThe written tasks ask you to write 400-600 words on each of three topics. The practical portfolio requires 6 supervised patients across 9 sessions (including an in-depth write-up on your chosen focus topic), an exhibition, and your CPD log & Personal Development Plan. You can work on both at the same time.\n\nDo get in touch if you have any questions.\n\nKind regards,\nEmily Bremner\nDental Nurse Training`
       };
       if (amendmentPending) return {
         colour: '#D97706', bg: '#FEF3C7', label: '✏ Awaiting amendment',
@@ -968,7 +968,7 @@
         promptEmail(
           l.email,
           'Your Dental Nurse Training Oral Health Education Course is now active',
-          'Dear ' + l.name + ',\n\nCongratulations! Your Dental Nurse Training Oral Health Education Course course is now active.\n\nYou can log in at:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you were sent separately.\n\nWork through the 5 theory modules in order, pass each quiz, then complete your written tasks, your "Reflection - Starting Out", your practical portfolio (patient sessions, case study, exhibition and CPD log/PDP) and your final reflective account.\n\nCourse duration: 9 months from today.\n\nIf you have any questions, please reply to this email or contact emily@dentalnurse.training.\n\nGood luck!\n\nEmily Bremner\nDental Nurse Training'
+          'Dear ' + l.name + ',\n\nCongratulations! Your Dental Nurse Training Oral Health Education Course course is now active.\n\nYou can log in at:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you were sent separately.\n\nWork through the 5 theory modules in order, pass each quiz, then complete your written tasks, your "Reflection - Starting Out", your practical portfolio (patient sessions with an in-depth write-up on your focus topic, exhibition, and CPD log/PDP) and your final reflective account.\n\nCourse duration: 9 months from today.\n\nIf you have any questions, please reply to this email or contact emily@dentalnurse.training.\n\nGood luck!\n\nEmily Bremner\nDental Nurse Training'
         );
       }
       updateStats();
@@ -1163,7 +1163,7 @@
       promptEmail(
         l.email,
         'Welcome to your Dental Nurse Training Oral Health Education Course',
-        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Oral Health Education Course!\n\nYour course is now active. You can log in at any time here:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks and a self-certified "Reflection - Starting Out"\n• A practical portfolio: 6 supervised patients across 9 sessions, a case study, an exhibition, and a CPD log & Personal Development Plan\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 9 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck - we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
+        'Dear ' + l.name + ',\n\nWelcome to the Dental Nurse Training Oral Health Education Course!\n\nYour course is now active. You can log in at any time here:\nhttps://ohe.dentalnurse.training/login.html\n\nUse your email address (' + l.email + ') and the password you chose when you enrolled.\n\nYour course gives you access to:\n• 5 theory modules with end-of-module quizzes\n• Written tasks and a self-certified "Reflection - Starting Out"\n• A practical portfolio: 6 supervised patients across 9 sessions (with an in-depth write-up on your chosen focus topic), an exhibition, and a CPD log & Personal Development Plan\n• A final reflective account\n• Your CPD certificate on completion\n\nYou have 9 months to complete the course. If you have any questions at any point, just reply to this email.\n\nGood luck - we\'re looking forward to supporting you through the course!\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
       );
     };
 
@@ -1270,7 +1270,7 @@
               <td style="padding:0.4rem 0.5rem;color:var(--ink-light)">${e.notes||''}</td>
             </tr>`).join('')}</tbody>
           </table>` : `<p style="font-size:0.85rem;color:var(--ink-light);margin:0.5rem 0 1.5rem">No PCAS sessions recorded.</p>`}
-          ${textBlock('Case Study', d.caseStudy)}
+          ${textBlock('In-Depth Write-Up' + (d.focusTopic ? ' (Focus Topic ' + esc(d.focusTopic) + ')' : ''), (entries.find(e=>String(e.topic)===String(d.focusTopic)&&Number(e.visit)===2)||{}).inDepthWriteup)}
           <div style="margin-bottom:1.25rem">
             <strong style="font-size:0.9rem;color:var(--teal-dark)">Exhibition</strong>
             <div style="font-size:0.82rem;color:var(--ink-light);margin-top:0.4rem">Topic: ${esc(d.exhibitionTopic)||'-'} &nbsp;|&nbsp; Target group: ${esc(d.exhibitionTargetGroup)||'-'}</div>

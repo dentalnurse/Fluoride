@@ -589,11 +589,12 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
 
     // ═══════════════════════════════════════════════════════════════════
     // PRACTICAL PORTFOLIO
-    // Four components, submitted together for review:
-    //  1. Practical Competence sessions (6 patients / 9 sessions, topics 1-6)
-    //  2. Case Study (one, expanded from a patient above, 2000-2500 words)
-    //  3. Exhibition (report 800-1000 words + optional photo evidence)
-    //  4. CPD Log & Personal Development Plan
+    // Three components, submitted together for review:
+    //  1. Practical Competence sessions (6 patients / 9 sessions, topics 1-6),
+    //     plus an in-depth write-up (1500-2000 words) on the learner's chosen
+    //     Focus Topic (one of 1-3), replacing a standalone case study
+    //  2. Exhibition (report 800-1000 words + optional photo evidence)
+    //  3. CPD Log & Personal Development Plan
     // ═══════════════════════════════════════════════════════════════════
 
     function pcasRequiredVisits(topicCode) {
@@ -613,6 +614,16 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       });
       return groups.size;
     }
+    function focusTopicEntry() {
+      if (!learner.focusTopic) return null;
+      return pcasEntriesFor(learner.focusTopic).find(e => e.visit === 2) || null;
+    }
+    function focusTopicComplete() {
+      const e = focusTopicEntry();
+      if (!e) return false;
+      const wc = wordCount(e.inDepthWriteup || '');
+      return wc >= 1500 && wc <= 2000;
+    }
 
     function renderPractical(el) {
       const amendmentRequested = !!learner.practicalAmendmentRequested;
@@ -621,7 +632,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       const pendingSignoff = learner.practicalPendingSignoff && !learner.practicalSubmitted && !amendmentRequested;
       const locked = submitted || pendingSignoff; // read-only once sent onward
 
-      let html = '<div class="dash-header"><h1>Practical Portfolio</h1><p>Complete all four parts below: your practical competence sessions, a case study, an exhibition, and your CPD log &amp; personal development plan.</p></div>';
+      let html = '<div class="dash-header"><h1>Practical Portfolio</h1><p>Complete all three parts below: your practical competence sessions (including an in-depth write-up on your chosen focus topic), an exhibition, and your CPD log &amp; personal development plan.</p></div>';
       if (passed) {
         html += '<div class="submission-status status-submitted" style="background:#E8F7EE;color:#1A7F4B;border-color:rgba(26,127,75,0.2)"><span>✅</span> Practical portfolio passed! Well done.</div>';
       } else if (amendmentRequested) {
@@ -661,17 +672,15 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       }
 
       html += renderPcasSection(locked);
-      html += renderCaseStudySection(locked);
       html += renderExhibitionSection(locked);
       html += renderCpdPdpSection(locked);
 
       if (!locked) {
         const groupsOk = pcasGroupsCovered() >= 4;
-        const csWc = wordCount(learner.caseStudy || '');
+        const focusOk = focusTopicComplete();
         const exWc = wordCount(learner.exhibitionReport || '');
         const pdp = learner.pdp || {};
-        const canSubmit = pcasComplete() && groupsOk
-          && csWc >= 2000 && csWc <= 2500
+        const canSubmit = pcasComplete() && groupsOk && focusOk
           && exWc >= 800 && exWc <= 1000
           && !!(learner.exhibitionTopic || '').trim() && !!(learner.exhibitionTargetGroup || '').trim()
           && (learner.cpdLog || []).length >= 1
@@ -680,7 +689,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         const missing = [];
         if (!pcasComplete()) missing.push('all 6 patient topics (9 sessions)');
         if (!groupsOk) missing.push('at least 4 different patient groups');
-        if (!(csWc >= 2000 && csWc <= 2500)) missing.push('a case study of 2,000-2,500 words');
+        if (!focusOk) missing.push('your in-depth write-up (1,500-2,000 words) on your chosen focus topic');
         if (!(exWc >= 800 && exWc <= 1000) || !(learner.exhibitionTopic||'').trim() || !(learner.exhibitionTargetGroup||'').trim()) missing.push('a complete exhibition report (800-1,000 words)');
         if ((learner.cpdLog || []).length < 1) missing.push('at least one CPD log entry');
         if (!canSubmit && (!(pdp.strengths||'').trim() || !(pdp.areas||'').trim() || !(pdp.goals||'').trim() || !(pdp.timescale||'').trim())) missing.push('your personal development plan');
@@ -714,10 +723,21 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
               <li style="margin-bottom:0.85rem">Topics <strong>1-3</strong> (caries, periodontal disease, diet &amp; tooth wear) each need <strong>one patient seen for two sessions</strong> - an initial session and a follow-up.</li>
               <li style="margin-bottom:0.85rem">Topics <strong>4-6</strong> (dentures/appliances, orthodontic appliances, additional needs) each need <strong>one patient seen for a single session</strong>.</li>
               <li style="margin-bottom:0.85rem">Across your 6 patients, try to cover <strong>at least 4 of the 6 patient groups</strong> listed on each form - plan this in advance with your supervisor where you can.</li>
+              <li style="margin-bottom:0.85rem">Choose <strong>one of topics 1-3 as your Focus Topic</strong> below. That patient's follow-up session write-up will include an extended in-depth section instead of a separate case study.</li>
               <li style="margin-bottom:0.85rem">Your supervising clinician must be <strong>physically present</strong> for every session and will be asked to countersign it.</li>
               <li style="margin-bottom:0"><strong>Complete each write-up within 14 days</strong> of the session taking place, while it's fresh - not weeks later.</li>
             </ol>
           </div>
+        </div>
+        <div class="form-group" style="max-width:420px">
+          <label for="pcFocusTopic">Focus Topic <span style="font-weight:400;color:var(--ink-light)">(pick one of topics 1-3 for your in-depth write-up)</span></label>
+          ${locked
+            ? `<div style="padding:0.6rem 0;color:var(--ink-mid)">${learner.focusTopic ? 'Topic ' + esc(learner.focusTopic) + ' - ' + esc((PCAS_TOPICS.find(t=>t.code===learner.focusTopic)||{}).label||'') : '-'}</div>`
+            : `<select id="pcFocusTopic" onchange="saveFocusTopic(this.value)">
+                <option value="">Select your focus topic...</option>
+                ${PCAS_TOPICS_TWICE.map(t => `<option value="${t.code}" ${learner.focusTopic===t.code?'selected':''}>Topic ${t.code} - ${esc(t.label)}</option>`).join('')}
+              </select>`
+          }
         </div>
         <div style="display:flex;flex-direction:column;gap:0.75rem">`;
 
@@ -725,10 +745,11 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         const required = pcasRequiredVisits(t.code);
         const entries = pcasEntriesFor(t.code);
         const done = entries.length >= required;
-        html += `<div style="border:1px solid var(--border);border-radius:var(--radius);padding:1rem;background:${done?'#F0FAF5':'var(--off-white)'}">
+        const isFocus = learner.focusTopic === t.code;
+        html += `<div style="border:1px solid ${isFocus?'var(--teal)':'var(--border)'};border-radius:var(--radius);padding:1rem;background:${done?'#F0FAF5':'var(--off-white)'}">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:${entries.length?'0.75rem':'0'}">
-            <div><strong style="font-size:0.9rem">Topic ${t.code} - ${esc(t.label)}</strong>
-              <div style="font-size:0.8rem;color:var(--ink-light);margin-top:0.15rem">${required===2?'2 sessions required (same patient)':'1 session required'}</div>
+            <div><strong style="font-size:0.9rem">Topic ${t.code} - ${esc(t.label)}</strong> ${isFocus?'<span style="font-size:0.72rem;font-weight:700;padding:0.15rem 0.55rem;border-radius:9999px;background:var(--teal-pale);color:var(--teal-dark);margin-left:0.4rem">📝 Focus topic</span>':''}
+              <div style="font-size:0.8rem;color:var(--ink-light);margin-top:0.15rem">${required===2?'2 sessions required (same patient)':'1 session required'}${isFocus?' + in-depth write-up (1,500-2,000 words)':''}</div>
             </div>
             <span style="font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px;${done?'background:#D1FAE5;color:#065F46':'background:#F3F4F6;color:#6B7280'}">${entries.length}/${required} recorded</span>
           </div>
@@ -736,6 +757,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
             ${entries.map((e,i) => `<button class="btn btn-outline btn-sm" onclick="viewPcasEntry('${t.code}',${e.visit})">👁 Session ${e.visit}</button>`).join('')}
             ${!locked && entries.length < required ? `<button class="btn btn-primary btn-sm" onclick="addPcasEntry('${t.code}',${entries.length+1})">+ ${entries.length===0?'Add patient (session 1)':'Add session 2 (follow-up)'}</button>` : ''}
+            ${!locked && isFocus && entries.length >= required && !wordCount((entries.find(e=>e.visit===2)||{}).inDepthWriteup||'') ? `<button class="btn btn-primary btn-sm" onclick="addFocusWriteup('${t.code}')">✏ Add in-depth write-up</button>` : ''}
           </div>
         </div>`;
       });
@@ -746,6 +768,14 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       </div>`;
       return html;
     }
+
+    window.saveFocusTopic = async (code) => {
+      learner.focusTopic = code;
+      try {
+        await setDoc(doc(db, 'learners', uid), { focusTopic: code }, { merge: true });
+        renderPractical(document.getElementById('dashMain'));
+      } catch(e) { console.error(e); }
+    };
 
     window.viewPcasEntry = (topic, visit) => {
       const e = pcasEntriesFor(topic).find(x => x.visit === visit);
@@ -761,6 +791,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         ['Advice given / session narrative', e.advice],
         ['Methods of evaluation', e.evaluation],
         ['Reflective account', e.reflectionText],
+        (visit === 2 && topic === learner.focusTopic) ? ['In-depth write-up', e.inDepthWriteup] : null,
         ['Supervisor', (e.supervisorName||'-') + ' (GDC: ' + (e.supervisorGdc||'-') + ')'],
         ['Notes', e.notes],
       ].filter(Boolean);
@@ -816,6 +847,15 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
           <div class="form-group"><label>What has changed since the last visit? *</label><textarea id="pc-changes" style="min-height:90px"></textarea></div>
           `}
 
+          ${(visit === 2 && topic === learner.focusTopic) ? `
+          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">In-Depth Write-Up (Focus Topic)</div>
+          <div class="callout" style="margin-bottom:1rem;font-size:0.85rem"><p style="margin:0">This is your chosen focus topic. Instead of a separate case study, expand this patient's care into a single in-depth write-up (1,500-2,000 words) covering: their background, needs and social circumstances; your aims, objectives and planning across both sessions; the advice and resources you used, with evidence-based reasoning; how you evaluated your approach; what changed for the patient; and your self-reflection on what you'd do differently.</p></div>
+          <div class="form-group"><label>Your in-depth write-up *</label>
+            <textarea id="pc-inDepth" style="min-height:360px;font-size:0.93rem;line-height:1.8" oninput="onPcasInDepthInput()"></textarea>
+            <span id="pc-inDepthWc" style="font-size:0.82rem;font-weight:600;color:var(--ink-light);display:inline-block;margin-top:0.4rem">0 words</span>
+          </div>
+          ` : ''}
+
           <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">The Advice Provided</div>
           <div class="form-group"><label>Setting &amp; resources used *</label><textarea id="pc-setting" style="min-height:70px" placeholder="Where the session took place, and what resources/teaching aids you used"></textarea></div>
           <div class="form-group"><label>Aim *</label><input type="text" id="pc-aim" placeholder="Your overall goal for this session"/></div>
@@ -851,6 +891,15 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       document.body.appendChild(formDiv);
     };
 
+    window.onPcasInDepthInput = () => {
+      const ta = document.getElementById('pc-inDepth');
+      const wcEl = document.getElementById('pc-inDepthWc');
+      if (!ta || !wcEl) return;
+      const wc = wordCount(ta.value);
+      wcEl.textContent = wc + ' words';
+      wcEl.style.color = wcColourRange(wc, 1500, 2000);
+    };
+
     window.onPcasSupSelect = () => {
       const sel = document.getElementById('pc-supSelect');
       if (!sel) return;
@@ -881,6 +930,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         medHistory: visit === 1 ? val('pc-medHistory') : '',
         social: visit === 1 ? val('pc-social') : '',
         changes: visit === 2 ? val('pc-changes') : '',
+        inDepthWriteup: (visit === 2 && topic === learner.focusTopic) ? val('pc-inDepth') : '',
         setting: val('pc-setting'),
         aim: val('pc-aim'),
         objectives: val('pc-objectives'),
@@ -901,6 +951,13 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         errEl.textContent = 'Please complete all required fields marked *.';
         errEl.style.display = 'block'; return;
       }
+      if (visit === 2 && topic === learner.focusTopic) {
+        const wc = wordCount(entry.inDepthWriteup);
+        if (wc < 1500 || wc > 2000) {
+          errEl.textContent = 'Your in-depth write-up must be between 1,500 and 2,000 words (currently ' + wc + ').';
+          errEl.style.display = 'block'; return;
+        }
+      }
 
       if (!learner.pcasEntries) learner.pcasEntries = [];
       learner.pcasEntries = learner.pcasEntries.filter(e => !(e.topic === topic && e.visit === visit));
@@ -917,50 +974,56 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       }
     };
 
-    // ── 2. Case study ──────────────────────────────────────────────────────
-    function renderCaseStudySection(locked) {
-      const text = learner.caseStudy || '';
-      const wc = wordCount(text);
-      return `<div class="content-card" style="margin-bottom:1.25rem">
-        <h2 style="margin:0 0 0.25rem">2. Case Study</h2>
-        <p style="margin:0 0 1rem;font-size:0.88rem;color:var(--ink-light)">2,000-2,500 words. Choose ONE of your six patients above and expand their care into a full case study. Your chosen patient must be seen for a minimum of three visits (the third may be a follow-up phone call or questionnaire rather than a face-to-face session).</p>
-        <div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.25rem;overflow:hidden">
-          <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.cs-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="width:100%;text-align:left;padding:0.85rem 1rem;background:var(--teal-pale);border:none;cursor:pointer;font-size:0.9rem;font-weight:600;color:var(--teal-dark);display:flex;justify-content:space-between;align-items:center">
-            📋 Suggested structure <span class="cs-arrow">▼</span>
-          </button>
-          <div style="display:none;padding:1.25rem;font-size:0.88rem;line-height:1.85;color:var(--ink-mid)">
-            <p style="margin-bottom:0.6rem">Use headings for each of these - your assessor is looking for evidence-based clinical reasoning, not just description:</p>
-            <ol style="padding-left:1.25rem;margin:0">
-              <li>Source of referral, age, and the patient's presenting problem</li>
-              <li>Other health problems, social circumstances, and contact with other disciplines</li>
-              <li>The patient's needs, and your assessment of their existing knowledge, skills and attitude</li>
-              <li>Your aims and objectives</li>
-              <li>Planning and format - include a lesson plan for each session</li>
-              <li>Resources and teaching aids used, with evidence-based research to support your approach</li>
-              <li>Limitations, and your methods of evaluation</li>
-              <li>Results, and the changes you observed - in the patient, and in yourself</li>
-              <li>Follow-up visits arranged</li>
-              <li>Whether you achieved your aims and objectives - your learning outcomes</li>
-              <li>Self-reflection</li>
-              <li>References, in a consistent style, and appendices (charting, plaque scores, lesson plans) if relevant</li>
-            </ol>
+    window.addFocusWriteup = (topic) => {
+      const entry = pcasEntriesFor(topic).find(e => e.visit === 2);
+      if (!entry) return;
+      const formDiv = document.createElement('div');
+      formDiv.id = 'pcasEntryForm';
+      formDiv.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem';
+      formDiv.innerHTML = `
+        <div class="lb-form-wrap">
+          <h3 style="margin:0 0 0.35rem;color:var(--teal-dark)">Topic ${topic} - In-Depth Write-Up</h3>
+          <div class="callout" style="margin-bottom:1rem;font-size:0.85rem"><p style="margin:0">This is your chosen focus topic. Expand this patient's care into a single in-depth write-up (1,500-2,000 words) covering: their background, needs and social circumstances; your aims, objectives and planning across both sessions; the advice and resources you used, with evidence-based reasoning; how you evaluated your approach; what changed for the patient; and your self-reflection on what you'd do differently.</p></div>
+          <div class="form-group"><label>Your in-depth write-up *</label>
+            <textarea id="pc-inDepth" style="min-height:360px;font-size:0.93rem;line-height:1.8" oninput="onPcasInDepthInput()">${esc(entry.inDepthWriteup||'')}</textarea>
+            <span id="pc-inDepthWc" style="font-size:0.82rem;font-weight:600;color:var(--ink-light);display:inline-block;margin-top:0.4rem">0 words</span>
           </div>
-        </div>
-        <div class="form-group">
-          <label for="csText">Your case study</label>
-          ${locked
-            ? `<div style="background:var(--off-white);border-radius:var(--radius);padding:1rem;font-size:0.9rem;line-height:1.75;white-space:pre-wrap;color:var(--ink-mid)">${esc(text)||'<em style="color:var(--ink-light)">Not completed</em>'}</div>`
-            : `<textarea id="csText" style="width:100%;box-sizing:border-box;min-height:420px;font-size:0.93rem;line-height:1.85" placeholder="Write your case study here..." oninput="onPracticalTextInput('caseStudy','csText','csWc',2000,2500)">${esc(text)}</textarea>`
-          }
-        </div>
-        ${!locked ? `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-          <span id="csWc" style="font-size:0.82rem;font-weight:600;color:${wcColourRange(wc,2000,2500)}">${wc} words</span>
-          <button class="btn btn-outline btn-sm" onclick="savePracticalDrafts()">💾 Save draft</button>
-        </div>` : ''}
-      </div>`;
-    }
+          <div id="pc-err" style="display:none;color:#D32F2F;font-size:0.85rem;margin-top:0.75rem;padding:0.5rem 0.75rem;background:#FFF0F0;border-radius:var(--radius)"></div>
+          <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
+            <button class="btn btn-primary" onclick="saveFocusWriteup('${topic}')">Save write-up</button>
+            <button class="btn btn-outline" onclick="document.getElementById('pcasEntryForm').remove()">Cancel</button>
+          </div>
+        </div>`;
+      document.body.appendChild(formDiv);
+      onPcasInDepthInput();
+    };
 
-    // ── 3. Exhibition ──────────────────────────────────────────────────────
+    window.saveFocusWriteup = async (topic) => {
+      const errEl = document.getElementById('pc-err');
+      const text = document.getElementById('pc-inDepth')?.value.trim() || '';
+      const wc = wordCount(text);
+      if (wc < 1500 || wc > 2000) {
+        errEl.textContent = 'Your in-depth write-up must be between 1,500 and 2,000 words (currently ' + wc + ').';
+        errEl.style.display = 'block'; return;
+      }
+      const entries = learner.pcasEntries || [];
+      const idx = entries.findIndex(e => e.topic === topic && e.visit === 2);
+      if (idx === -1) return;
+      entries[idx] = { ...entries[idx], inDepthWriteup: text };
+      learner.pcasEntries = entries;
+      try {
+        await setDoc(doc(db, 'learners', uid), { pcasEntries: entries }, { merge: true });
+        document.getElementById('pcasEntryForm').remove();
+        showToast('In-depth write-up saved ✅', 'success');
+        renderPractical(document.getElementById('dashMain'));
+      } catch(e) {
+        console.error(e);
+        errEl.textContent = 'Could not save. Please try again.';
+        errEl.style.display = 'block';
+      }
+    };
+
+    // ── 2. Exhibition ──────────────────────────────────────────────────────
     function renderExhibitionSection(locked) {
       const text = learner.exhibitionReport || '';
       const wc = wordCount(text);
@@ -968,7 +1031,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       const targetGroup = learner.exhibitionTargetGroup || '';
       const photoUrl = learner.exhibitionPhotoUrl || '';
       return `<div class="content-card" style="margin-bottom:1.25rem">
-        <h2 style="margin:0 0 0.25rem">3. Exhibition</h2>
+        <h2 style="margin:0 0 0.25rem">2. Exhibition</h2>
         <p style="margin:0 0 1rem;font-size:0.88rem;color:var(--ink-light)">Choose a target group and produce, display and evaluate a real oral health exhibition (a display board, presentation, or similar) - then write a report of 800-1,000 words about it.</p>
         <div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.25rem;overflow:hidden">
           <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.ex-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="width:100%;text-align:left;padding:0.85rem 1rem;background:var(--teal-pale);border:none;cursor:pointer;font-size:0.9rem;font-weight:600;color:var(--teal-dark);display:flex;justify-content:space-between;align-items:center">
@@ -1035,7 +1098,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       const totalHours = log.reduce((n,e) => n + (parseFloat(e.hours)||0), 0);
       const pdp = learner.pdp || {};
       return `<div class="content-card" style="margin-bottom:1.25rem">
-        <h2 style="margin:0 0 0.25rem">4. CPD Log &amp; Personal Development Plan</h2>
+        <h2 style="margin:0 0 0.25rem">3. CPD Log &amp; Personal Development Plan</h2>
         <p style="margin:0 0 1rem;font-size:0.88rem;color:var(--ink-light)">A record of CPD activity relevant to oral health education completed in the last 12 months, plus a personal development plan (PDP).</p>
 
         <h3 style="font-size:0.95rem;margin-bottom:0.5rem">CPD Log</h3>
@@ -1151,7 +1214,6 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
 
     window.savePracticalDrafts = async (auto = false) => {
       const data = {};
-      const cs = document.getElementById('csText'); if (cs) { data.caseStudy = cs.value; learner.caseStudy = cs.value; }
       const ex = document.getElementById('exText'); if (ex) { data.exhibitionReport = ex.value; learner.exhibitionReport = ex.value; }
       const exT = document.getElementById('exTopic'); if (exT) { data.exhibitionTopic = exT.value; learner.exhibitionTopic = exT.value; }
       const exG = document.getElementById('exTargetGroup'); if (exG) { data.exhibitionTargetGroup = exG.value; learner.exhibitionTargetGroup = exG.value; }
@@ -1485,7 +1547,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
               <li>Complete all <strong>five theory modules</strong> and pass each end-of-module MCQ (75% pass mark; unlimited retakes)</li>
               <li>Complete <strong>three written tasks</strong> (400-600 words each), answered directly in your dashboard</li>
               <li>Write a short <strong>starting reflection</strong> (300+ words) before you begin seeing patients</li>
-              <li>Complete a <strong>practical portfolio</strong>: 6 supervised patients across 9 sessions covering 6 topics and at least 4 patient groups, a <strong>case study</strong> (2,000-2,500 words), an <strong>exhibition</strong> you design, produce and evaluate (report 800-1,000 words), and a <strong>CPD log &amp; personal development plan</strong></li>
+              <li>Complete a <strong>practical portfolio</strong>: 6 supervised patients across 9 sessions covering 6 topics and at least 4 patient groups, including an <strong>in-depth write-up</strong> (1,500-2,000 words) on your chosen focus topic, an <strong>exhibition</strong> you design, produce and evaluate (report 800-1,000 words), and a <strong>CPD log &amp; personal development plan</strong></li>
               <li>Write a <strong>final reflective account</strong> (300-500 words) at the end of the course</li>
             </ul>
             <p style="margin-bottom:0;font-size:0.9rem">Course access: <strong>${COURSE_DURATION_MONTHS} months</strong> from enrolment. Extensions are available at £15 per additional month.</p>

@@ -229,11 +229,15 @@
           }).join('')}</tbody>
         </table>`;
 
-    // ── Case study ───────────────────────────────────────────────────────────
-    const csText = l.caseStudy || '';
-    const csHtml = csText
-      ? `<div class="task-body">${esc(csText)}</div><div class="task-wc">${wc(csText)} words</div>`
-      : `<div class="task-body empty">Not yet written.</div>`;
+    // ── In-depth write-up (focus topic) ─────────────────────────────────────
+    const focusTopic = l.focusTopic || '';
+    const focusEntry = entries.find(e => String(e.topic) === String(focusTopic) && Number(e.visit) === 2);
+    const idwText = focusEntry ? (focusEntry.inDepthWriteup || '') : '';
+    const csHtml = !focusTopic
+      ? `<div class="task-body empty">No focus topic chosen yet.</div>`
+      : idwText
+        ? `<div class="task-label">Focus topic: ${esc(focusTopic)}</div><div class="task-body">${esc(idwText)}</div><div class="task-wc">${wc(idwText)} words</div>`
+        : `<div class="task-label">Focus topic: ${esc(focusTopic)}</div><div class="task-body empty">Not yet written.</div>`;
 
     // ── Exhibition ───────────────────────────────────────────────────────────
     const exText = l.exhibitionReport || '';
@@ -324,7 +328,7 @@
       </div>
 
       <div class="section">
-        <div class="section-title">📋 Case Study</div>
+        <div class="section-title">📋 In-Depth Write-Up (Focus Topic)</div>
         ${csHtml}
       </div>
 
