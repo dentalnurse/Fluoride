@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0L9NXXFBFR');
+  </script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Hub - Dental Nurse Training</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .hub-filters { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.1rem; align-items:center; }
+    .hub-filter-btn { padding:0.4rem 0.9rem; border-radius:100px; font-size:0.8rem; font-weight:600; cursor:pointer; border:1.5px solid var(--border); background:var(--white); color:var(--ink-mid); }
+    .hub-filter-btn.active { background:var(--teal-dark); color:var(--white); border-color:var(--teal-dark); }
+    .hub-search { flex:1; min-width:180px; max-width:280px; padding:0.5rem 0.9rem; border:1.5px solid var(--border); border-radius:100px; font-size:0.85rem; }
+    .hub-toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem; }
+    .checklist-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:0.6rem 1.25rem; margin:0.75rem 0 1.25rem; }
+    .checklist-item { display:flex; align-items:flex-start; gap:0.55rem; font-size:0.86rem; color:var(--ink-mid); cursor:pointer; }
+    .checklist-item input { margin-top:0.2rem; width:16px; height:16px; accent-color:var(--teal); flex-shrink:0; }
+    .checklist-item.checked span { color:var(--ink); text-decoration:line-through; text-decoration-color:var(--border); }
+    .note-item { border-left:3px solid var(--teal-light); padding:0.5rem 0.75rem; margin-bottom:0.6rem; background:var(--off-white); border-radius:0 var(--radius) var(--radius) 0; }
+    .note-item .note-meta { font-size:0.72rem; color:var(--ink-light); margin-top:0.25rem; }
+    .note-item .note-text { font-size:0.86rem; color:var(--ink); white-space:pre-wrap; }
+    .empty-state { text-align:center; padding:2.5rem 1rem; color:var(--ink-light); font-size:0.9rem; }
+    .hub-flag { color:#D93025; font-size:0.95rem; }
+    .assessor-chip { display:inline-flex; align-items:center; gap:0.4rem; background:var(--teal-pale); border:1px solid var(--teal-light); color:var(--teal-dark); padding:0.35rem 0.75rem; border-radius:100px; font-size:0.82rem; font-weight:600; margin:0 0.4rem 0.4rem 0; }
+    .assessor-chip button { background:none; border:none; color:var(--teal-dark); cursor:pointer; font-size:0.95rem; line-height:1; opacity:0.6; }
+    .assessor-chip button:hover { opacity:1; }
+    .attention-list { display:flex; flex-direction:column; gap:0.5rem; }
+    .attention-row { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; padding:0.6rem 0.9rem; background:var(--white); border:1px solid #F59E0B; border-radius:var(--radius); font-size:0.85rem; cursor:pointer; }
+    .attention-row:hover { background:#FFFBEB; }
+    .field-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    @media (max-width:640px){ .field-row{ grid-template-columns:1fr; } .admin-stat-row{ grid-template-columns:repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+
+  <!-- Login screen (shown before auth) -->
+  <div id="hubLogin" class="auth-wrap">
+    <div class="auth-card" style="max-width:400px">
+      <div class="auth-logo">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png"
+             alt="Dental Nurse Training" style="height:56px;margin:0 auto 1rem" onerror="this.style.display='none'"/>
+        <h2>Student Hub</h2>
+        <p style="font-size:0.85rem;color:var(--ink-light);margin-top:0.25rem">Onboarding, enquiries &amp; tasks</p>
+      </div>
+      <div class="form-group">
+        <label>Admin email</label>
+        <input type="email" id="hubEmail" value="emily@dentalnurse.training"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="hubPass" placeholder="••••••••"/>
+      </div>
+      <div id="hubLoginErr" class="form-error" style="display:none"></div>
+      <button class="btn btn-primary form-submit" onclick="hubLogin()">Log in</button>
+    </div>
+  </div>
+
+  <!-- Hub panel (shown after auth) -->
+  <div id="hubPanel" style="display:none">
+    <div class="admin-header">
+      <div>
+        <h1>Student Hub</h1>
+        <span style="font-size:0.8rem;opacity:0.6">Onboarding · Enquiries · Tasks</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
+        <a href="admin/index.html" class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.8)">⚙️ Course Admin</a>
+        <span id="hubUserEmail" style="font-size:0.85rem;color:rgba(255,255,255,0.6)"></span>
+        <button class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.8)" onclick="hubLogout()">Log out</button>
+      </div>
+    </div>
+
+    <div class="admin-panel">
+      <!-- Needs-attention banner -->
+      <div id="hubAttentionBanner" style="display:none;background:#FEF3C7;border:1.5px solid #F59E0B;border-radius:var(--radius);padding:0.85rem 1.25rem;margin-bottom:1.25rem;font-size:0.88rem;color:#92400E;align-items:center;gap:0.6rem;flex-wrap:wrap">
+        <span style="font-size:1.1rem">🔔</span>
+        <span id="hubAttentionText" style="font-weight:600"></span>
+      </div>
+
+      <!-- Stats row -->
+      <div class="admin-stat-row">
+        <div class="admin-stat"><div class="as-n" id="statOnbActive">-</div><div class="as-lbl">Active onboarding</div></div>
+        <div class="admin-stat" id="statAttentionTile"><div class="as-n" id="statAttention">-</div><div class="as-lbl">Needs attention</div></div>
+        <div class="admin-stat"><div class="as-n" id="statInquiries">-</div><div class="as-lbl">Open enquiries</div></div>
+        <div class="admin-stat"><div class="as-n" id="statTasks">-</div><div class="as-lbl">Open tasks</div></div>
+        <div class="admin-stat"><div class="as-n" id="statCompletedMonth">-</div><div class="as-lbl">Completed this month</div></div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="admin-tabs">
+        <div class="admin-tab active" data-tab="overview" onclick="switchHubTab('overview')">🏠 Overview</div>
+        <div class="admin-tab" data-tab="onboarding" onclick="switchHubTab('onboarding')">🎓 Onboarding</div>
+        <div class="admin-tab" data-tab="inquiries" onclick="switchHubTab('inquiries')">📞 Enquiries</div>
+        <div class="admin-tab" data-tab="tasks" onclick="switchHubTab('tasks')">✅ Tasks</div>
+        <div class="admin-tab" data-tab="assessors" onclick="switchHubTab('assessors')">👥 Assessors</div>
+        <div class="admin-tab" data-tab="archive" onclick="switchHubTab('archive')">📦 Archive</div>
+      </div>
+
+      <div id="hubTabContent">
+        <div style="text-align:center;padding:3rem;color:var(--ink-light)">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal-overlay hidden" id="onbModal"><div class="modal" id="onbModalContent" style="max-width:720px;width:100%"></div></div>
+  <div class="modal-overlay hidden" id="inqModal"><div class="modal" id="inqModalContent" style="max-width:640px;width:100%"></div></div>
+  <div class="modal-overlay hidden" id="taskModal"><div class="modal" id="taskModalContent" style="max-width:560px;width:100%"></div></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, addDoc, updateDoc, deleteDoc, getDoc, setDoc, arrayUnion, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const app  = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    // ── Config: programmes & checklist templates ─────────────────────────────
+    const PROGRAMMES = ['Diploma','NEBDN RAD','BDA RAD','BDA OHE','NEBDN OHE','NEBDN FVA','Other'];
+
+    const CORE_CHECKLIST = [
+      { k:'contact',           l:'Added to phone / WhatsApp & contacted' },
+      { k:'id',                l:'Photo ID received' },
+      { k:'courseInfoSent',    l:'Course info / induction & SMA sent' },
+      { k:'qEmployerSent',     l:'Employer questionnaire sent' },
+      { k:'qLearnerSent',      l:'Learner questionnaire sent' },
+      { k:'qEmployerReceived', l:'Employer questionnaire received' },
+      { k:'qLearnerReceived',  l:'Learner questionnaire received' },
+      { k:'smaEmployer',       l:'SMA signed - employer' },
+      { k:'smaLearner',        l:'SMA signed - learner' },
+      { k:'smaProvider',       l:'SMA signed - provider' },
+      { k:'enrolled',          l:'Enrolled with awarding body' },
+      { k:'loginsSent',        l:'DNT logins sent' },
+      { k:'adjustments',       l:'Adjustments checked & noted' },
+    ];
+    const EXTRA_CHECKLIST = {
+      'Diploma': [
+        { k:'teamsBrief',          l:'Teams brief / intro call done' },
+        { k:'qDiscussed',          l:'Questionnaires discussed with learner & practice' },
+        { k:'inductionDocs',       l:'Induction docs completed' },
+        { k:'hepB',                l:'Hep B evidence received' },
+        { k:'iqaDoc',              l:'Added to IQA tracking doc' },
+        { k:'pebblepadSMA',        l:'SMA added to Pebblepad' },
+        { k:'pebblepadAssessor',   l:'Assessor & IQA details added to Pebblepad' },
+      ],
+      'NEBDN RAD': [
+        { k:'trainingSupportSheet', l:'Training support sheet received' },
+        { k:'pebblepadWitnesses',   l:'Pebblepad witnesses sent' },
+        { k:'tutorCloud',           l:'Moved to Tutor Cloud' },
+        { k:'iqaDoc',               l:'Added to IQA tracking doc' },
+      ],
+      'NEBDN OHE': [
+        { k:'trainingSupportSheet', l:'Training support sheet received' },
+        { k:'pebblepadWitnesses',   l:'Pebblepad witnesses sent' },
+        { k:'tutorCloud',           l:'Moved to Tutor Cloud' },
+        { k:'iqaDoc',               l:'Added to IQA tracking doc' },
+      ],
+      'NEBDN FVA': [],
+      'BDA RAD': [
+        { k:'whatsapp',          l:'WhatsApp voicenote sent' },
+        { k:'accountIdILP',      l:'Account ID added to ILP' },
+        { k:'contractReceived',  l:'BDA contract received' },
+        { k:'gdcLearner',        l:"Learner's GDC checked & added to ILP" },
+        { k:'gdcSupervisor',     l:'Supervisor GDC & status checked (must be dentist)' },
+        { k:'tutorCloudBDA',     l:'Into Tutor Cloud & added to BDA enrolment sheet' },
+      ],
+      'BDA OHE': [
+        { k:'whatsapp',          l:'WhatsApp voicenote sent' },
+        { k:'callWithLearner',   l:'Call with learner done' },
+        { k:'accountIdILP',      l:'Account ID added to ILP' },
+        { k:'contractReceived',  l:'BDA contract received' },
+        { k:'gdcLearner',        l:"Learner's GDC checked & added to ILP" },
+        { k:'gdcSupervisor',     l:'Supervisor GDC & status checked (must be dentist)' },
+        { k:'tutorCloudBDA',     l:'Into Tutor Cloud & added to BDA enrolment sheet' },
+      ],
+      'Other': [],
+    };
+    function getChecklist(programme) { return CORE_CHECKLIST.concat(EXTRA_CHECKLIST[programme] || []); }
+    const BDA_PROGRAMMES = ['BDA RAD', 'BDA OHE'];
+
+    const PAYMENT_STATUSES = ['Not started','Instalments','Paid in full','Waiting on payment','Withdrawn'];
+
+    const ONB_STATUS = {
+      not_started: { label:'Not started',   pill:'pill-grey' },
+      in_progress: { label:'In progress',   pill:'pill-teal' },
+      issue:       { label:'Needs attention', pill:'pill-red' },
+      completed:   { label:'Completed - moved to ILP', pill:'pill-green' },
+    };
+    const INQ_STATUS = {
+      new:               { label:'New',               pill:'pill-teal' },
+      contacted:         { label:'Contacted',          pill:'pill-teal' },
+      info_sent:         { label:'Info sent',          pill:'pill-teal' },
+      awaiting_decision: { label:'Awaiting decision',  pill:'pill-orange' },
+      converted:         { label:'Converted',          pill:'pill-green' },
+      lost:              { label:'Lost / not proceeding', pill:'pill-grey' },
+    };
+    const STALE_DAYS = 5;
+
+    // ── State ──────────────────────────────────────────────────────────────
+    let onboarding = [], inquiries = [], tasks = [], assessorNames = [];
+    let currentTab = 'overview';
+    let onbFilter = { programme:'all', status:'all', q:'' };
+    let inqFilter = { status:'all', q:'' };
+    let taskFilter = { assessor:'all', status:'open' };
+
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function showToast(msg, type='success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = 'toast show ' + type;
+      setTimeout(() => t.className = 'toast', 2500);
+    }
+    function fmtDate(v) {
+      if (!v) return '—';
+      const d = typeof v === 'number' ? new Date(v) : (v.toDate ? v.toDate() : new Date(v));
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+    }
+    function daysSince(v) {
+      if (!v) return null;
+      const d = typeof v === 'number' ? new Date(v) : (v.toDate ? v.toDate() : new Date(v));
+      if (isNaN(d.getTime())) return null;
+      return Math.floor((Date.now() - d.getTime()) / 86400000);
+    }
+    function currentUserLabel() {
+      const email = auth.currentUser ? auth.currentUser.email : '';
+      const first = (email.split('@')[0] || 'Admin');
+      return first.charAt(0).toUpperCase() + first.slice(1);
+    }
+    function noteEntry(text) { return { text, author: currentUserLabel(), at: Date.now() }; }
+    function sortedNotes(rec) { return (rec.notes || []).slice().sort((a,b) => (b.at||0) - (a.at||0)); }
+
+    function checklistProgress(rec) {
+      const items = getChecklist(rec.programme || 'Other');
+      const cl = rec.checklist || {};
+      const done = items.filter(i => cl[i.k]).length;
+      return { done, total: items.length, pct: items.length ? Math.round(done / items.length * 100) : 0 };
+    }
+    function isOnbStale(rec) {
+      if (rec.statusBucket === 'completed') return false;
+      const d = daysSince(rec.updatedAt || rec.createdAt);
+      return d !== null && d >= STALE_DAYS;
+    }
+    function isInqStale(rec) {
+      if (rec.status === 'converted' || rec.status === 'lost') return false;
+      const d = daysSince(rec.updatedAt || rec.createdAt);
+      return d !== null && d >= STALE_DAYS;
+    }
+    function needsAttention(rec, kind) {
+      return !!rec.flagged || (kind === 'onb' ? isOnbStale(rec) : isInqStale(rec));
+    }
+
+    function allAssessors() {
+      const known = ['Emily', 'Erica'];
+      return Array.from(new Set([...known, ...assessorNames])).sort();
+    }
+
+    // ── Auth ───────────────────────────────────────────────────────────────
+    onAuthStateChanged(auth, (user) => {
+      if (user && ADMIN_EMAILS.includes(user.email)) {
+        document.getElementById('hubLogin').style.display = 'none';
+        document.getElementById('hubPanel').style.display  = '';
+        document.getElementById('hubUserEmail').textContent = user.email;
+        loadAll();
+      }
+    });
+    window.hubLogin = async () => {
+      const email = document.getElementById('hubEmail').value.trim();
+      const pass  = document.getElementById('hubPass').value;
+      const err   = document.getElementById('hubLoginErr');
+      if (!ADMIN_EMAILS.includes(email)) {
+        err.textContent = 'Invalid admin credentials.'; err.style.display = 'block'; return;
+      }
+      try { await signInWithEmailAndPassword(auth, email, pass); }
+      catch(e) { err.textContent = 'Login failed. Please check your password.'; err.style.display = 'block'; }
+    };
+    window.hubLogout = async () => {
+      await signOut(auth);
+      document.getElementById('hubLogin').style.display = '';
+      document.getElementById('hubPanel').style.display  = 'none';
+    };
+
+    // ── Load data ──────────────────────────────────────────────────────────
+    async function loadAll() {
+      const [onbSnap, inqSnap, taskSnap, settingsSnap] = await Promise.all([
+        getDocs(collection(db, 'hubOnboarding')),
+        getDocs(collection(db, 'hubInquiries')),
+        getDocs(collection(db, 'hubTasks')),
+        getDoc(doc(db, 'hubSettings', 'assessors')).catch(() => null),
+      ]);
+      onboarding = onbSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      inquiries  = inqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      tasks      = taskSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      assessorNames = (settingsSnap && settingsSnap.exists()) ? (settingsSnap.data().names || []) : [];
+      renderAll();
+    }
+
+    function renderAll() {
+      renderStats();
+      renderAttentionBanner();
+      renderTab();
+    }
+
+    function renderStats() {
+      const active = onboarding.filter(r => r.statusBucket !== 'completed').length;
+      const attention = onboarding.filter(r => needsAttention(r,'onb')).length + inquiries.filter(r => needsAttention(r,'inq')).length;
+      const openInq = inquiries.filter(r => r.status !== 'converted' && r.status !== 'lost').length;
+      const openTasks = tasks.filter(t => t.status !== 'done').length;
+      const now = new Date();
+      const completedMonth = onboarding.filter(r => {
+        if (r.statusBucket !== 'completed' || !r.completedAt) return false;
+        const d = new Date(r.completedAt);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }).length;
+      document.getElementById('statOnbActive').textContent = active;
+      document.getElementById('statAttention').textContent = attention;
+      document.getElementById('statInquiries').textContent = openInq;
+      document.getElementById('statTasks').textContent = openTasks;
+      document.getElementById('statCompletedMonth').textContent = completedMonth;
+      document.getElementById('statAttentionTile').classList.toggle('needs-attention', attention > 0);
+    }
+
+    function renderAttentionBanner() {
+      const flaggedOnb = onboarding.filter(r => needsAttention(r,'onb')).length;
+      const flaggedInq = inquiries.filter(r => needsAttention(r,'inq')).length;
+      const overdueTasks = tasks.filter(t => t.status !== 'done' && t.dueDate && t.dueDate < new Date().toISOString().slice(0,10)).length;
+      const banner = document.getElementById('hubAttentionBanner');
+      const total = flaggedOnb + flaggedInq + overdueTasks;
+      if (total === 0) { banner.style.display = 'none'; return; }
+      banner.style.display = 'flex';
+      const parts = [];
+      if (flaggedOnb) parts.push(flaggedOnb + ' onboarding record' + (flaggedOnb>1?'s':'') + ' need' + (flaggedOnb===1?'s':'') + ' attention');
+      if (flaggedInq) parts.push(flaggedInq + ' enquir' + (flaggedInq>1?'ies':'y') + ' gone quiet');
+      if (overdueTasks) parts.push(overdueTasks + ' task' + (overdueTasks>1?'s':'') + ' overdue');
+      document.getElementById('hubAttentionText').textContent = parts.join(' · ');
+    }
+
+    window.switchHubTab = (tab) => {
+      currentTab = tab;
+      document.querySelectorAll('.admin-tab').forEach(el => el.classList.toggle('active', el.dataset.tab === tab));
+      renderTab();
+    };
+
+    function renderTab() {
+      const el = document.getElementById('hubTabContent');
+      if (currentTab === 'overview') el.innerHTML = tplOverview();
+      else if (currentTab === 'onboarding') el.innerHTML = tplOnboarding();
+      else if (currentTab === 'inquiries') el.innerHTML = tplInquiries();
+      else if (currentTab === 'tasks') el.innerHTML = tplTasks();
+      else if (currentTab === 'assessors') el.innerHTML = tplAssessors();
+      else if (currentTab === 'archive') el.innerHTML = tplArchive();
+    }
+
+    // ── Overview tab ───────────────────────────────────────────────────────
+    function tplOverview() {
+      const attentionItems = [
+        ...onboarding.filter(r => needsAttention(r,'onb')).map(r => ({ type:'onb', id:r.id, label:`${r.name || 'Unnamed'} — ${r.programme || ''}`, sub: r.flagged ? 'Flagged for follow-up' : `No update in ${daysSince(r.updatedAt||r.createdAt)} days` })),
+        ...inquiries.filter(r => needsAttention(r,'inq')).map(r => ({ type:'inq', id:r.id, label:`${r.name || 'Unnamed'} — enquiry`, sub: r.flagged ? 'Flagged for follow-up' : `No update in ${daysSince(r.updatedAt||r.createdAt)} days` })),
+      ];
+      const upcoming = tasks.filter(t => t.status !== 'done' && t.dueDate)
+        .sort((a,b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 8);
+      return `
+        <div class="field-row" style="align-items:start">
+          <div class="card">
+            <span class="section-label">Needs attention</span>
+            ${attentionItems.length ? `<div class="attention-list">${attentionItems.map(i => `
+              <div class="attention-row" data-action="open-${i.type}" data-id="${i.id}">
+                <div><div style="font-weight:600">${esc(i.label)}</div><div style="font-size:0.78rem;color:var(--ink-light)">${esc(i.sub)}</div></div>
+                <span style="color:#92400E">›</span>
+              </div>`).join('')}</div>` : `<div class="empty-state">Nothing needs chasing right now.</div>`}
+          </div>
+          <div class="card">
+            <span class="section-label">Upcoming tasks</span>
+            ${upcoming.length ? `<div class="attention-list">${upcoming.map(t => `
+              <div class="attention-row" style="border-color:var(--border)" data-action="open-task" data-id="${t.id}">
+                <div><div style="font-weight:600">${esc(t.title)}</div><div style="font-size:0.78rem;color:var(--ink-light)">${esc(t.assignedTo || 'Unassigned')} · due ${fmtDate(t.dueDate)}</div></div>
+                ${t.priority === 'high' ? '<span class="pill pill-red">High</span>' : ''}
+              </div>`).join('')}</div>` : `<div class="empty-state">No open tasks with a due date.</div>`}
+          </div>
+        </div>`;
+    }
+
+    // ── Onboarding tab ─────────────────────────────────────────────────────
+    function filteredOnboarding() {
+      return onboarding.filter(r => r.statusBucket !== 'completed')
+        .filter(r => onbFilter.programme === 'all' || r.programme === onbFilter.programme)
+        .filter(r => onbFilter.status === 'all' || r.statusBucket === onbFilter.status || (onbFilter.status === 'attention' && needsAttention(r,'onb')))
+        .filter(r => !onbFilter.q || (r.name||'').toLowerCase().includes(onbFilter.q) || (r.company||'').toLowerCase().includes(onbFilter.q))
+        .sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    }
+    function tplOnboarding() {
+      const rows = filteredOnboarding();
+      return `
+        <div class="hub-toolbar">
+          <div class="hub-filters">
+            <button class="hub-filter-btn ${onbFilter.programme==='all'?'active':''}" data-action="onb-filter-prog" data-v="all">All programmes</button>
+            ${PROGRAMMES.map(p => `<button class="hub-filter-btn ${onbFilter.programme===p?'active':''}" data-action="onb-filter-prog" data-v="${esc(p)}">${esc(p)}</button>`).join('')}
+          </div>
+          <button class="btn btn-primary btn-sm" data-action="new-onb">+ Add student</button>
+        </div>
+        <div class="hub-filters">
+          ${['all','not_started','in_progress','attention','completed'].map(s => `<button class="hub-filter-btn ${onbFilter.status===s?'active':''}" data-action="onb-filter-status" data-v="${s}">${s==='all'?'All statuses':s==='attention'?'Needs attention':ONB_STATUS[s].label}</button>`).join('')}
+          <input class="hub-search" placeholder="Search name or company…" data-action="onb-search" value="${esc(onbFilter.q)}"/>
+        </div>
+        ${rows.length ? `<div style="overflow-x:auto"><table class="admin-table"><thead><tr>
+          <th></th><th>Name</th><th>Programme</th><th>Company</th><th>Payment</th><th>Progress</th><th>Status</th><th>Assigned</th><th>Updated</th><th></th>
+        </tr></thead><tbody>
+          ${rows.map(r => {
+            const p = checklistProgress(r);
+            return `<tr data-action="open-onb" data-id="${r.id}" style="cursor:pointer">
+              <td>${needsAttention(r,'onb') ? '<span class="hub-flag">🔺</span>' : ''}</td>
+              <td class="td-name">${esc(r.name||'Unnamed')}</td>
+              <td>${esc(r.programme||'—')}</td>
+              <td class="td-email">${esc(r.company||'—')}</td>
+              <td>${esc(r.paymentStatus||'—')}</td>
+              <td style="min-width:120px"><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${p.pct}%"></div></div><span style="font-size:0.75rem;color:var(--ink-light)">${p.done}/${p.total}</span></td>
+              <td><span class="pill ${ONB_STATUS[r.statusBucket||'not_started'].pill}">${ONB_STATUS[r.statusBucket||'not_started'].label}</span></td>
+              <td class="td-email">${esc(r.assignedTo||'—')}</td>
+              <td class="td-email">${fmtDate(r.updatedAt||r.createdAt)}</td>
+              <td><button class="btn btn-outline btn-sm" data-action="open-onb" data-id="${r.id}">View</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody></table></div>` : `<div class="empty-state">No matching students.</div>`}`;
+    }
+
+    function onbModalHtml(rec) {
+      const isNew = !rec;
+      const r = rec || { programme:'Diploma', statusBucket:'not_started', checklist:{}, notes:[] };
+      const items = getChecklist(r.programme);
+      const showGdc = BDA_PROGRAMMES.includes(r.programme);
+      return `
+        <div class="modal-header"><h3>${isNew ? 'Add student — onboarding' : esc(r.name||'Unnamed')}</h3><button class="modal-close" data-action="close-onb">×</button></div>
+        <div class="field-row">
+          <div class="form-group"><label>Name</label><input id="fOnbName" value="${esc(r.name)}"/></div>
+          <div class="form-group"><label>Programme</label><select id="fOnbProgramme" data-action="onb-programme-change">${PROGRAMMES.map(p => `<option ${p===r.programme?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
+        </div>
+        <div class="field-row">
+          <div class="form-group"><label>Company / employer</label><input id="fOnbCompany" value="${esc(r.company)}"/></div>
+          <div class="form-group"><label id="fOnbGdcLabel" style="${showGdc?'':'opacity:0.4'}">GDC number ${showGdc?'':'(BDA only)'}</label><input id="fOnbGdc" value="${esc(r.gdc)}" ${showGdc?'':'disabled'}/></div>
+        </div>
+        <div class="field-row">
+          <div class="form-group"><label>Contact email</label><input id="fOnbEmail" value="${esc(r.contactEmail)}"/></div>
+          <div class="form-group"><label>Contact phone</label><input id="fOnbPhone" value="${esc(r.contactPhone)}"/></div>
+        </div>
+        <div class="field-row">
+          <div class="form-group"><label>Payment status</label><select id="fOnbPayment">${PAYMENT_STATUSES.map(p => `<option ${p===r.paymentStatus?'selected':''}>${p}</option>`).join('')}</select></div>
+          <div class="form-group"><label>Assigned assessor</label><select id="fOnbAssigned"><option value="">Unassigned</option>${allAssessors().map(a => `<option ${a===r.assignedTo?'selected':''}>${esc(a)}</option>`).join('')}</select></div>
+        </div>
+        <div class="field-row">
+          <div class="form-group"><label>Status</label><select id="fOnbStatus">${Object.entries(ONB_STATUS).filter(([k])=>k!=='completed').map(([k,v]) => `<option value="${k}" ${k===(r.statusBucket||'not_started')?'selected':''}>${v.label}</option>`).join('')}</select></div>
+          <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:0.6rem">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-weight:600;cursor:pointer"><input type="checkbox" id="fOnbFlagged" ${r.flagged?'checked':''} style="width:16px;height:16px;accent-color:var(--teal)"/> Flag for follow-up</label>
+          </div>
+        </div>
+        <span class="section-label">Onboarding checklist</span>
+        <div class="checklist-grid" id="onbChecklistGrid">
+          ${items.map(i => `<label class="checklist-item ${r.checklist && r.checklist[i.k] ? 'checked':''}" data-key="${i.k}">
+            <input type="checkbox" data-key="${i.k}" ${r.checklist && r.checklist[i.k] ? 'checked':''}/><span>${esc(i.l)}</span>
+          </label>`).join('')}
+        </div>
+        <span class="section-label">Notes</span>
+        <div id="onbNotesList">${sortedNotes(r).map(n => `<div class="note-item"><div class="note-text">${esc(n.text)}</div><div class="note-meta">${esc(n.author)} · ${fmtDate(n.at)}</div></div>`).join('') || '<div class="empty-state" style="padding:1rem">No notes yet.</div>'}</div>
+        ${!isNew ? `<div class="form-group"><textarea id="fOnbNewNote" placeholder="Add a note…" style="min-height:70px"></textarea><button class="btn btn-outline btn-sm" style="margin-top:0.5rem" data-action="add-onb-note" data-id="${r.id}">+ Add note</button></div>` : ''}
+        <div class="modal-footer" style="justify-content:space-between">
+          <div>${!isNew ? `<button class="btn btn-outline btn-sm" style="color:#D93025;border-color:#D93025" data-action="delete-onb" data-id="${r.id}">Delete</button>` : ''}</div>
+          <div style="display:flex;gap:0.75rem">
+            ${!isNew && r.statusBucket !== 'completed' ? `<button class="btn btn-success btn-sm" data-action="complete-onb" data-id="${r.id}">🎓 Mark complete → move to ILP</button>` : ''}
+            <button class="btn btn-primary" data-action="save-onb" data-id="${isNew?'':r.id}">Save</button>
+          </div>
+        </div>`;
+    }
+    window.openOnbModal = (id) => {
+      const rec = id ? onboarding.find(x => x.id === id) : null;
+      document.getElementById('onbModalContent').innerHTML = onbModalHtml(rec);
+      document.getElementById('onbModal').classList.remove('hidden');
+    };
+    function closeOnbModal() { document.getElementById('onbModal').classList.add('hidden'); }
+
+    async function saveOnb(id) {
+      const checklist = {};
+      document.querySelectorAll('#onbChecklistGrid input[type=checkbox]').forEach(cb => checklist[cb.dataset.key] = cb.checked);
+      const payload = {
+        name: document.getElementById('fOnbName').value.trim(),
+        programme: document.getElementById('fOnbProgramme').value,
+        company: document.getElementById('fOnbCompany').value.trim(),
+        gdc: document.getElementById('fOnbGdc').value.trim(),
+        contactEmail: document.getElementById('fOnbEmail').value.trim(),
+        contactPhone: document.getElementById('fOnbPhone').value.trim(),
+        paymentStatus: document.getElementById('fOnbPayment').value,
+        assignedTo: document.getElementById('fOnbAssigned').value,
+        statusBucket: document.getElementById('fOnbStatus').value,
+        flagged: document.getElementById('fOnbFlagged').checked,
+        checklist,
+        updatedAt: Date.now(),
+      };
+      if (!payload.name) { showToast('Please enter a name', 'error'); return; }
+      if (id) {
+        await updateDoc(doc(db, 'hubOnboarding', id), payload);
+      } else {
+        payload.notes = []; payload.createdAt = Date.now();
+        await addDoc(collection(db, 'hubOnboarding'), payload);
+      }
+      showToast('Saved'); closeOnbModal(); await loadAll();
+    }
+    async function addOnbNote(id) {
+      const ta = document.getElementById('fOnbNewNote');
+      const text = ta.value.trim();
+      if (!text) return;
+      await updateDoc(doc(db, 'hubOnboarding', id), { notes: arrayUnion(noteEntry(text)), updatedAt: Date.now() });
+      await loadAll();
+      openOnbModal(id);
+      showToast('Note added');
+    }
+    async function completeOnb(id) {
+      if (!confirm('Mark this student complete and move them to ILP tracking? They will drop out of active onboarding.')) return;
+      await updateDoc(doc(db, 'hubOnboarding', id), { statusBucket:'completed', completedAt: Date.now(), updatedAt: Date.now() });
+      showToast('Moved to ILP'); closeOnbModal(); await loadAll();
+    }
+    async function deleteOnb(id) {
+      if (!confirm('Delete this onboarding record permanently?')) return;
+      await deleteDoc(doc(db, 'hubOnboarding', id));
+      showToast('Deleted'); closeOnbModal(); await loadAll();
+    }
+
+    // ── Inquiries tab ──────────────────────────────────────────────────────
+    function filteredInquiries() {
+      return inquiries
+        .filter(r => inqFilter.status === 'all' || r.status === inqFilter.status)
+        .filter(r => !inqFilter.q || (r.name||'').toLowerCase().includes(inqFilter.q))
+        .sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+    }
+    function tplInquiries() {
+      const rows = filteredInquiries();
+      return `
+        <div class="hub-toolbar">
+          <div class="hub-filters">
+            <button class="hub-filter-btn ${inqFilter.status==='all'?'active':''}" data-action="inq-filter-status" data-v="all">All</button>
+            ${Object.entries(INQ_STATUS).map(([k,v]) => `<button class="hub-filter-btn ${inqFilter.status===k?'active':''}" data-action="inq-filter-status" data-v="${k}">${v.label}</button>`).join('')}
+            <input class="hub-search" placeholder="Search name…" data-action="inq-search" value="${esc(inqFilter.q)}"/>
+          </div>
+          <button class="btn btn-primary btn-sm" data-action="new-inq">+ Add enquiry</button>
+        </div>
+        ${rows.length ? `<div style="overflow-x:auto"><table class="admin-table"><thead><tr>
+          <th></th><th>Name</th><th>Programme interest</th><th>Source</th><th>Status</th><th>Assigned</th><th>Updated</th><th></th>
+        </tr></thead><tbody>
+          ${rows.map(r => `<tr data-action="open-inq" data-id="${r.id}" style="cursor:pointer">
+            <td>${needsAttention(r,'inq') ? '<span class="hub-flag">🔺</span>' : ''}</td>
+            <td class="td-name">${esc(r.name||'Unnamed')}</td>
+            <td>${esc(r.programme||'—')}</td>
+            <td class="td-email">${esc(r.source||'—')}</td>
+            <td><span class="pill ${INQ_STATUS[r.status||'new'].pill}">${INQ_STATUS[r.status||'new'].label}</span></td>
+            <td class="td-email">${esc(r.assignedTo||'—')}</td>
+            <td class="td-email">${fmtDate(r.updatedAt||r.createdAt)}</td>
+            <td><button class="btn btn-outline btn-sm" data-action="open-inq" data-id="${r.id}">View</button></td>
+          </tr>`).join('')}
+        </tbody></table></div>` : `<div class="empty-state">No matching enquiries.</div>`}`;
+    }
+    function inqModalHtml(rec) {
+      const isNew = !rec;
+      const r = rec || { status:'new', notes:[] };
+      return `
+        <div class="modal-header"><h3>${isNew ? 'Add enquiry' : esc(r.name||'Unnamed')}</h3><button class="modal-close" data-action="close-inq">×</button></div>
+        <div class="field-row">
+          <div class="form-group"><label>Name</label><input id="fInqName" value="${esc(r.name)}"/></div>
+          <div class="form-group"><label>Programme interested in</label><select id="fInqProgramme">${PROGRAMMES.filter(p=>p!=='Other').concat(['Not sure yet']).map(p => `<option ${p===r.programme?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
+        </div>
+        <div class="field-row">
+          <div class="form-group"><label>Contact email</label><input id="fInqEmail" value="${esc(r.contactEmail)}"/></div>
+          <div class="form-group"><label>Contact phone</label><input id="fInqPhone" value="${esc(r.contactPhone)}"/></div>
+        </div>
+        <div class="field-row">
+          <div class="form-group"><label>Source</label><select id="fInqSource">${['Website','Referral','Social media','Phone','Email','Other'].map(s => `<option ${s===r.source?'selected':''}>${s}</option>`).join('')}</select></div>
+          <div class="form-group"><label>Assigned to</label><select id="fInqAssigned"><option value="">Unassigned</option>${allAssessors().map(a => `<option ${a===r.assignedTo?'selected':''}>${esc(a)}</option>`).join('')}</select></div>
+        </div>
+        <div class="field-row">
+          <div class="form-group"><label>Status</label><select id="fInqStatus">${Object.entries(INQ_STATUS).map(([k,v]) => `<option value="${k}" ${k===(r.status||'new')?'selected':''}>${v.label}</option>`).join('')}</select></div>
+          <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:0.6rem">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-weight:600;cursor:pointer"><input type="checkbox" id="fInqFlagged" ${r.flagged?'checked':''} style="width:16px;height:16px;accent-color:var(--teal)"/> Flag for follow-up</label>
+          </div>
+        </div>
+        <span class="section-label">Notes</span>
+        <div id="inqNotesList">${sortedNotes(r).map(n => `<div class="note-item"><div class="note-text">${esc(n.text)}</div><div class="note-meta">${esc(n.author)} · ${fmtDate(n.at)}</div></div>`).join('') || '<div class="empty-state" style="padding:1rem">No notes yet.</div>'}</div>
+        ${!isNew ? `<div class="form-group"><textarea id="fInqNewNote" placeholder="Add a note…" style="min-height:70px"></textarea><button class="btn btn-outline btn-sm" style="margin-top:0.5rem" data-action="add-inq-note" data-id="${r.id}">+ Add note</button></div>` : ''}
+        <div class="modal-footer" style="justify-content:space-between">
+          <div>${!isNew ? `<button class="btn btn-outline btn-sm" style="color:#D93025;border-color:#D93025" data-action="delete-inq" data-id="${r.id}">Delete</button>` : ''}</div>
+          <div style="display:flex;gap:0.75rem">
+            ${!isNew && r.status !== 'converted' ? `<button class="btn btn-success btn-sm" data-action="convert-inq" data-id="${r.id}">🎓 Convert to onboarding</button>` : ''}
+            <button class="btn btn-primary" data-action="save-inq" data-id="${isNew?'':r.id}">Save</button>
+          </div>
+        </div>`;
+    }
+    window.openInqModal = (id) => {
+      const rec = id ? inquiries.find(x => x.id === id) : null;
+      document.getElementById('inqModalContent').innerHTML = inqModalHtml(rec);
+      document.getElementById('inqModal').classList.remove('hidden');
+    };
+    function closeInqModal() { document.getElementById('inqModal').classList.add('hidden'); }
+
+    async function saveInq(id) {
+      const payload = {
+        name: document.getElementById('fInqName').value.trim(),
+        programme: document.getElementById('fInqProgramme').value,
+        contactEmail: document.getElementById('fInqEmail').value.trim(),
+        contactPhone: document.getElementById('fInqPhone').value.trim(),
+        source: document.getElementById('fInqSource').value,
+        assignedTo: document.getElementById('fInqAssigned').value,
+        status: document.getElementById('fInqStatus').value,
+        flagged: document.getElementById('fInqFlagged').checked,
+        updatedAt: Date.now(),
+      };
+      if (!payload.name) { showToast('Please enter a name', 'error'); return; }
+      if (id) {
+        await updateDoc(doc(db, 'hubInquiries', id), payload);
+      } else {
+        payload.notes = []; payload.createdAt = Date.now();
+        await addDoc(collection(db, 'hubInquiries'), payload);
+      }
+      showToast('Saved'); closeInqModal(); await loadAll();
+    }
+    async function addInqNote(id) {
+      const ta = document.getElementById('fInqNewNote');
+      const text = ta.value.trim();
+      if (!text) return;
+      await updateDoc(doc(db, 'hubInquiries', id), { notes: arrayUnion(noteEntry(text)), updatedAt: Date.now() });
+      await loadAll();
+      openInqModal(id);
+      showToast('Note added');
+    }
+    async function deleteInq(id) {
+      if (!confirm('Delete this enquiry permanently?')) return;
+      await deleteDoc(doc(db, 'hubInquiries', id));
+      showToast('Deleted'); closeInqModal(); await loadAll();
+    }
+    async function convertInq(id) {
+      const r = inquiries.find(x => x.id === id);
+      if (!r) return;
+      if (!confirm(`Move ${r.name} into onboarding? The enquiry will be marked converted.`)) return;
+      await addDoc(collection(db, 'hubOnboarding'), {
+        name: r.name, programme: PROGRAMMES.includes(r.programme) ? r.programme : 'Diploma',
+        company:'', gdc:'', contactEmail: r.contactEmail||'', contactPhone: r.contactPhone||'',
+        paymentStatus: 'Not started', assignedTo: r.assignedTo||'', statusBucket:'not_started',
+        flagged: false, checklist:{}, notes:[noteEntry('Converted from enquiry')],
+        createdAt: Date.now(), updatedAt: Date.now(),
+      });
+      await updateDoc(doc(db, 'hubInquiries', id), { status:'converted', updatedAt: Date.now() });
+      showToast('Converted to onboarding'); closeInqModal(); await loadAll();
+    }
+
+    // ── Tasks tab ──────────────────────────────────────────────────────────
+    function filteredTasks() {
+      return tasks
+        .filter(t => taskFilter.assessor === 'all' || t.assignedTo === taskFilter.assessor)
+        .filter(t => taskFilter.status === 'all' || (taskFilter.status === 'open' ? t.status !== 'done' : t.status === 'done'))
+        .sort((a,b) => (a.dueDate||'9999').localeCompare(b.dueDate||'9999'));
+    }
+    function tplTasks() {
+      const rows = filteredTasks();
+      const today = new Date().toISOString().slice(0,10);
+      return `
+        <div class="hub-toolbar">
+          <div class="hub-filters">
+            <select class="hub-filter-btn" style="padding:0.4rem 0.7rem" data-action="task-filter-assessor">
+              <option value="all">All assessors</option>
+              ${allAssessors().map(a => `<option value="${esc(a)}" ${taskFilter.assessor===a?'selected':''}>${esc(a)}</option>`).join('')}
+            </select>
+            <button class="hub-filter-btn ${taskFilter.status==='open'?'active':''}" data-action="task-filter-status" data-v="open">Open</button>
+            <button class="hub-filter-btn ${taskFilter.status==='done'?'active':''}" data-action="task-filter-status" data-v="done">Done</button>
+            <button class="hub-filter-btn ${taskFilter.status==='all'?'active':''}" data-action="task-filter-status" data-v="all">All</button>
+          </div>
+          <button class="btn btn-primary btn-sm" data-action="new-task">+ Add task</button>
+        </div>
+        ${rows.length ? `<div style="overflow-x:auto"><table class="admin-table"><thead><tr>
+          <th></th><th>Task</th><th>Assigned to</th><th>Linked to</th><th>Due</th><th>Priority</th><th></th>
+        </tr></thead><tbody>
+          ${rows.map(t => `<tr>
+            <td><input type="checkbox" ${t.status==='done'?'checked':''} data-action="toggle-task" data-id="${t.id}" style="width:16px;height:16px;accent-color:var(--teal)"/></td>
+            <td class="td-name" style="${t.status==='done'?'text-decoration:line-through;color:var(--ink-light)':''}">${esc(t.title)}</td>
+            <td>${esc(t.assignedTo||'Unassigned')}</td>
+            <td class="td-email">${esc(t.linkName||'—')}</td>
+            <td class="td-email" style="${t.status!=='done' && t.dueDate && t.dueDate<today ? 'color:#D93025;font-weight:700':''}">${t.dueDate?fmtDate(t.dueDate):'—'}</td>
+            <td>${t.priority==='high'?'<span class="pill pill-red">High</span>':'<span class="pill pill-grey">Normal</span>'}</td>
+            <td><button class="btn btn-outline btn-sm" data-action="open-task" data-id="${t.id}">Edit</button></td>
+          </tr>`).join('')}
+        </tbody></table></div>` : `<div class="empty-state">No tasks here.</div>`}`;
+    }
+    function linkOptions(selType, selId) {
+      const opts = [`<option value="">No link</option>`];
+      onboarding.filter(r=>r.statusBucket!=='completed').forEach(r => opts.push(`<option value="onb:${r.id}" ${selType==='onb'&&selId===r.id?'selected':''}>🎓 ${esc(r.name)}</option>`));
+      inquiries.filter(r=>r.status!=='converted'&&r.status!=='lost').forEach(r => opts.push(`<option value="inq:${r.id}" ${selType==='inq'&&selId===r.id?'selected':''}>📞 ${esc(r.name)}</option>`));
+      return opts.join('');
+    }
+    function taskModalHtml(t) {
+      const isNew = !t;
+      const r = t || { status:'open', priority:'normal' };
+      return `
+        <div class="modal-header"><h3>${isNew ? 'Add task' : 'Edit task'}</h3><button class="modal-close" data-action="close-task">×</button></div>
+        <div class="form-group"><label>Task</label><input id="fTaskTitle" value="${esc(r.title)}" placeholder="e.g. Chase Employer questionnaire"/></div>
+        <div class="form-group"><label>Details (optional)</label><textarea id="fTaskDesc" style="min-height:70px">${esc(r.description)}</textarea></div>
+        <div class="field-row">
+          <div class="form-group"><label>Assign to</label><select id="fTaskAssigned"><option value="">Unassigned</option>${allAssessors().map(a => `<option ${a===r.assignedTo?'selected':''}>${esc(a)}</option>`).join('')}</select></div>
+          <div class="form-group"><label>Priority</label><select id="fTaskPriority"><option value="normal" ${r.priority==='normal'?'selected':''}>Normal</option><option value="high" ${r.priority==='high'?'selected':''}>High</option></select></div>
+        </div>
+        <div class="field-row">
+          <div class="form-group"><label>Due date</label><input type="date" id="fTaskDue" value="${esc(r.dueDate)}"/></div>
+          <div class="form-group"><label>Link to student / enquiry</label><select id="fTaskLink">${linkOptions(r.linkType, r.linkId)}</select></div>
+        </div>
+        <div class="modal-footer" style="justify-content:space-between">
+          <div>${!isNew ? `<button class="btn btn-outline btn-sm" style="color:#D93025;border-color:#D93025" data-action="delete-task" data-id="${r.id}">Delete</button>` : ''}</div>
+          <button class="btn btn-primary" data-action="save-task" data-id="${isNew?'':r.id}">Save</button>
+        </div>`;
+    }
+    window.openTaskModal = (id) => {
+      const rec = id ? tasks.find(x => x.id === id) : null;
+      document.getElementById('taskModalContent').innerHTML = taskModalHtml(rec);
+      document.getElementById('taskModal').classList.remove('hidden');
+    };
+    function closeTaskModal() { document.getElementById('taskModal').classList.add('hidden'); }
+
+    async function saveTask(id) {
+      const linkVal = document.getElementById('fTaskLink').value;
+      let linkType = '', linkId = '', linkName = '';
+      if (linkVal) {
+        const [t, lid] = linkVal.split(':');
+        linkType = t; linkId = lid;
+        const src = t === 'onb' ? onboarding : inquiries;
+        const found = src.find(x => x.id === lid);
+        linkName = found ? found.name : '';
+      }
+      const title = document.getElementById('fTaskTitle').value.trim();
+      if (!title) { showToast('Please enter a task title', 'error'); return; }
+      const payload = {
+        title,
+        description: document.getElementById('fTaskDesc').value.trim(),
+        assignedTo: document.getElementById('fTaskAssigned').value,
+        priority: document.getElementById('fTaskPriority').value,
+        dueDate: document.getElementById('fTaskDue').value,
+        linkType, linkId, linkName,
+        updatedAt: Date.now(),
+      };
+      if (id) {
+        await updateDoc(doc(db, 'hubTasks', id), payload);
+      } else {
+        payload.status = 'open'; payload.createdAt = Date.now();
+        await addDoc(collection(db, 'hubTasks'), payload);
+      }
+      showToast('Saved'); closeTaskModal(); await loadAll();
+    }
+    async function toggleTask(id) {
+      const t = tasks.find(x => x.id === id);
+      const newStatus = t.status === 'done' ? 'open' : 'done';
+      await updateDoc(doc(db, 'hubTasks', id), { status: newStatus, completedAt: newStatus === 'done' ? Date.now() : null });
+      await loadAll();
+    }
+    async function deleteTask(id) {
+      if (!confirm('Delete this task?')) return;
+      await deleteDoc(doc(db, 'hubTasks', id));
+      showToast('Deleted'); closeTaskModal(); await loadAll();
+    }
+
+    // ── Assessors tab ──────────────────────────────────────────────────────
+    function tplAssessors() {
+      return `
+        <div class="card" style="max-width:520px">
+          <span class="section-label">Assessors / team members</span>
+          <p style="font-size:0.85rem;color:var(--ink-light);margin-bottom:1rem">People you can assign onboarding cases, enquiries and tasks to. Emily and Erica are always available as they have admin logins.</p>
+          <div style="margin-bottom:1rem">${allAssessors().map(a => `<span class="assessor-chip">${esc(a)}${['Emily','Erica'].includes(a)?'':` <button data-action="remove-assessor" data-v="${esc(a)}">×</button>`}</span>`).join('')}</div>
+          <div class="form-group" style="display:flex;gap:0.5rem;margin-bottom:0">
+            <input id="fNewAssessor" placeholder="Add a name…" style="flex:1"/>
+            <button class="btn btn-primary btn-sm" data-action="add-assessor">Add</button>
+          </div>
+        </div>`;
+    }
+    async function addAssessor() {
+      const input = document.getElementById('fNewAssessor');
+      const name = input.value.trim();
+      if (!name) return;
+      const names = Array.from(new Set([...assessorNames, name]));
+      await setDoc(doc(db, 'hubSettings', 'assessors'), { names });
+      showToast('Added'); await loadAll();
+    }
+    async function removeAssessor(name) {
+      const names = assessorNames.filter(a => a !== name);
+      await setDoc(doc(db, 'hubSettings', 'assessors'), { names });
+      showToast('Removed'); await loadAll();
+    }
+
+    // ── Archive tab ────────────────────────────────────────────────────────
+    function tplArchive() {
+      const rows = onboarding.filter(r => r.statusBucket === 'completed').sort((a,b) => (b.completedAt||0)-(a.completedAt||0));
+      return `
+        <p style="font-size:0.85rem;color:var(--ink-light);margin-bottom:1rem">Students who've completed onboarding and moved to their ILP. Kept here for your records only.</p>
+        ${rows.length ? `<div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Name</th><th>Programme</th><th>Company</th><th>Completed</th><th></th></tr></thead><tbody>
+          ${rows.map(r => `<tr>
+            <td class="td-name">${esc(r.name)}</td><td>${esc(r.programme)}</td><td class="td-email">${esc(r.company||'—')}</td><td class="td-email">${fmtDate(r.completedAt)}</td>
+            <td><button class="btn btn-outline btn-sm" data-action="open-onb" data-id="${r.id}">View</button></td>
+          </tr>`).join('')}
+        </tbody></table></div>` : `<div class="empty-state">No completed students yet.</div>`}`;
+    }
+
+    // ── Event delegation ──────────────────────────────────────────────────
+    document.getElementById('hubTabContent').addEventListener('click', (e) => {
+      const el = e.target.closest('[data-action]');
+      if (!el) return;
+      const action = el.dataset.action, id = el.dataset.id, v = el.dataset.v;
+      if (action === 'new-onb') openOnbModal(null);
+      else if (action === 'open-onb') openOnbModal(id);
+      else if (action === 'open-inq') openInqModal(id);
+      else if (action === 'open-task') openTaskModal(id);
+      else if (action === 'onb-filter-prog') { onbFilter.programme = v; renderTab(); }
+      else if (action === 'onb-filter-status') { onbFilter.status = v; renderTab(); }
+      else if (action === 'new-inq') openInqModal(null);
+      else if (action === 'inq-filter-status') { inqFilter.status = v; renderTab(); }
+      else if (action === 'new-task') openTaskModal(null);
+      else if (action === 'task-filter-status') { taskFilter.status = v; renderTab(); }
+      else if (action === 'toggle-task') toggleTask(id);
+      else if (action === 'add-assessor') addAssessor();
+      else if (action === 'remove-assessor') removeAssessor(v);
+    });
+    document.getElementById('hubTabContent').addEventListener('input', (e) => {
+      const el = e.target.closest('[data-action]');
+      if (!el) return;
+      if (el.dataset.action === 'onb-search' || el.dataset.action === 'inq-search') {
+        const pos = el.selectionStart;
+        if (el.dataset.action === 'onb-search') onbFilter.q = el.value.toLowerCase();
+        else inqFilter.q = el.value.toLowerCase();
+        renderTab();
+        const fresh = document.querySelector('#hubTabContent .hub-search');
+        if (fresh) { fresh.focus(); fresh.setSelectionRange(pos, pos); }
+      }
+    });
+    document.getElementById('hubTabContent').addEventListener('change', (e) => {
+      const el = e.target.closest('[data-action]');
+      if (!el) return;
+      if (el.dataset.action === 'task-filter-assessor') { taskFilter.assessor = el.value; renderTab(); }
+    });
+
+    // Onboarding modal delegation
+    document.getElementById('onbModal').addEventListener('click', (e) => {
+      const el = e.target.closest('[data-action]');
+      if (!el) return;
+      const action = el.dataset.action, id = el.dataset.id;
+      if (action === 'close-onb') closeOnbModal();
+      else if (action === 'save-onb') saveOnb(id || null);
+      else if (action === 'add-onb-note') addOnbNote(id);
+      else if (action === 'complete-onb') completeOnb(id);
+      else if (action === 'delete-onb') deleteOnb(id);
+    });
+    document.getElementById('onbModal').addEventListener('change', (e) => {
+      if (e.target.closest('[data-action="onb-programme-change"]')) {
+        const checked = {};
+        document.querySelectorAll('#onbChecklistGrid input[type=checkbox]').forEach(cb => checked[cb.dataset.key] = cb.checked);
+        const programme = document.getElementById('fOnbProgramme').value;
+        const items = getChecklist(programme);
+        document.getElementById('onbChecklistGrid').innerHTML = items.map(i => `<label class="checklist-item ${checked[i.k]?'checked':''}" data-key="${i.k}">
+          <input type="checkbox" data-key="${i.k}" ${checked[i.k]?'checked':''}/><span>${esc(i.l)}</span></label>`).join('');
+        const showGdc = BDA_PROGRAMMES.includes(programme);
+        document.getElementById('fOnbGdc').disabled = !showGdc;
+        document.getElementById('fOnbGdcLabel').style.opacity = showGdc ? '1' : '0.4';
+        document.getElementById('fOnbGdcLabel').textContent = 'GDC number ' + (showGdc ? '' : '(BDA only)');
+      }
+      const cb = e.target.closest('input[type=checkbox][data-key]');
+      if (cb) cb.closest('.checklist-item').classList.toggle('checked', cb.checked);
+    });
+
+    // Inquiry modal delegation
+    document.getElementById('inqModal').addEventListener('click', (e) => {
+      const el = e.target.closest('[data-action]');
+      if (!el) return;
+      const action = el.dataset.action, id = el.dataset.id;
+      if (action === 'close-inq') closeInqModal();
+      else if (action === 'save-inq') saveInq(id || null);
+      else if (action === 'add-inq-note') addInqNote(id);
+      else if (action === 'convert-inq') convertInq(id);
+      else if (action === 'delete-inq') deleteInq(id);
+    });
+
+    // Task modal delegation
+    document.getElementById('taskModal').addEventListener('click', (e) => {
+      const el = e.target.closest('[data-action]');
+      if (!el) return;
+      const action = el.dataset.action, id = el.dataset.id;
+      if (action === 'close-task') closeTaskModal();
+      else if (action === 'save-task') saveTask(id || null);
+      else if (action === 'delete-task') deleteTask(id);
+    });
+  </script>
+</body>
+</html>
