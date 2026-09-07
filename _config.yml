@@ -18,3 +18,9 @@ defaults:
       type: "posts"
     values:
       layout: "post"
+
+# firestore.rules is kept here for version-controlled review only, not for
+# the Firebase CLI (no firebase.json/CI deploy step exists) and not meant
+# to be published on the live site
+exclude:
+  - firestore.rules
