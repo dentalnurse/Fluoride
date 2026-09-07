@@ -50,7 +50,10 @@ service cloud.firestore {
     match /pendingEnrolments/{email} {
       allow create: if true;
       allow update: if true;
-      allow get: if true;
+      allow get: if request.auth != null &&
+        (request.auth.token.email == email ||
+         request.auth.token.email == 'emily@dentalnurse.training' ||
+         request.auth.token.email == 'erica@dentalnurse.training');
       allow list: if request.auth != null &&
         (request.auth.token.email == 'emily@dentalnurse.training' ||
          request.auth.token.email == 'erica@dentalnurse.training');
