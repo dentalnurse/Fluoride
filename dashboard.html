@@ -77,11 +77,66 @@
     let uid = null;
     let customContent = {};
     let courseExpiryDate = null;
+    const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
 
     function esc(s) {
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    // Lets an assessor see the fully-unlocked learner experience without a
+    // real account. Sample data only - nothing here is read from or written
+    // to Firestore, so it can't affect any real learner's record.
+    function startPreviewMode() {
+      uid = 'preview-uid';
+      const today = new Date().toISOString().slice(0,10);
+      const sampleEntry = (i) => ({
+        date: today, patientId: 'SAMPLE-' + i, patientType: '7-11',
+        rxName: 'Dr Sample Dentist', rxGdc: '123456', rxDate: today, product: 'Duraphat 22,600ppm',
+        safetyChecks: { asthma: true, allergy: true, ulcer: true },
+        consent: { type: 'self', guardianName: '', guardianRel: '' },
+        postOpGiven: { rinse: true, food: true, brush: true },
+        supervisorName: 'Sam Supervisor', supervisorGdc: '654321', supervisorEmail: 'sam.supervisor@example.com',
+        notes: 'Sample logbook entry for preview purposes.'
+      });
+      learner = {
+        name: 'Jordan Sample', email: 'preview@example.com', gdc: '123456', phone: '07000 000000',
+        workplace: 'Sample Dental Practice', workplaceAddress: '1 High Street, Sample Town, SA1 1PL',
+        experience: '3–5 years', indemnity: 'Sample Indemnity Provider',
+        unlocked: true, declarationSigned: true, declarationSignedName: 'Jordan Sample',
+        enrolledAt: { toDate: () => new Date() }, extensionMonths: 0,
+        moduleProgress: { 1:2, 2:2, 3:2, 4:2, 5:2 },
+        supervisors: [
+          { name: 'Sam Supervisor', email: 'sam.supervisor@example.com', gdc: '654321', approved: true },
+        ],
+        supervisorsSubmitted: true,
+        logbookEntries: Array.from({ length: 10 }, (_, i) => sampleEntry(i + 1)),
+        caseStudy1: 'Sample case study 1 - full text would appear here.',
+        caseStudy2: 'Sample case study 2 - full text would appear here.',
+        casestudyCount: 2,
+        writtenSubmitted: true, writtenPassed: true, writtenAmendmentRequested: false,
+        writtenFeedback: 'Great work - all three tasks clearly met the criteria.',
+        practicalSubmitted: true, practicalPassed: true, practicalAmendmentRequested: false,
+        practicalPendingSignoff: false,
+        practicalFeedback: 'Logbook and case studies fully meet the required standard.',
+        reflectionSubmitted: true, reflectionPassed: true, reflectionAmendmentRequested: false,
+        reflectionText: 'Sample final reflection text would appear here.',
+        reflectionDraft: '',
+        reflectionFeedback: 'Thoughtful, well-structured reflection.',
+        certNumber: 'DNT-PREVIEW-0001',
+      };
+      document.getElementById('navName').textContent = 'Jordan';
+      document.body.insertAdjacentHTML('afterbegin',
+        '<div style="background:#F59E0B;color:#1a1a1a;text-align:center;padding:0.55rem 1rem;font-weight:700;font-size:0.85rem;position:sticky;top:0;z-index:9999">' +
+        '⚠ PREVIEW MODE — sample account with everything unlocked, not a real login. Nothing here is saved.</div>');
+      renderSidebar();
+      showSection('home');
+    }
+
+    if (isPreview) {
+      // Defer until after the rest of this script has run, since startPreviewMode
+      // calls renderSidebar/showSection which are defined further down the file.
+      setTimeout(startPreviewMode, 0);
+    } else {
     onAuthStateChanged(auth, async (user) => {
       if (!user) { window.location.href = 'login.html'; return; }
       uid = user.uid;
@@ -98,6 +153,12 @@
           learner.enrolledAt = { toDate: () => createdAt };
         }
         document.getElementById('navName').textContent = (learner.name || user.email).split(' ')[0];
+
+        // Not yet approved by an assessor (payment not confirmed) - hold at the pending screen
+        if (!learner.unlocked && !ADMIN_EMAILS.includes(user.email)) {
+          window.location.href = 'pending.html';
+          return;
+        }
 
         // Check course expiry (skip if the learner has already completed the course)
         const enrolledAt = learner.enrolledAt?.toDate ? learner.enrolledAt.toDate() : null;
@@ -154,8 +215,12 @@
         document.getElementById('dashMain').innerHTML = '<div style="padding:3rem;text-align:center"><h2>Could not load course data</h2><p>Please log out and back in.</p><button class="btn btn-primary" onclick="handleLogout()">Log out</button></div>';
       }
     });
+    }
 
-    window.handleLogout = async () => { await signOut(auth); window.location.href = 'login.html'; };
+    window.handleLogout = async () => {
+      if (isPreview) { window.location.href = 'dashboard.html?preview=1'; return; }
+      await signOut(auth); window.location.href = 'login.html';
+    };
 
     function renderSidebar() {
       const mp = learner.moduleProgress || {};

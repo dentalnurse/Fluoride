@@ -48,6 +48,7 @@
         <span style="font-size:0.8rem;opacity:0.6">Fluoride Varnish Application Course</span>
       </div>
       <div style="display:flex;align-items:center;gap:1rem">
+        <a href="../dashboard.html?preview=1" target="_blank" class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.8)">👀 Log in as a learner</a>
         <span style="font-size:0.85rem;color:rgba(255,255,255,0.6)">emily@dentalnurse.training</span>
         <button class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.8)" onclick="adminLogout()">Log out</button>
       </div>
@@ -1107,6 +1108,7 @@
           ${!l.unlocked ? `<button class="btn btn-success" onclick="approveLearner('${l.id}','${escJsAttr(l.name)}');closeModal()">✓ Approve learner</button>` : ''}
           <button class="btn btn-outline" onclick="sendWelcomeEmail('${l.id}')">📧 Send welcome email</button>
           ${(() => { const d = daysUntilExpiry(l); return d !== null && d <= 14 ? `<button class="btn btn-outline" style="color:#92400E;border-color:#F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>` : `<button class="btn btn-outline" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>`; })()}
+          ${daysUntilExpiry(l) !== null ? `<button class="btn btn-outline" style="color:#065F46;border-color:#10B981" onclick="grantFreeExtension('${l.id}','${escJsAttr(l.name)}','${escJsAttr(l.email)}')">🎁 Extend access (free)</button>` : ''}
           <button class="btn btn-outline" onclick="saveNotes('${l.id}')">Save notes</button>
           <a href="../portfolio-export.html?uid=${id}" target="_blank" class="btn btn-outline">📄 Download Portfolio</a>
           ${isCourseCompleted(l) ? `<a href="../certificate.html?uid=${id}" target="_blank" class="btn btn-outline">🎓 View Certificate</a>` : ''}
@@ -1430,6 +1432,37 @@
         'Hi ' + l.name + ',\n\nGreat news! Your supervisor ' + s.name + ' has been approved and is now confirmed for your clinical logbook.\n\nYou can view the status of all your supervisors in your course dashboard:\nhttps://fluoride.dentalnurse.training/login.html\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
       );
       openLearnerModal(learnerId);
+    };
+
+    // ── Free extension (assessor's own discretion, no application needed) ──
+    window.grantFreeExtension = async (id, name, email) => {
+      const input = prompt('Extend ' + name + '\'s access by how many months?', '1');
+      if (input === null) return;
+      const months = parseInt(input, 10);
+      if (!Number.isInteger(months) || months <= 0) { alert('Please enter a whole number of months greater than 0.'); return; }
+      if (!confirm('Grant ' + name + ' a free ' + months + '-month extension?')) return;
+
+      try {
+        await updateDoc(doc(db, 'learners', id), {
+          extensionMonths: increment(months),
+          extensionUpdatedAt: serverTimestamp(),
+          extensionReason: 'Free extension granted by assessor'
+        });
+        showToast(months + '-month extension granted to ' + name + ' ✅', 'success');
+        if (typeof emailjs !== 'undefined' && email) {
+          emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+            to_email: email, to_name: name,
+            learner_name: name, learner_email: email, learner_gdc: '',
+            submission_type: 'Course Extension Granted',
+            file_url: 'N/A', submitted_at: new Date().toLocaleString('en-GB'),
+            message: 'Hi ' + name + ',\n\nGood news - your course access has been extended by ' + months + ' month' + (months > 1 ? 's' : '') + ', free of charge.\n\nYou can carry on right where you left off:\nhttps://fluoride.dentalnurse.training/login.html\n\nKind regards,\nEmily Bremner\nDental Nurse Training'
+          }).catch(() => {});
+        }
+        await reloadAndOpenModal(id);
+      } catch(e) {
+        console.error(e);
+        showToast('Could not grant extension.', 'error');
+      }
     };
 
     // ── Expiry helper ─────────────────────────────────────────────────────

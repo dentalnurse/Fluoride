@@ -211,7 +211,7 @@
           invoiceName:     enrolData.invoiceName    || '',
           invoiceEmail:    enrolData.invoiceEmail   || '',
           invoiceAddress:  enrolData.invoiceAddress || '',
-          unlocked:    true,
+          unlocked:    false,
           enrolledAt:  serverTimestamp(),
           moduleProgress: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
         });
@@ -233,9 +233,10 @@
         // Remove the enrolment lead now that the account actually exists
         try { await deleteDoc(doc(db, 'pendingEnrolments', email.toLowerCase())); } catch(e3) { /* best-effort */ }
 
-        // Clear session and go to dashboard
+        // Clear session and go to the pending-approval screen (an assessor
+        // manually unlocks access once payment is confirmed)
         localStorage.removeItem('enrolData');
-        window.location.href = 'dashboard.html';
+        window.location.href = 'pending.html';
 
       } catch(e) {
         console.error(e);
