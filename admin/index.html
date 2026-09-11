@@ -81,6 +81,7 @@
         <div class="admin-tab" onclick="switchAdminTab('content')">✏️ Course Content</div>
         <div class="admin-tab" onclick="switchAdminTab('ec')">🏥 EC Requests <span id="ecBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab" onclick="switchAdminTab('audit')">📋 Audit / QA</div>
+        <div class="admin-tab" onclick="switchAdminTab('archived')">🗄 Archived</div>
       </div>
 
       <!-- Tab content -->
@@ -136,6 +137,7 @@
     const db   = getFirestore(app);
 
     let learners            = [];
+    let archivedLearners    = [];
     let currentTab          = 'pending';
     let supervisorAgreements = {};
     let logbookSignoffs      = {};
@@ -219,7 +221,12 @@
     // ── Load learners ──────────────────────────────────────────────────────
     async function loadLearners() {
       const snap = await getDocs(collection(db, 'learners'));
-      learners = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const allLearners = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Archived learners (old test accounts etc.) are kept out of every
+      // other tab and count automatically since everything below reads
+      // from `learners` - they only show up on the Archived tab.
+      learners = allLearners.filter(l => !l.archived);
+      archivedLearners = allLearners.filter(l => l.archived);
       try {
         const agrSnap = await getDocs(collection(db, 'supervisorAgreements'));
         agrSnap.docs.forEach(d => { supervisorAgreements[d.id] = d.data(); });
@@ -324,7 +331,7 @@
     window.switchAdminTab = (tab) => {
       currentTab = tab;
       document.querySelectorAll('.admin-tab').forEach((t, i) => {
-        t.classList.toggle('active', ['leads','pending','all','completed','submissions','content','ec','audit'][i] === tab);
+        t.classList.toggle('active', ['leads','pending','all','completed','submissions','content','ec','audit','archived'][i] === tab);
       });
       renderTab(tab);
     };
@@ -339,6 +346,7 @@
       if (tab === 'content')     { renderContentTab(el); return; }
       if (tab === 'ec')          { renderECTab(el); return; }
       if (tab === 'audit')       { renderAuditTab(el); return; }
+      if (tab === 'archived')    { renderArchivedTab(el); return; }
     }
 
     // ── Pending tab ────────────────────────────────────────────────────────
@@ -363,6 +371,7 @@
                 <div class="admin-actions">
                   <button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${escJsAttr(l.name)}')">✓ Approve</button>
                   <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">View</button>
+                  <button class="btn btn-sm" style="background:#F3F4F6;color:var(--ink-mid);border:1px solid var(--border)" onclick="archiveLearner('${l.id}','${escJsAttr(l.name)}')">🗄 Archive</button>
                 </div>
               </td>
             </tr>`).join('')}
@@ -511,6 +520,55 @@
         </table>`;
     }
 
+    // ── Archived tab (old test accounts etc., hidden from every other tab) ─
+    function renderArchivedTab(el) {
+      if (!archivedLearners.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No archived learners.</div>';
+        return;
+      }
+      el.innerHTML = `
+        <p style="margin-bottom:1rem;color:var(--ink-light);font-size:0.9rem">Archived accounts are hidden from every other tab and from your stats, but their data is kept unless you delete them. Unarchive to bring one back.</p>
+        <table class="admin-table">
+          <thead><tr>
+            <th>Name</th><th>Email / GDC</th><th>Archived</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${archivedLearners.map(l => `<tr>
+              <td><div class="td-name">${esc(l.name)}</div></td>
+              <td><div style="font-size:0.82rem">${esc(l.email)||'-'}</div><div class="td-email">GDC: ${esc(l.gdc)||'-'}</div></td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${l.archivedAt?.toDate ? l.archivedAt.toDate().toLocaleDateString('en-GB') : '-'}</td>
+              <td>
+                <div class="admin-actions">
+                  <button class="btn btn-outline btn-sm" onclick="unarchiveLearner('${l.id}','${escJsAttr(l.name)}')">↩ Unarchive</button>
+                  <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:1px solid #FECACA" onclick="deleteLearnerPermanently('${l.id}','${escJsAttr(l.name)}')">🗑 Delete permanently</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    window.archiveLearner = async (id, name) => {
+      if (!confirm('Archive ' + name + '\'s account? This hides it from every tab and your stats - you can unarchive it later from the Archived tab. Nothing is deleted.')) return;
+      await updateDoc(doc(db, 'learners', id), { archived: true, archivedAt: serverTimestamp() });
+      showToast(name + ' archived', 'success');
+      closeModal();
+      await loadLearners();
+    };
+
+    window.unarchiveLearner = async (id, name) => {
+      await updateDoc(doc(db, 'learners', id), { archived: false });
+      showToast(name + ' unarchived ✅', 'success');
+      await loadLearners();
+    };
+
+    window.deleteLearnerPermanently = async (id, name) => {
+      if (!confirm('Permanently delete ' + name + '\'s course record? This cannot be undone.\n\nNote: this only removes their course data (progress, submissions, etc.) - it does NOT delete their login. To fully remove a test account, also delete their user in Firebase Console → Authentication → Users.')) return;
+      await deleteDoc(doc(db, 'learners', id));
+      showToast(name + ' deleted', 'success');
+      await loadLearners();
+    };
+
     function renderAllRows(list) {
       return list.map(l => {
         const mp   = l.moduleProgress || {};
@@ -545,6 +603,7 @@
               <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">Manage</button>
               ${!l.unlocked ? `<button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${escJsAttr(l.name)}')">Approve</button>` : ''}
               ${days !== null && days <= 14 ? `<button class="btn btn-sm" style="background:#FFF3CD;color:#92400E;border:1px solid #F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Remind</button>` : ''}
+              <button class="btn btn-sm" style="background:#F3F4F6;color:var(--ink-mid);border:1px solid var(--border)" onclick="archiveLearner('${l.id}','${escJsAttr(l.name)}')">🗄 Archive</button>
             </div>
           </td>
         </tr>`;
@@ -1112,6 +1171,7 @@
           <button class="btn btn-outline" onclick="saveNotes('${l.id}')">Save notes</button>
           <a href="../portfolio-export.html?uid=${id}" target="_blank" class="btn btn-outline">📄 Download Portfolio</a>
           ${isCourseCompleted(l) ? `<a href="../certificate.html?uid=${id}" target="_blank" class="btn btn-outline">🎓 View Certificate</a>` : ''}
+          <button class="btn btn-outline" style="color:var(--ink-mid)" onclick="archiveLearner('${l.id}','${escJsAttr(l.name)}')">🗄 Archive</button>
           <button class="btn btn-primary" onclick="closeModal()">Close</button>
         </div>`;
       document.getElementById('learnerModal').classList.remove('hidden');
