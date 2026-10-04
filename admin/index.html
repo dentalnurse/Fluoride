@@ -1049,6 +1049,22 @@
       });
     }
 
+    function loadJSZipLib() {
+      if (window.JSZip) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.2/dist/jszip.min.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Could not load the zip library - check your internet connection and try again.'));
+        document.head.appendChild(s);
+      });
+    }
+
+    // One filename per learner, disambiguating same-name learners (e.g. two "Jordan Sample"s)
+    function safeFilename(s) {
+      return String(s || 'learner').replace(/[\\/:*?"<>|]/g, '').trim().slice(0, 80) || 'learner';
+    }
+
     function learnerCourseStatus(l) {
       return l.certNumber ? 'Certificate issued'
         : l.writtenPassed && l.practicalPassed && l.reflectionPassed ? 'Awaiting certificate'
@@ -1063,7 +1079,7 @@
       const originalLabel = btn ? btn.textContent : '';
       if (btn) { btn.disabled = true; btn.textContent = 'Preparing...'; }
       try {
-        await loadDocxLib();
+        await Promise.all([loadDocxLib(), loadJSZipLib()]);
         const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, BorderStyle } = window.docx;
 
         const fmtDate = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -1096,7 +1112,10 @@
           });
         };
 
-        const sections = learners.map((l, i) => {
+        const zip = new window.JSZip();
+        const usedNames = new Set();
+
+        for (const l of learners) {
           const enrolledAt = l.enrolledAt?.toDate ? l.enrolledAt.toDate() : null;
           const extensionMonths = l.extensionMonths || 0;
           let expectedCompletion = 'Not yet enrolled';
@@ -1138,17 +1157,27 @@
               : [new Paragraph({ children: [new TextRun('No supervisors recorded yet.')] })]),
             blankLine(), blankLine(), blankLine(),
           ];
-          return i > 0 ? { properties: {}, children } : { children };
-        });
 
-        const doc = new Document({
-          sections: sections.length ? sections : [{ children: [new Paragraph('No learners to export.')] }]
-        });
+          const learnerDoc = new Document({ sections: [{ children }] });
+          const blob = await Packer.toBlob(learnerDoc);
 
-        const blob = await Packer.toBlob(doc);
+          let base = safeFilename(l.name || l.email);
+          let filename = base + '.docx';
+          let n = 2;
+          while (usedNames.has(filename)) { filename = base + ' (' + n + ').docx'; n++; }
+          usedNames.add(filename);
+          zip.file(filename, blob);
+        }
+
+        if (!learners.length) {
+          alert('No learners to export.');
+          return;
+        }
+
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'DNT_Training_Register_' + new Date().toISOString().slice(0,10) + '.docx';
+        a.href = URL.createObjectURL(zipBlob);
+        a.download = 'DNT_Training_Register_' + new Date().toISOString().slice(0,10) + '.zip';
         a.click();
       } catch (e) {
         console.error(e);
