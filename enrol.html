@@ -81,9 +81,15 @@
           <div class="form-group"><label>Anything else you would like us to know?</label><textarea id="enrolNotes" placeholder="Optional"></textarea></div>
 
           <div class="form-group">
+            <label for="invoiceAddress">Your address *</label>
+            <p style="margin:0 0 0.4rem;font-size:0.82rem;color:var(--ink-light)">We need this on file for invoicing purposes, even if you don't need a copy of the invoice yourself.</p>
+            <textarea id="invoiceAddress" placeholder="Your home or billing address"></textarea>
+          </div>
+
+          <div class="form-group">
             <label style="display:flex;align-items:flex-start;gap:0.6rem;font-size:0.9rem;cursor:pointer">
               <input type="checkbox" id="wantInvoice" style="width:16px;height:16px;flex-shrink:0;margin-top:0.15rem" onchange="toggleInvoiceFields()"/>
-              I would like an invoice for this payment
+              I would like a copy of the invoice for this payment
             </label>
           </div>
           <div id="invoiceFields" style="display:none;background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.5rem">
@@ -94,16 +100,12 @@
               </label>
               <input type="text" id="invoiceName" placeholder="Name for the invoice" style="display:none;margin-top:0.5rem"/>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom:0">
               <label style="display:flex;align-items:flex-start;gap:0.6rem;font-size:0.85rem;cursor:pointer;font-weight:500">
                 <input type="checkbox" id="invoiceEmailSame" checked style="width:16px;height:16px;flex-shrink:0;margin-top:0.15rem" onchange="toggleInvoiceEmailField()"/>
                 Invoice email same as above
               </label>
               <input type="email" id="invoiceEmail" placeholder="Email for the invoice" style="display:none;margin-top:0.5rem"/>
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>Invoice address *</label>
-              <textarea id="invoiceAddress" placeholder="Billing address for the invoice"></textarea>
             </div>
           </div>
 
@@ -176,17 +178,17 @@
       const wantInvoice      = document.getElementById('wantInvoice').checked;
       const invoiceNameSame  = document.getElementById('invoiceNameSame').checked;
       const invoiceEmailSame = document.getElementById('invoiceEmailSame').checked;
-      const invoiceAddress   = wantInvoice ? document.getElementById('invoiceAddress').value.trim() : '';
+      const invoiceAddress   = document.getElementById('invoiceAddress').value.trim();
       const invoiceName      = wantInvoice ? (invoiceNameSame  ? (firstName + ' ' + lastName).trim() : document.getElementById('invoiceName').value.trim())  : '';
       const invoiceEmail     = wantInvoice ? (invoiceEmailSame ? email                               : document.getElementById('invoiceEmail').value.trim()) : '';
 
-      if (!firstName || !lastName || !email || !gdc || !phone || !workplace || !experience || !supervisor || !indemnity) {
+      if (!firstName || !lastName || !email || !gdc || !phone || !workplace || !experience || !supervisor || !indemnity || !invoiceAddress) {
         errEl.textContent = 'Please complete all required fields marked with *';
         errEl.style.display = 'block';
         return;
       }
-      if (wantInvoice && (!invoiceAddress || !invoiceName || !invoiceEmail)) {
-        errEl.textContent = 'Please complete the invoice details, or untick "I would like an invoice" if you don\'t need one.';
+      if (wantInvoice && (!invoiceName || !invoiceEmail)) {
+        errEl.textContent = 'Please complete the invoice details, or untick "I would like a copy of the invoice" if you don\'t need one.';
         errEl.style.display = 'block';
         return;
       }
