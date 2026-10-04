@@ -49,6 +49,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:1rem">
         <a href="../dashboard.html?preview=1" target="_blank" class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.8)">👀 Log in as a learner</a>
+        <button class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.8)" onclick="exportTrainingRegister(this)">📄 Export Training Register</button>
         <span style="font-size:0.85rem;color:rgba(255,255,255,0.6)">emily@dentalnurse.training</span>
         <button class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.8)" onclick="adminLogout()">Log out</button>
       </div>
@@ -396,14 +397,15 @@
         <p style="margin-bottom:1rem;color:var(--ink-light);font-size:0.9rem">${pendingEnrolments.length} learner${pendingEnrolments.length>1?'s':''} submitted the enrolment form and were sent to payment, but have not come back to finish creating their account yet. If they paid, chase them to complete signup; if not, this may just be someone who didn't go through with it.</p>
         <table class="admin-table">
           <thead><tr>
-            <th>Name</th><th>Email / GDC</th><th>Workplace / Phone</th><th>Invoice</th><th>Submitted</th><th>Actions</th>
+            <th>Name</th><th>Email / GDC</th><th>Workplace / Phone</th><th>Address</th><th>Invoice copy requested</th><th>Submitted</th><th>Actions</th>
           </tr></thead>
           <tbody>
             ${pendingEnrolments.map(r => `<tr>
               <td><div class="td-name">${esc((r.firstName||'') + ' ' + (r.lastName||''))||'-'}</div></td>
               <td><div>${esc(r.email)||'-'}</div><div class="td-email">GDC: ${esc(r.gdc)||'-'}</div></td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${esc(r.workplace)||'-'}<br/>${esc(r.phone)||'-'}</td>
-              <td style="font-size:0.82rem;color:var(--ink-light)">${r.wantInvoice ? ('✅ ' + esc(r.invoiceName) + '<br/>' + esc(r.invoiceEmail) + '<br/>' + esc(r.invoiceAddress)) : '-'}</td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${esc(r.invoiceAddress)||'-'}</td>
+              <td style="font-size:0.82rem;color:var(--ink-light)">${r.wantInvoice ? ('✅ ' + esc(r.invoiceName) + '<br/>' + esc(r.invoiceEmail)) : 'No'}</td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${fmt(r.submittedAt)}</td>
               <td>
                 <div class="admin-actions">
@@ -646,6 +648,20 @@
           <button class="btn btn-outline btn-sm" onclick="closeModal()">Close</button>
         </div>`;
       document.getElementById('learnerModal').classList.remove('hidden');
+    };
+
+    // Formats a learner's approved witnesses so they can be pasted straight
+    // into the Witnesses section of an exported training register (or
+    // anywhere else), without retyping their details.
+    window.copyApprovedWitnesses = (id) => {
+      const l = learners.find(x => x.id === id);
+      if (!l) return;
+      const approved = (l.supervisors || []).filter(s => s.approved);
+      if (!approved.length) { showToast('No approved witnesses yet for this learner.', 'error'); return; }
+      const text = approved.map(s => (s.name || 'Unnamed') + ' - GDC ' + (s.gdc || '-') + (s.email ? ' - ' + s.email : '')).join('\n');
+      navigator.clipboard.writeText(text).then(() => showToast('Approved witnesses copied ✅', 'success')).catch(() => {
+        alert(text); // fallback if clipboard access is blocked - at least they can select and copy it
+      });
     };
 
     window.copyToClip = (elId, msg) => {
@@ -1018,6 +1034,130 @@
       a.click();
     };
 
+    // ── Training register export (Word) ────────────────────────────────────
+    // External record of everyone who has trained with us, one page per
+    // learner. Loaded from a CDN on demand (not on every page load) since
+    // it's only needed when this button is actually used.
+    function loadDocxLib() {
+      if (window.docx) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/docx@9.8.1/dist/index.iife.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Could not load the Word export library - check your internet connection and try again.'));
+        document.head.appendChild(s);
+      });
+    }
+
+    function learnerCourseStatus(l) {
+      return l.certNumber ? 'Certificate issued'
+        : l.writtenPassed && l.practicalPassed && l.reflectionPassed ? 'Awaiting certificate'
+        : l.practicalSubmitted ? 'Practical under review'
+        : l.practicalPendingSignoff ? 'Awaiting supervisor sign-off'
+        : l.writtenSubmitted ? 'Written under review'
+        : l.unlocked ? 'In progress'
+        : 'Awaiting approval';
+    }
+
+    window.exportTrainingRegister = async (btn) => {
+      const originalLabel = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = 'Preparing...'; }
+      try {
+        await loadDocxLib();
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, BorderStyle } = window.docx;
+
+        const fmtDate = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        // A faint ruled line, for writing in by hand on a printed copy
+        const blankLine = () => new Paragraph({
+          spacing: { before: 300 },
+          border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'AAAAAA' } },
+          children: [new TextRun(' ')]
+        });
+
+        const detailRow = (label, value) => new TableRow({
+          children: [
+            new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: label, bold: true })] })] }),
+            new TableCell({ width: { size: 70, type: WidthType.PERCENTAGE }, children: [new Paragraph(String(value || '-'))] }),
+          ]
+        });
+
+        // Blank table for logging emails/calls with the assessor or supervisors by hand
+        const correspondenceTable = () => {
+          const headerCell = (text) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text, bold: true })] })] });
+          const blankCell = () => new TableCell({ children: [new Paragraph(' ')] });
+          return new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            columnWidths: [20, 35, 45],
+            rows: [
+              new TableRow({ tableHeader: true, children: [headerCell('Date'), headerCell('Contact (email/phone)'), headerCell('Notes')] }),
+              ...Array.from({ length: 5 }, () => new TableRow({ children: [blankCell(), blankCell(), blankCell()] })),
+            ]
+          });
+        };
+
+        const sections = learners.map((l, i) => {
+          const enrolledAt = l.enrolledAt?.toDate ? l.enrolledAt.toDate() : null;
+          const extensionMonths = l.extensionMonths || 0;
+          let expectedCompletion = 'Not yet enrolled';
+          if (enrolledAt) {
+            const d = new Date(enrolledAt);
+            d.setMonth(d.getMonth() + 4 + extensionMonths);
+            expectedCompletion = fmtDate(d);
+          }
+
+          const children = [
+            new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun(l.name || l.email || 'Unnamed learner')] }),
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: [
+                detailRow('Email', l.email),
+                detailRow('GDC number', l.gdc),
+                detailRow('Phone', l.phone),
+                detailRow('Workplace', l.workplace),
+                detailRow('Address', l.invoiceAddress),
+                detailRow('Date enrolled', enrolledAt ? fmtDate(enrolledAt) : 'Not yet enrolled'),
+                detailRow('Expected completion date', expectedCompletion),
+                detailRow('Course status', learnerCourseStatus(l)),
+                detailRow('Certificate number', l.certNumber),
+              ]
+            }),
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400 }, children: [new TextRun('Extensions')] }),
+            new Paragraph({ children: [new TextRun(
+              extensionMonths > 0
+                ? extensionMonths + ' month' + (extensionMonths > 1 ? 's' : '') + ' granted' + (l.extensionReason ? ' - ' + l.extensionReason : '') + (l.extensionUpdatedAt?.toDate ? ' (' + fmtDate(l.extensionUpdatedAt.toDate()) + ')' : '')
+                : 'No extensions granted yet.'
+            )] }),
+            blankLine(), blankLine(), blankLine(),
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400 }, children: [new TextRun('Assessor Correspondence')] }),
+            new Paragraph({ spacing: { after: 150 }, children: [new TextRun('Record of emails, calls, or other contact with this learner\'s assessor or supervisors.')] }),
+            correspondenceTable(),
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400 }, children: [new TextRun('Witnesses')] }),
+            ...((l.supervisors && l.supervisors.length)
+              ? l.supervisors.map(s => new Paragraph({ children: [new TextRun((s.name || 'Unnamed') + ' - GDC ' + (s.gdc || '-') + (s.approved ? ' (approved)' : ''))] }))
+              : [new Paragraph({ children: [new TextRun('No supervisors recorded yet.')] })]),
+            blankLine(), blankLine(), blankLine(),
+          ];
+          return i > 0 ? { properties: {}, children } : { children };
+        });
+
+        const doc = new Document({
+          sections: sections.length ? sections : [{ children: [new Paragraph('No learners to export.')] }]
+        });
+
+        const blob = await Packer.toBlob(doc);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'DNT_Training_Register_' + new Date().toISOString().slice(0,10) + '.docx';
+        a.click();
+      } catch (e) {
+        console.error(e);
+        alert(e.message || 'Could not export the training register.');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
+      }
+    };
+
     // ── Approve learner ──────────────────────────────────────────────────
       window.approveLearner = async (id, name) => {
       if (!confirm('Approve ' + name + ' and send them a welcome email?')) return;
@@ -1048,7 +1188,10 @@
         <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.85rem">
             <h4 style="margin:0;font-size:0.95rem">Clinical Supervisors (${sups.length})</h4>
-            ${sups.length ? `<button class="btn btn-outline btn-sm" onclick="reloadAndOpenModal('${id}')">↺ Refresh status</button>` : ''}
+            <div style="display:flex;gap:0.5rem">
+              ${sups.some(s => s.approved) ? `<button class="btn btn-outline btn-sm" onclick="copyApprovedWitnesses('${id}')">📋 Copy approved witnesses</button>` : ''}
+              ${sups.length ? `<button class="btn btn-outline btn-sm" onclick="reloadAndOpenModal('${id}')">↺ Refresh status</button>` : ''}
+            </div>
           </div>
           ${sups.length && !Object.keys(supervisorAgreements).length && sups.some(s=>s.guidanceSent&&!s.approved) ? `<div style="background:#FFF8E7;border:1px solid #FBBF24;border-radius:6px;padding:0.6rem 0.85rem;font-size:0.8rem;color:#92400E;margin-bottom:0.75rem">⚠️ Signed agreements could not be loaded. Check your Firestore rules allow authenticated reads on the <strong>supervisorAgreements</strong> collection, then click ↺ Refresh.</div>` : ''}
           ${sups.length ? `<div style="display:flex;flex-direction:column;gap:0.6rem">
@@ -1106,7 +1249,8 @@
           <div id="learnerViewMode">
             <table style="width:100%;font-size:0.9rem;border-collapse:collapse">
               ${[['Name', esc(l.name)||'-'],['Email', esc(l.email)||'-'],['GDC', esc(l.gdc)||'-'],['Phone', esc(l.phone)||'-'],['Workplace', esc(l.workplace)||'-'],
-                 ['Invoice', l.wantInvoice ? ('✅ Requested - ' + esc(l.invoiceName) + ', ' + esc(l.invoiceEmail) + ', ' + esc(l.invoiceAddress)) : 'Not requested'],
+                 ['Address', esc(l.invoiceAddress)||'-'],
+                 ['Invoice copy requested', l.wantInvoice ? ('✅ Yes - ' + esc(l.invoiceName) + ', ' + esc(l.invoiceEmail)) : 'No'],
                  ['Status', l.unlocked?'Active':'Pending approval'],
                  ['Declaration', l.declarationSigned ? '✅ Signed (' + esc(l.declarationSignedName) + ')' : '⏳ Not yet signed'],
                  ['Enrolled', l.enrolledAt?.toDate ? l.enrolledAt.toDate().toLocaleDateString('en-GB') : '-'],
