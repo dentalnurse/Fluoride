@@ -650,6 +650,20 @@
       document.getElementById('learnerModal').classList.remove('hidden');
     };
 
+    // Formats a learner's approved witnesses so they can be pasted straight
+    // into the Witnesses section of an exported training register (or
+    // anywhere else), without retyping their details.
+    window.copyApprovedWitnesses = (id) => {
+      const l = learners.find(x => x.id === id);
+      if (!l) return;
+      const approved = (l.supervisors || []).filter(s => s.approved);
+      if (!approved.length) { showToast('No approved witnesses yet for this learner.', 'error'); return; }
+      const text = approved.map(s => (s.name || 'Unnamed') + ' - GDC ' + (s.gdc || '-') + (s.email ? ' - ' + s.email : '')).join('\n');
+      navigator.clipboard.writeText(text).then(() => showToast('Approved witnesses copied ✅', 'success')).catch(() => {
+        alert(text); // fallback if clipboard access is blocked - at least they can select and copy it
+      });
+    };
+
     window.copyToClip = (elId, msg) => {
       const el = document.getElementById(elId);
       if (!el) return;
@@ -1068,6 +1082,20 @@
           ]
         });
 
+        // Blank table for logging emails/calls with the assessor or supervisors by hand
+        const correspondenceTable = () => {
+          const headerCell = (text) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text, bold: true })] })] });
+          const blankCell = () => new TableCell({ children: [new Paragraph(' ')] });
+          return new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            columnWidths: [20, 35, 45],
+            rows: [
+              new TableRow({ tableHeader: true, children: [headerCell('Date'), headerCell('Contact (email/phone)'), headerCell('Notes')] }),
+              ...Array.from({ length: 5 }, () => new TableRow({ children: [blankCell(), blankCell(), blankCell()] })),
+            ]
+          });
+        };
+
         const sections = learners.map((l, i) => {
           const enrolledAt = l.enrolledAt?.toDate ? l.enrolledAt.toDate() : null;
           const extensionMonths = l.extensionMonths || 0;
@@ -1101,6 +1129,9 @@
                 : 'No extensions granted yet.'
             )] }),
             blankLine(), blankLine(), blankLine(),
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400 }, children: [new TextRun('Assessor Correspondence')] }),
+            new Paragraph({ spacing: { after: 150 }, children: [new TextRun('Record of emails, calls, or other contact with this learner\'s assessor or supervisors.')] }),
+            correspondenceTable(),
             new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400 }, children: [new TextRun('Witnesses')] }),
             ...((l.supervisors && l.supervisors.length)
               ? l.supervisors.map(s => new Paragraph({ children: [new TextRun((s.name || 'Unnamed') + ' - GDC ' + (s.gdc || '-') + (s.approved ? ' (approved)' : ''))] }))
@@ -1157,7 +1188,10 @@
         <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.85rem">
             <h4 style="margin:0;font-size:0.95rem">Clinical Supervisors (${sups.length})</h4>
-            ${sups.length ? `<button class="btn btn-outline btn-sm" onclick="reloadAndOpenModal('${id}')">↺ Refresh status</button>` : ''}
+            <div style="display:flex;gap:0.5rem">
+              ${sups.some(s => s.approved) ? `<button class="btn btn-outline btn-sm" onclick="copyApprovedWitnesses('${id}')">📋 Copy approved witnesses</button>` : ''}
+              ${sups.length ? `<button class="btn btn-outline btn-sm" onclick="reloadAndOpenModal('${id}')">↺ Refresh status</button>` : ''}
+            </div>
           </div>
           ${sups.length && !Object.keys(supervisorAgreements).length && sups.some(s=>s.guidanceSent&&!s.approved) ? `<div style="background:#FFF8E7;border:1px solid #FBBF24;border-radius:6px;padding:0.6rem 0.85rem;font-size:0.8rem;color:#92400E;margin-bottom:0.75rem">⚠️ Signed agreements could not be loaded. Check your Firestore rules allow authenticated reads on the <strong>supervisorAgreements</strong> collection, then click ↺ Refresh.</div>` : ''}
           ${sups.length ? `<div style="display:flex;flex-direction:column;gap:0.6rem">
