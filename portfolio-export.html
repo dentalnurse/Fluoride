@@ -70,6 +70,10 @@
     /* Empty state */
     .empty { color: #9ca3af; font-style: italic; font-size: 0.88rem; }
 
+    /* Assessor feedback */
+    .feedback-box { background: #fffbeb; border-left: 3px solid #d97706; border-radius: 0 8px 8px 0; padding: 0.85rem 1.1rem; margin-top: 1rem; font-size: 0.85rem; line-height: 1.6; color: #374151; white-space: pre-wrap; }
+    .feedback-label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #92400e; margin-bottom: 0.35rem; }
+
     /* Footer */
     .doc-footer { padding: 1.25rem 2.5rem; background: #f9fafb; text-align: center; font-size: 0.75rem; color: #9ca3af; }
 
@@ -155,6 +159,9 @@
     if (!ts) return '-';
     const d = ts.toDate ? ts.toDate() : new Date(ts);
     return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  }
+  function feedbackBox(text) {
+    return text ? `<div class="feedback-box"><div class="feedback-label">Assessor Feedback</div>${esc(text)}</div>` : '';
   }
 
   const MODULE_TITLES = [
@@ -292,6 +299,7 @@
           </span>
         </div>
         ${writtenHtml}
+        ${feedbackBox(l.writtenFeedback)}
       </div>
 
       <div class="section">
@@ -308,6 +316,7 @@
           </span>
         </div>
         ${csHtml}
+        ${feedbackBox(l.practicalFeedback)}
       </div>
 
       <div class="section">
@@ -317,6 +326,7 @@
           </span>
         </div>
         ${reflHtml}
+        ${feedbackBox(l.reflectionFeedback)}
       </div>
 
       <div class="doc-footer">
