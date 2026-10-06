@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="js/gate.js"></script>
+  <meta name="robots" content="noindex, nofollow"/>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0L9NXXFBFR');
+  </script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create account - Dental Nurse Training CPD Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="css/cpd.css"/>
+</head>
+<body>
+  <div id="navHolder"></div>
+  <div class="auth-wrap" style="min-height:calc(100vh - var(--nav-h))">
+    <div class="auth-card" style="max-width:480px">
+      <div class="auth-logo" style="margin-bottom:1.5rem">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="Dental Nurse Training" style="height:56px;margin:0 auto 0.75rem" onerror="this.style.display='none'"/>
+        <h2>Create your free CPD Hub account</h2>
+      </div>
+      <div class="form-group"><label for="name">Full name (as it should appear on certificates) *</label><input type="text" id="name" autocomplete="name"/></div>
+      <div class="form-group"><label for="email">Email address *</label><input type="email" id="email" autocomplete="email"/></div>
+      <div class="form-group"><label for="gdc">GDC registration number *</label><input type="text" id="gdc" placeholder="e.g. 123456" inputmode="numeric"/></div>
+      <div class="form-group"><label for="workplace">Place of work</label><input type="text" id="workplace" placeholder="Optional"/></div>
+      <div class="form-group"><label for="pass">Create a password *</label><input type="password" id="pass" placeholder="At least 8 characters" autocomplete="new-password"/></div>
+      <div class="form-group"><label for="pass2">Confirm password *</label><input type="password" id="pass2" autocomplete="new-password"/></div>
+      <label style="display:flex;gap:0.6rem;align-items:flex-start;font-size:0.85rem;color:var(--ink-mid);margin-bottom:1rem">
+        <input type="checkbox" id="agree" style="margin-top:0.25rem"/>
+        <span>I confirm I am a GDC-registered dental nurse (or student dental nurse) and agree to the <a href="../terms.html" target="_blank" style="color:var(--teal);font-weight:600">terms</a> and <a href="../privacy-policy.html" target="_blank" style="color:var(--teal);font-weight:600">privacy policy</a>.</span>
+      </label>
+      <div id="err" class="form-error" style="display:none;margin-bottom:0.75rem"></div>
+      <button class="btn btn-primary form-submit" id="regBtn">Create account</button>
+      <div class="auth-switch">Already have an account? <a href="login.html" id="loginLink">Log in</a></div>
+    </div>
+  </div>
+  <div id="footHolder"></div>
+  <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/demo-course.js"></script>
+  <script type="module">
+    import * as D from './js/data.js';
+    const user = await D.mountChrome();
+    const rawNext = qs('next') || '';
+    const next = /^[\w./?=&%-]+$/.test(rawNext) && !rawNext.includes('//') ? rawNext : 'dashboard.html';
+    document.getElementById('loginLink').href = D.link('login.html' + (rawNext ? '?next=' + encodeURIComponent(next) : ''));
+    if (user) location.href = D.link(next);
+
+    const err = (m) => { const e = document.getElementById('err'); e.textContent = m; e.style.display = m ? 'block' : 'none'; };
+    document.getElementById('regBtn').onclick = async () => {
+      const v = id => document.getElementById(id).value.trim();
+      const name = v('name'), email = v('email'), gdc = v('gdc'), workplace = v('workplace');
+      const pass = document.getElementById('pass').value, pass2 = document.getElementById('pass2').value;
+      err('');
+      if (!D.PREVIEW && !D.CONFIGURED) { err('The CPD Hub is not open yet.'); return; }
+      if (!name || !email || !gdc) { err('Please complete all fields marked with *'); return; }
+      if (pass.length < 8) { err('Your password must be at least 8 characters.'); return; }
+      if (pass !== pass2) { err('The passwords do not match.'); return; }
+      if (!document.getElementById('agree').checked) { err('Please tick the box to confirm.'); return; }
+      const btn = document.getElementById('regBtn'); btn.disabled = true; btn.textContent = 'Creating your account...';
+      try {
+        await D.register({ name, email, gdc, workplace, password: pass });
+        location.href = D.link(next);
+      } catch (e) {
+        btn.disabled = false; btn.textContent = 'Create account';
+        if (e.code === 'auth/email-already-in-use') err('An account with this email already exists. Please log in instead.');
+        else if (e.code === 'auth/invalid-email') err('Please check your email address.');
+        else err('Could not create your account. Please try again or email ' + NOTIFY_EMAIL);
+      }
+    };
+  </script>
+</body>
+</html>

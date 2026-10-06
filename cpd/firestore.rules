@@ -1,0 +1,73 @@
+rules_version = '2';
+// Firestore rules for the CPD Hub's own Firebase project.
+// Paste into Firebase Console → Firestore Database → Rules, then Publish.
+// Kept here for version-controlled review only (excluded from the website).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function myEmail()  { return request.auth.token.email.lower(); }
+    // Built-in admins: keep in step with ADMIN_EMAILS in cpd/js/config.js.
+    // Extra admins are added from the admin hub (admins collection).
+    function isAdmin() {
+      return signedIn() && (
+        myEmail() in ['emily@dentalnurse.training', 'erica@dentalnurse.training'] ||
+        exists(/databases/$(database)/documents/admins/$(myEmail())));
+    }
+    function isMe(uid) { return signedIn() && request.auth.uid == uid; }
+    function hasAccess(uid, slug) {
+      return exists(/databases/$(database)/documents/access/$(uid)) &&
+        get(/databases/$(database)/documents/access/$(uid)).data.get('courses', {}).keys().hasAny([slug]);
+    }
+
+    // Course details: anyone can read live/coming-soon courses; admins manage.
+    match /courses/{slug} {
+      allow read: if isAdmin() || resource.data.status in ['live', 'coming-soon'];
+      allow write: if isAdmin();
+    }
+
+    // Lessons, quiz and reflection questions: only learners who have access.
+    match /courseContent/{slug} {
+      allow read: if isAdmin() || (signedIn() && hasAccess(request.auth.uid, slug));
+      allow write: if isAdmin();
+    }
+
+    match /learners/{uid} {
+      allow read, write: if isMe(uid) || isAdmin();
+
+      match /progress/{slug} {
+        allow read: if isMe(uid) || isAdmin();
+        allow write: if isAdmin() || (isMe(uid) && hasAccess(uid, slug));
+      }
+
+      // A learner can only ever record an order as "pending"; only admins unlock.
+      match /orders/{slug} {
+        allow read: if isMe(uid) || isAdmin();
+        allow create: if isAdmin() || (isMe(uid) && request.resource.data.status == 'pending' && request.resource.data.uid == uid);
+        allow update: if isAdmin() || (isMe(uid) && resource.data.status == 'pending' && request.resource.data.status == 'pending' && request.resource.data.uid == uid);
+        allow delete: if isAdmin();
+      }
+    }
+
+    // Admin views across all learners
+    match /{path=**}/progress/{slug} { allow read: if isAdmin(); }
+    match /{path=**}/orders/{slug}   { allow read: if isAdmin(); }
+
+    // Which courses each learner has unlocked: learners read their own, admins write.
+    match /access/{uid} {
+      allow read: if isMe(uid) || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /admins/{email} {
+      allow read: if isAdmin() || (signedIn() && myEmail() == email);
+      allow write: if isAdmin();
+    }
+
+    // Uploaded pictures/videos: shown inside lessons, so anyone can read.
+    match /media/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

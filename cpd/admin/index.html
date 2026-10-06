@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="../js/gate.js"></script>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - Dental Nurse Training CPD Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../css/style.css"/>
+  <link rel="stylesheet" href="../css/cpd.css"/>
+</head>
+<body>
+  <div id="navHolder"></div>
+
+  <div id="denied" class="auth-wrap" style="display:none;min-height:60vh">
+    <div class="auth-card" style="text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:0.75rem">🔒</div>
+      <h2 style="margin-bottom:0.5rem">Admin access only</h2>
+      <p id="deniedMsg" style="margin-bottom:1.25rem">Please log in with an admin account.</p>
+      <a href="../login.html?next=admin/index.html" id="adminLoginLink" class="btn btn-primary">Log in</a>
+    </div>
+  </div>
+
+  <div id="panel" style="display:none">
+    <div class="admin-header">
+      <div><h1>DNT CPD Hub - Admin</h1><span style="font-size:0.8rem;opacity:0.65" id="whoami"></span></div>
+      <a href="../index.html" id="viewHub" class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.35);color:rgba(255,255,255,0.85)">View hub</a>
+    </div>
+    <div class="admin-panel">
+      <div class="admin-stat-row four">
+        <div class="admin-stat" id="statPayTile"><div class="as-n" id="statPay">-</div><div class="as-lbl">Payments to check</div></div>
+        <div class="admin-stat"><div class="as-n" id="statLearners">-</div><div class="as-lbl">Learners</div></div>
+        <div class="admin-stat"><div class="as-n" id="statLive">-</div><div class="as-lbl">Live courses</div></div>
+        <div class="admin-stat"><div class="as-n" id="statDone">-</div><div class="as-lbl">Courses completed</div></div>
+      </div>
+      <div class="admin-tabs" id="tabs">
+        <div class="admin-tab" data-tab="payments">💳 Payments <span id="payBadge" class="admin-tab-badge" style="display:none"></span></div>
+        <div class="admin-tab" data-tab="learners">👥 Learners</div>
+        <div class="admin-tab" data-tab="courses">📚 Courses</div>
+        <div class="admin-tab" data-tab="completions">🏅 Completions</div>
+        <div class="admin-tab" data-tab="feedback">💬 Feedback</div>
+        <div class="admin-tab" data-tab="media">🖼️ Pictures &amp; videos</div>
+        <div class="admin-tab" data-tab="admins">🔑 Admins</div>
+      </div>
+      <div id="tabBody"></div>
+    </div>
+  </div>
+
+  <div id="modalHolder"></div>
+  <input type="file" id="importFile" accept=".json,application/json" style="display:none"/>
+  <div id="footHolder"></div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/render.js"></script>
+  <script src="../js/demo-course.js"></script>
+  <script type="module">
+    import * as D from '../js/data.js';
+    const me = await D.mountChrome({ prefix: '../' });
+    document.getElementById('adminLoginLink').href = D.link('../login.html?next=admin/index.html');
+    document.getElementById('viewHub').href = D.link('../index.html');
+    if (!me || !me.isAdmin) {
+      document.getElementById('denied').style.display = 'flex';
+      if (me) document.getElementById('deniedMsg').textContent = 'You are logged in as ' + me.email + ', which is not an admin account.';
+      throw 0;
+    }
+    document.getElementById('panel').style.display = '';
+    document.getElementById('whoami').textContent = 'Logged in as ' + me.email;
+
+    // ── Data ─────────────────────────────────────────────────────────────
+    let S = {};
+    async function loadAll() {
+      const [courses, learners, access, progress, orders] = await Promise.all([
+        D.listCourses(true), D.listLearners(), D.listAllAccess(), D.listAllProgress(), D.listAllOrders()]);
+      S = { courses, learners, access, progress, orders, bySlug: Object.fromEntries(courses.map(c => [c.slug, c])) };
+      const pending = orders.filter(o => o.status === 'pending' && !((access[o.uid] || {})[o.slug]));
+      S.pending = pending;
+      document.getElementById('statPay').textContent = pending.length;
+      document.getElementById('statPayTile').classList.toggle('needs-attention', pending.length > 0);
+      document.getElementById('statLearners').textContent = learners.length;
+      document.getElementById('statLive').textContent = courses.filter(c => c.status === 'live').length;
+      document.getElementById('statDone').textContent = progress.filter(p => p.completedAt).length;
+      const badge = document.getElementById('payBadge');
+      badge.textContent = pending.length; badge.style.display = pending.length ? '' : 'none';
+    }
+    const learnerOf = uid => S.learners.find(l => l.uid === uid) || { uid, name: '(unknown)', email: '' };
+    const titleOf = slug => (S.bySlug[slug] || {}).title || slug;
+    const body = document.getElementById('tabBody');
+
+    let tab = 'payments';
+    async function show(t) {
+      if (edDirty && !confirm('You have unsaved changes to this course. Leave without saving?')) return;
+      tab = t; edDirty = false; ed = null;
+      document.querySelectorAll('#tabs .admin-tab').forEach(x => x.classList.toggle('active', x.dataset.tab === t));
+      body.innerHTML = '<p style="color:var(--ink-light)">Loading...</p>';
+      try { await loadAll(); } catch (e) { console.error(e); body.innerHTML = '<div class="callout callout-warn"><p>Could not load data: ' + esc(e.message) + '</p></div>'; return; }
+      ({ payments: tabPayments, learners: tabLearners, courses: tabCourses, completions: tabCompletions, feedback: tabFeedback, media: tabMedia, admins: tabAdmins })[t]();
+    }
+    document.querySelectorAll('#tabs .admin-tab').forEach(x => x.onclick = () => show(x.dataset.tab));
+
+    function modal(title, html, wide) {
+      const h = document.getElementById('modalHolder');
+      h.innerHTML = '<div class="modal-overlay"><div class="modal" style="' + (wide ? 'max-width:860px' : '') + '"><div class="modal-header"><h3>' + esc(title) + '</h3><button class="modal-close">×</button></div><div id="modalBody">' + html + '</div></div></div>';
+      const close = () => { h.innerHTML = ''; };
+      h.querySelector('.modal-close').onclick = close;
+      h.querySelector('.modal-overlay').onclick = (e) => { if (e.target.classList.contains('modal-overlay')) close(); };
+      return { el: document.getElementById('modalBody'), close };
+    }
+
+    function unlockEmail(l, slug) {
+      const subj = 'Your CPD course is ready - ' + titleOf(slug);
+      const msg = 'Hi ' + (l.name || '').split(' ')[0] + ',\n\nThank you for your payment. Your CPD course "' + titleOf(slug) + '" is now unlocked and ready for you.\n\nLog in to the CPD Hub to get started:\nhttps://fluoride.dentalnurse.training/cpd/login.html\n\nIf you have any questions, just reply to this email.\n\nKind regards,\nDental Nurse Training';
+      return 'mailto:' + encodeURIComponent(l.email) + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(msg);
+    }
+
+    // ══ Payments ═════════════════════════════════════════════════════════
+    function tabPayments() {
+      const recent = S.orders.filter(o => o.status === 'unlocked').sort((a, b) => (b.unlockedAt || '').localeCompare(a.unlockedAt || '')).slice(0, 15);
+      body.innerHTML = '<div class="callout" style="margin-top:0"><div class="callout-label">How this works</div><p>When a learner clicks Buy they appear here. Check the payment has arrived in Stripe (search their email), then click Unlock. Then use "Email learner" to let them know.</p></div>'
+        + '<h3 style="margin:1rem 0 0.75rem">Waiting to be checked</h3>'
+        + (S.pending.length ? '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Learner</th><th>GDC</th><th>Course</th><th>Price</th><th>Clicked buy</th><th></th></tr></thead><tbody>'
+          + S.pending.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map((o, i) => '<tr><td><div class="td-name">' + esc(o.name) + '</div><div class="td-email">' + esc(o.email) + '</div></td><td>' + esc(o.gdc) + '</td><td>' + esc(o.title) + '</td><td>' + esc(o.price) + '</td><td>' + fmtDate(o.createdAt) + '</td>'
+            + '<td><div class="admin-actions"><button class="btn btn-success btn-sm" data-unlock="' + i + '">Unlock</button><button class="btn btn-outline btn-sm" data-del="' + i + '">Remove</button></div></td></tr>').join('')
+          + '</tbody></table></div>' : '<p style="color:var(--ink-light)">Nothing waiting. 🎉</p>')
+        + '<h3 style="margin:1.75rem 0 0.75rem">Recently unlocked</h3>'
+        + (recent.length ? '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Learner</th><th>Course</th><th>Unlocked</th><th></th></tr></thead><tbody>'
+          + recent.map(o => '<tr><td><div class="td-name">' + esc(o.name) + '</div><div class="td-email">' + esc(o.email) + '</div></td><td>' + esc(o.title) + '</td><td>' + fmtDate(o.unlockedAt) + ' by ' + esc(o.unlockedBy || '') + '</td><td><a class="submission-link" href="' + unlockEmail(learnerOf(o.uid), o.slug) + '">Email learner</a></td></tr>').join('')
+          + '</tbody></table></div>' : '<p style="color:var(--ink-light)">None yet.</p>');
+      body.querySelectorAll('[data-unlock]').forEach(b => b.onclick = async () => {
+        const o = S.pending[b.dataset.unlock];
+        if (!confirm('Have you checked in Stripe that ' + o.name + ' has paid ' + o.price + ' for "' + o.title + '"?')) return;
+        try { await D.grantAccess(o.uid, o.slug, me.email, 'Paid ' + o.price); toast('Unlocked. Now email the learner.', 'success'); location.href = unlockEmail(learnerOf(o.uid), o.slug); show('payments'); }
+        catch (e) { toast('Could not unlock: ' + e.message, 'error'); }
+      });
+      body.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
+        const o = S.pending[b.dataset.del];
+        if (!confirm('Remove this order? Only do this if ' + o.name + ' did not actually pay.')) return;
+        await D.deleteOrder(o.uid, o.slug); show('payments');
+      });
+    }
+
+    // ══ Learners ═════════════════════════════════════════════════════════
+    function tabLearners() {
+      body.innerHTML = '<div class="cat-toolbar"><input type="search" class="cat-search" id="lSearch" placeholder="Search by name, email or GDC number..."/></div><div id="lTable"></div>';
+      const draw = () => {
+        const term = document.getElementById('lSearch').value.trim().toLowerCase();
+        const list = S.learners.filter(l => !term || ((l.name || '') + ' ' + (l.email || '') + ' ' + (l.gdc || '')).toLowerCase().includes(term))
+          .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        document.getElementById('lTable').innerHTML = list.length ? '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Learner</th><th>GDC</th><th>Workplace</th><th>Courses</th><th></th></tr></thead><tbody>'
+          + list.map(l => {
+              const acc = Object.keys(S.access[l.uid] || {});
+              const pills = acc.map(s => { const p = S.progress.find(x => x.uid === l.uid && x.slug === s) || {}; return '<span class="pill ' + (p.completedAt ? 'pill-green' : 'pill-teal') + '" style="margin:0 0.25rem 0.25rem 0">' + esc(titleOf(s)) + ' · ' + (p.completedAt ? 'done' : (p.percent || 0) + '%') + '</span>'; }).join('');
+              return '<tr><td><div class="td-name">' + esc(l.name) + '</div><div class="td-email">' + esc(l.email) + '</div></td><td>' + esc(l.gdc) + '</td><td>' + esc(l.workplace || '') + '</td><td>' + (pills || '<span style="color:var(--ink-light)">None</span>') + '</td><td><button class="btn btn-outline btn-sm" data-uid="' + esc(l.uid) + '">Manage</button></td></tr>';
+            }).join('') + '</tbody></table></div>' : '<p style="color:var(--ink-light)">No learners found.</p>';
+        document.querySelectorAll('[data-uid]').forEach(b => b.onclick = () => manageLearner(b.dataset.uid));
+      };
+      document.getElementById('lSearch').oninput = draw;
+      draw();
+    }
+
+    function manageLearner(uid) {
+      const l = learnerOf(uid);
+      const acc = S.access[uid] || {};
+      const m = modal(l.name, '', true);
+      const draw = () => {
+        const rows = Object.entries(acc).map(([s, a]) => {
+          const p = S.progress.find(x => x.uid === uid && x.slug === s) || {};
+          return '<div class="ed-block"><div class="ed-block-head"><strong>' + esc(titleOf(s)) + '</strong><span class="pill ' + (p.completedAt ? 'pill-green' : 'pill-teal') + '">' + (p.completedAt ? 'Completed ' + fmtDate(p.completedAt) : (p.percent || 0) + '% complete') + '</span></div><div class="ed-block-body" style="font-size:0.85rem">'
+            + '<p style="font-size:0.85rem">Unlocked ' + fmtDate(a.grantedAt) + ' by ' + esc(a.grantedBy || '') + (a.note ? ' (' + esc(a.note) + ')' : '') + '. Quiz: ' + (p.quiz ? 'best ' + p.quiz.best + '%, ' + p.quiz.attempts + ' attempt' + (p.quiz.attempts === 1 ? '' : 's') + (p.quiz.passed ? ', passed' : '') : 'not taken') + '.</p>'
+            + (p.reflection ? '<details class="reveal-item"><summary>Reflection</summary><div class="md">' + (p.reflection.questions || []).map((q, i) => '<p><strong>' + esc(q) + '</strong><br/>' + esc((p.reflection.answers || [])[i] || '') + '</p>').join('') + '</div></details>' : '')
+            + (p.feedback ? '<details class="reveal-item"><summary>Feedback</summary><div class="md"><p>' + Object.entries(p.feedback.ratings || {}).map(([k, v]) => esc(k) + ': ' + v + '/5').join(' · ') + '<br/>Free from bias: ' + esc(p.feedback.bias) + ' · Time taken: ' + esc(p.feedback.time) + '</p>' + (p.feedback.comments ? '<p>"' + esc(p.feedback.comments) + '"</p>' : '') + '</div></details>' : '')
+            + '<div class="admin-actions" style="margin-top:0.6rem">' + (p.completedAt ? '<a class="btn btn-primary btn-sm" target="_blank" href="' + D.link('../certificate.html?c=' + encodeURIComponent(s) + '&u=' + encodeURIComponent(uid)) + '">Certificate</a>' : '')
+            + '<button class="btn btn-outline btn-sm" data-reset="' + esc(s) + '">Reset progress</button><button class="btn btn-danger btn-sm" data-revoke="' + esc(s) + '">Remove access</button></div></div></div>';
+        }).join('');
+        const options = S.courses.filter(c => !acc[c.slug]).map(c => '<option value="' + esc(c.slug) + '">' + esc(c.title) + (c.status !== 'live' ? ' (' + c.status + ')' : '') + '</option>').join('');
+        m.el.innerHTML = '<p style="font-size:0.88rem">' + esc(l.email) + ' · GDC ' + esc(l.gdc) + (l.workplace ? ' · ' + esc(l.workplace) : '') + ' · joined ' + fmtDate(l.createdAt) + '</p>'
+          + '<h3 style="margin:1rem 0 0.6rem">Courses</h3>' + (rows || '<p style="color:var(--ink-light);font-size:0.88rem">No courses yet.</p>')
+          + (options ? '<h3 style="margin:1.25rem 0 0.6rem">Give access to a course</h3><div class="ed-grid"><div class="form-group"><select id="gCourse">' + options + '</select></div><div class="form-group"><input type="text" id="gNote" placeholder="Reason, e.g. Paid by bank transfer / Free place"/></div></div><button class="btn btn-success btn-sm" id="gBtn">Give access</button>' : '');
+        m.el.querySelectorAll('[data-revoke]').forEach(b => b.onclick = async () => {
+          if (!confirm('Remove access to "' + titleOf(b.dataset.revoke) + '"? Their progress is kept and comes back if you give access again.')) return;
+          await D.revokeAccess(uid, b.dataset.revoke); delete acc[b.dataset.revoke]; await loadAll(); draw();
+        });
+        m.el.querySelectorAll('[data-reset]').forEach(b => b.onclick = async () => {
+          if (!confirm('Delete all progress, quiz results, reflection, feedback and the certificate for "' + titleOf(b.dataset.reset) + '"? This cannot be undone.')) return;
+          await D.resetProgress(uid, b.dataset.reset); await loadAll(); draw();
+        });
+        const g = document.getElementById('gBtn');
+        if (g) g.onclick = async () => {
+          const s = document.getElementById('gCourse').value;
+          await D.grantAccess(uid, s, me.email, document.getElementById('gNote').value.trim());
+          acc[s] = { grantedAt: new Date().toISOString(), grantedBy: me.email, note: document.getElementById('gNote').value.trim() };
+          await loadAll(); draw(); toast('Access given.', 'success');
+        };
+      };
+      draw();
+      const obs = new MutationObserver(() => { if (!document.getElementById('modalBody')) { obs.disconnect(); if (tab === 'learners') tabLearners(); } });
+      obs.observe(document.getElementById('modalHolder'), { childList: true });
+    }
+
+    // ══ Courses list ═════════════════════════════════════════════════════
+    const STATUS_PILL = { live: 'pill-green', 'coming-soon': 'pill-orange', draft: 'pill-grey', archived: 'pill-red' };
+    function tabCourses() {
+      const list = S.courses.slice().sort((a, b) => a.title.localeCompare(b.title));
+      body.innerHTML = '<div class="admin-actions" style="margin-bottom:1rem"><button class="btn btn-primary btn-sm" id="newCourse">＋ New course</button><button class="btn btn-outline btn-sm" id="importCourse">⬆ Import course file</button></div>'
+        + (list.length ? '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Course</th><th>Status</th><th>Hours</th><th>Price</th><th>Learners</th><th>Completed</th><th></th></tr></thead><tbody>'
+          + list.map(c => {
+              const learners = Object.values(S.access).filter(a => a[c.slug]).length;
+              const done = S.progress.filter(p => p.slug === c.slug && p.completedAt).length;
+              return '<tr><td><div class="td-name">' + esc(c.icon || '') + ' ' + esc(c.title) + '</div><div class="td-email">' + esc(c.category || '') + ' · ' + (c.lessonTitles || []).length + ' lessons · ' + (c.questionCount || 0) + ' quiz questions</div></td>'
+                + '<td><span class="pill ' + (STATUS_PILL[c.status] || 'pill-grey') + '">' + esc(c.status) + '</span></td><td>' + esc(c.hours) + '</td><td>' + esc(c.price) + '</td><td>' + learners + '</td><td>' + done + '</td>'
+                + '<td><div class="admin-actions"><button class="btn btn-primary btn-sm" data-edit="' + esc(c.slug) + '">Edit</button><a class="btn btn-outline btn-sm" target="_blank" href="' + D.link('../learn.html?c=' + encodeURIComponent(c.slug)) + '">Preview</a></div></td></tr>';
+            }).join('') + '</tbody></table></div>'
+          : '<div class="empty-state"><div class="es-icon">📚</div><h3>No courses yet</h3><p>Click "New course" to build your first one, or import a course file.</p></div>');
+      document.getElementById('newCourse').onclick = () => openEditor(null);
+      document.getElementById('importCourse').onclick = () => document.getElementById('importFile').click();
+      body.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openEditor(b.dataset.edit));
+    }
+
+    document.getElementById('importFile').onchange = async (e) => {
+      const f = e.target.files[0]; e.target.value = '';
+      if (!f) return;
+      try {
+        const data = JSON.parse(await f.text());
+        if (!data.meta || !data.content || !data.meta.title) throw new Error('This does not look like a course file.');
+        const meta = { ...blankMeta(), ...data.meta, status: 'draft' };
+        meta.slug = slugify(meta.slug || meta.title);
+        if (S.bySlug[meta.slug]) {
+          if (!confirm('A course called "' + meta.slug + '" already exists. Import as a copy with a new link name? (Cancel to stop.)')) return;
+          meta.slug = meta.slug + '-' + Date.now().toString(36).slice(-4);
+        }
+        const content = { lessons: [], quiz: { passMark: 80, questions: [] }, reflection: DEFAULT_REFLECTION.slice(), ...data.content };
+        content.lessons.forEach(l => { l.id = l.id || newId(); l.blocks = l.blocks || []; });
+        if (tab !== 'courses') await show('courses');
+        startEditor(meta, content, true);
+        edDirty = true;
+        toast('Course imported as a draft. Check it, then click Save.', 'success');
+      } catch (err) { alert('Could not import: ' + err.message); }
+    };
+
+    // ══ Course editor ════════════════════════════════════════════════════
+    const DEFAULT_REFLECTION = [
+      'What were the key things you learned from this course?',
+      'How will you apply this learning in your day-to-day practice?',
+      'How will this benefit your patients?',
+      'Is there anything you would like to learn more about? (Add it to your personal development plan.)',
+    ];
+    const newId = () => 'l' + Math.random().toString(36).slice(2, 8);
+    const blankMeta = () => ({ slug: '', title: '', category: '', icon: '📘', thumbnail: '', summary: '', hours: 1, price: '£15', stripeLink: '', status: 'draft', outcomes: [], aims: '', objectives: [], updated: new Date().toISOString().slice(0, 10) });
+
+    const DETAIL_FIELDS = [
+      { key: 'title', label: 'Course title *', type: 'text' },
+      { key: 'slug', label: 'Link name *', type: 'slug', help: 'Used in the course web address. Set automatically from the title and cannot be changed after the first save.' },
+      { key: 'status', label: 'Status', type: 'select', options: [['draft', 'Draft - hidden from learners'], ['coming-soon', 'Coming soon - shown, cannot be bought'], ['live', 'Live - can be bought'], ['archived', 'Archived - hidden, existing learners keep access']] },
+      { key: 'category', label: 'Category', type: 'text', placeholder: 'e.g. Clinical, Infection Control, Professionalism', list: 'catList' },
+      { key: 'icon', label: 'Icon (an emoji)', type: 'text' },
+      { key: 'thumbnail', label: 'Course card picture (optional)', type: 'media', accept: 'image' },
+      { key: 'summary', label: 'Short summary for the course card *', type: 'md', short: true },
+      { key: 'hours', label: 'Verifiable CPD hours *', type: 'number', step: 0.5, min: 0.5, help: 'Must reflect the time a learner realistically spends on the course, including the quiz and reflection.' },
+      { key: 'price', label: 'Price *', type: 'text', placeholder: '£15' },
+      { key: 'stripeLink', label: 'Stripe Payment Link', type: 'text', placeholder: 'https://buy.stripe.com/...', help: 'In Stripe, set this link to redirect after payment to: https://fluoride.dentalnurse.training/cpd/payment-success.html?c=LINK-NAME' },
+      { key: 'outcomes', label: 'GDC development outcomes covered *', type: 'outcomes' },
+      { key: 'aims', label: 'Aims *', type: 'md', short: true, help: 'What the course sets out to do. GDC requirement for verifiable CPD.' },
+      { key: 'objectives', label: 'Objectives * (one per line, finishing "By the end of this course you will be able to...")', type: 'lines', help: 'GDC requirement for verifiable CPD.' },
+      { key: 'updated', label: 'Content last reviewed', type: 'date' },
+    ];
+    const QUIZ_FIELDS = [
+      { key: 'passMark', label: 'Pass mark (%)', type: 'number', min: 1 },
+      { key: 'questions', label: 'Questions', type: 'rows', item: 'Question', fields: [
+        { key: 'q', label: 'Question', type: 'text' },
+        { key: 'options', label: 'Answer options (one per line)', type: 'lines' },
+        { key: 'answer', label: 'Correct option number (1 = first line)', type: 'number', min: 1 },
+        { key: 'explain', label: 'Explanation shown after marking', type: 'text' },
+      ] },
+    ];
+
+    let ed = null, edDirty = false, edSection = 'details';
+    window.addEventListener('beforeunload', e => { if (edDirty) { e.preventDefault(); e.returnValue = ''; } });
+
+    async function openEditor(slug) {
+      if (!slug) return startEditor(blankMeta(), { lessons: [{ id: newId(), title: 'Lesson 1', blocks: [] }], quiz: { passMark: 80, questions: [] }, reflection: DEFAULT_REFLECTION.slice() }, true);
+      const meta = await D.getCourse(slug);
+      const content = await D.getCourseContent(slug) || { lessons: [], quiz: { passMark: 80, questions: [] }, reflection: DEFAULT_REFLECTION.slice() };
+      ['lessonTitles', 'questionCount', 'passMark', 'updatedAt'].forEach(k => delete meta[k]);
+      startEditor({ ...blankMeta(), ...meta }, content, false);
+    }
+
+    function startEditor(meta, content, isNew) {
+      ed = { meta, content, isNew };
+      ed.content.quiz = ed.content.quiz || { passMark: 80, questions: [] };
+      ed.content.reflection = ed.content.reflection || DEFAULT_REFLECTION.slice();
+      edSection = 'details'; edDirty = false;
+      drawEditor();
+    }
+
+    function drawEditor() {
+      const L = ed.content.lessons;
+      body.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem"><div><a href="#" id="edBack" class="submission-link">← All courses</a><h2 style="margin-top:0.35rem;font-size:1.35rem">' + esc(ed.meta.title || 'New course') + '</h2></div>'
+        + '<span class="pill ' + (STATUS_PILL[ed.meta.status] || 'pill-grey') + '">' + esc(ed.meta.status) + '</span></div>'
+        + '<datalist id="catList">' + [...new Set(S.courses.map(c => c.category).filter(Boolean))].map(c => '<option value="' + esc(c) + '">').join('') + '</datalist>'
+        + '<div class="ed-layout"><div class="ed-nav" id="edNav"></div><div><div class="ed-panel" id="edPanel"></div>'
+        + '<div class="ed-savebar"><span id="edState" style="font-size:0.82rem;color:var(--ink-light);margin-right:auto"></span>'
+        + (ed.isNew ? '' : '<button class="btn btn-outline btn-sm" id="edDelete" style="color:var(--warn);border-color:var(--warn)">Delete</button>')
+        + '<button class="btn btn-outline btn-sm" id="edExport">⬇ Download course file</button><button class="btn btn-outline btn-sm" id="edPreview">Save &amp; preview</button><button class="btn btn-primary btn-sm" id="edSave">Save</button></div></div></div>';
+      document.getElementById('edBack').onclick = (e) => { e.preventDefault(); if (edDirty && !confirm('Leave without saving your changes?')) return; edDirty = false; show('courses'); };
+      document.getElementById('edSave').onclick = () => saveCourse(false);
+      document.getElementById('edPreview').onclick = () => saveCourse(true);
+      document.getElementById('edExport').onclick = exportCourse;
+      const del = document.getElementById('edDelete');
+      if (del) del.onclick = deleteCourse;
+
+      const nav = document.getElementById('edNav');
+      const item = (id, label, sub) => '<button class="' + (edSection === id ? 'active' : '') + (sub ? ' ed-sub' : '') + '" data-sec="' + esc(id) + '">' + label + '</button>';
+      nav.innerHTML = item('details', '📋 Course details') + '<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-light);padding:0.75rem 0.75rem 0.25rem">Lessons</div>'
+        + L.map((l, i) => item('lesson:' + l.id, (i + 1) + '. ' + esc(l.title || 'Untitled'), true)).join('')
+        + '<button class="ed-sub" id="addLesson" style="color:var(--teal);font-weight:700">＋ Add lesson</button>'
+        + item('quiz', '✅ Quiz (' + ed.content.quiz.questions.length + ')') + item('reflection', '🪞 Reflection questions') + item('help', '❔ Writing tips');
+      nav.querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { edSection = b.dataset.sec; drawEditor(); });
+      document.getElementById('addLesson').onclick = () => { const l = { id: newId(), title: 'Lesson ' + (L.length + 1), blocks: [] }; L.push(l); edSection = 'lesson:' + l.id; dirty(); drawEditor(); };
+
+      const panel = document.getElementById('edPanel');
+      if (edSection === 'details') {
+        panel.innerHTML = '<h3 style="margin-bottom:1rem">Course details</h3>';
+        renderFields(panel, ed.meta, DETAIL_FIELDS);
+      } else if (edSection.startsWith('lesson:')) {
+        const i = L.findIndex(l => 'lesson:' + l.id === edSection);
+        if (i < 0) { edSection = 'details'; return drawEditor(); }
+        drawLessonEditor(panel, L[i], i);
+      } else if (edSection === 'quiz') {
+        panel.innerHTML = '<h3 style="margin-bottom:0.5rem">End of course quiz</h3><p style="font-size:0.88rem;margin-bottom:1rem">Learners must pass this to get their certificate. Questions and answer options are shuffled each attempt. Aim for at least 5 to 10 questions that test each objective.</p>';
+        renderFields(panel, ed.content.quiz, QUIZ_FIELDS);
+      } else if (edSection === 'reflection') {
+        panel.innerHTML = '<h3 style="margin-bottom:0.5rem">Reflection questions</h3><p style="font-size:0.88rem;margin-bottom:1rem">Learners answer these after passing the quiz. Their answers are printed on the back of the certificate.</p>';
+        renderFields(panel, ed.content, [{ key: 'reflection', label: 'Questions (one per line)', type: 'lines' }]);
+      } else {
+        panel.innerHTML = '<h3 style="margin-bottom:0.75rem">Writing tips</h3><div class="md">' + md('## Formatting text\nIn any large text box you can use:\n- A blank line to start a new paragraph\n- **two stars** around words for bold, *one star* for italics\n- A dash and a space at the start of a line for a bullet point\n- 1. at the start of a line for a numbered list\n- ## at the start of a line for a small heading\n- [link text](https://www.example.com) for a link\n\n## Activities\nLearners must try every Knowledge check, True or false, Scenario, Sort and Put in order activity on a page before they can complete the lesson. Text, pictures, videos, flip cards and click to reveal are free to read.\n\n## GDC verifiable CPD checklist\n- Clear aims and objectives\n- GDC development outcomes chosen\n- Realistic CPD hours\n- A quiz that checks the objectives\n- Content checked against current UK guidance, with the review date updated\n- Free from commercial bias\n\n## Building a course with Claude\nYou can ask Claude to write a course and give you a course file. Use "Import course file" on the Courses page, check it, then save. Use "Download course file" to back up a course or share it.') + '</div>';
+      }
+      updateState();
+    }
+
+    function dirty() { edDirty = true; updateState(); }
+    function updateState() { const s = document.getElementById('edState'); if (s) s.textContent = edDirty ? '● Unsaved changes' : (ed.isNew ? 'Not saved yet' : 'All changes saved'); }
+
+    function drawLessonEditor(panel, lesson, i) {
+      const L = ed.content.lessons;
+      panel.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem"><h3>Lesson ' + (i + 1) + '</h3><div class="admin-actions">'
+        + '<button class="mini-btn" id="lUp" title="Move lesson up"' + (i === 0 ? ' disabled' : '') + '>▲</button><button class="mini-btn" id="lDown" title="Move lesson down"' + (i === L.length - 1 ? ' disabled' : '') + '>▼</button>'
+        + '<button class="btn btn-outline btn-sm" id="lDel" style="color:var(--warn);border-color:var(--warn)">Delete lesson</button></div></div>'
+        + '<div id="lTitle"></div><div id="blocks"></div><div style="font-size:0.78rem;font-weight:700;color:var(--ink-light);margin-top:1rem">ADD TO THIS LESSON</div><div class="ed-add" id="addBlocks"></div>';
+      renderFields(document.getElementById('lTitle'), lesson, [{ key: 'title', label: 'Lesson title', type: 'text' }]);
+      document.querySelector('#lTitle input').addEventListener('change', drawEditor);
+      document.getElementById('lUp').onclick = () => { [L[i - 1], L[i]] = [L[i], L[i - 1]]; dirty(); drawEditor(); };
+      document.getElementById('lDown').onclick = () => { [L[i + 1], L[i]] = [L[i], L[i + 1]]; dirty(); drawEditor(); };
+      document.getElementById('lDel').onclick = () => { if (!confirm('Delete "' + lesson.title + '" and everything in it?')) return; L.splice(i, 1); edSection = 'details'; dirty(); drawEditor(); };
+      const holder = document.getElementById('blocks');
+      const drawBlocks = () => {
+        holder.innerHTML = lesson.blocks.length ? '' : '<p style="color:var(--ink-light);font-size:0.88rem">This lesson is empty. Add text, pictures, videos and activities using the buttons below.</p>';
+        lesson.blocks.forEach((b, bi) => {
+          const t = BLOCK_TYPES[b.type] || { label: b.type, icon: '?', fields: [] };
+          const box = document.createElement('div'); box.className = 'ed-block';
+          box.innerHTML = '<div class="ed-block-head"><strong>' + t.icon + ' ' + esc(t.label) + '</strong><span class="admin-actions"><button class="mini-btn" data-a="up"' + (bi === 0 ? ' disabled' : '') + '>▲</button><button class="mini-btn" data-a="down"' + (bi === lesson.blocks.length - 1 ? ' disabled' : '') + '>▼</button><button class="mini-btn" data-a="copy" title="Duplicate">⧉</button><button class="mini-btn" data-a="del" title="Delete" style="color:var(--warn)">✕</button></span></div><div class="ed-block-body"></div>';
+          renderFields(box.querySelector('.ed-block-body'), b, t.fields);
+          box.querySelectorAll('[data-a]').forEach(btn => btn.onclick = () => {
+            const a = btn.dataset.a, B = lesson.blocks;
+            if (a === 'up') [B[bi - 1], B[bi]] = [B[bi], B[bi - 1]];
+            if (a === 'down') [B[bi + 1], B[bi]] = [B[bi], B[bi + 1]];
+            if (a === 'copy') B.splice(bi + 1, 0, JSON.parse(JSON.stringify(b)));
+            if (a === 'del') { if (!confirm('Delete this ' + t.label.toLowerCase() + '?')) return; B.splice(bi, 1); }
+            dirty(); drawBlocks();
+          });
+          holder.appendChild(box);
+        });
+      };
+      drawBlocks();
+      const add = document.getElementById('addBlocks');
+      Object.entries(BLOCK_TYPES).forEach(([type, t]) => {
+        const b = document.createElement('button'); b.className = 'chip'; b.textContent = t.icon + ' ' + t.label;
+        b.onclick = () => { lesson.blocks.push(blankBlock(type)); dirty(); drawBlocks(); holder.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+        add.appendChild(b);
+      });
+    }
+
+    // Generic form builder: binds each input straight to obj[field.key].
+    function renderFields(container, obj, fields) {
+      fields.forEach(f => {
+        const g = document.createElement('div'); g.className = 'form-group';
+        const label = '<label>' + esc(f.label) + '</label>';
+        const help = f.help ? '<div class="ed-help">' + esc(f.help) + '</div>' : '';
+        const val = obj[f.key];
+        if (f.type === 'text' || f.type === 'slug' || f.type === 'date') {
+          g.innerHTML = label + '<input type="' + (f.type === 'date' ? 'date' : 'text') + '"' + (f.placeholder ? ' placeholder="' + esc(f.placeholder) + '"' : '') + (f.list ? ' list="' + f.list + '"' : '') + '/>' + help;
+          const inp = g.querySelector('input'); inp.value = val == null ? '' : val;
+          if (f.type === 'slug') {
+            inp.disabled = !ed.isNew;
+            inp.oninput = () => { obj.slug = slugify(inp.value); inp.dataset.touched = '1'; dirty(); };
+            inp.onblur = () => { inp.value = obj.slug; };
+          } else inp.oninput = () => {
+            obj[f.key] = inp.value; dirty();
+            if (f.key === 'title' && obj === ed.meta && ed.isNew) { const s = container.querySelector('[data-slug]'); if (s && !s.dataset.touched) { obj.slug = slugify(inp.value); s.value = obj.slug; } }
+          };
+          if (f.type === 'slug') inp.setAttribute('data-slug', '1');
+        } else if (f.type === 'md' || f.type === 'lines') {
+          g.innerHTML = label + '<textarea' + (f.short || f.type === 'lines' ? ' class="short"' : '') + '></textarea>' + help + (f.type === 'md' ? '<div class="ed-help">**bold** · - bullet · ## heading · blank line for new paragraph</div>' : '');
+          const ta = g.querySelector('textarea');
+          ta.value = f.type === 'lines' ? (val || []).join('\n') : (val || '');
+          ta.oninput = () => { obj[f.key] = f.type === 'lines' ? ta.value.split('\n').map(s => s.trim()).filter(Boolean) : ta.value; dirty(); };
+        } else if (f.type === 'number') {
+          g.innerHTML = label + '<input type="number"' + (f.step ? ' step="' + f.step + '"' : '') + (f.min != null ? ' min="' + f.min + '"' : '') + ' style="max-width:160px"/>' + help;
+          const inp = g.querySelector('input'); inp.value = val == null ? '' : val;
+          inp.oninput = () => { obj[f.key] = inp.value === '' ? '' : Number(inp.value); dirty(); };
+        } else if (f.type === 'select') {
+          g.innerHTML = label + '<select>' + f.options.map(([v, t]) => '<option value="' + esc(v) + '">' + esc(t) + '</option>').join('') + '</select>' + help;
+          const s = g.querySelector('select'); s.value = String(val);
+          s.onchange = () => { obj[f.key] = s.value; dirty(); if (f.key === 'status') drawEditor(); };
+        } else if (f.type === 'check') {
+          g.innerHTML = '<label style="display:flex;gap:0.5rem;align-items:center"><input type="checkbox" style="width:auto"/> ' + esc(f.label) + '</label>';
+          const c = g.querySelector('input'); c.checked = !!val; c.onchange = () => { obj[f.key] = c.checked; dirty(); };
+        } else if (f.type === 'outcomes') {
+          g.innerHTML = label + Object.entries(GDC_OUTCOMES).map(([k, t]) => '<label style="display:flex;gap:0.6rem;align-items:flex-start;font-weight:400;font-size:0.86rem;margin-bottom:0.4rem"><input type="checkbox" value="' + k + '" style="width:auto;margin-top:0.25rem"/><span><strong>' + k + '</strong> ' + esc(t) + '</span></label>').join('');
+          g.querySelectorAll('input').forEach(c => { c.checked = (val || []).includes(c.value); c.onchange = () => { obj[f.key] = [...g.querySelectorAll('input:checked')].map(x => x.value).sort(); dirty(); }; });
+        } else if (f.type === 'media') {
+          g.innerHTML = label + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap"><input type="text" placeholder="' + (f.accept === 'video' ? 'Choose or upload a video, or paste a YouTube link' : 'Choose or upload a picture') + '" style="flex:1;min-width:220px"/><button type="button" class="btn btn-outline btn-sm" data-pick>Choose / upload</button></div><div class="mprev" style="margin-top:0.5rem"></div>' + help;
+          const inp = g.querySelector('input'), prev = g.querySelector('.mprev');
+          const drawPrev = () => { prev.innerHTML = !obj[f.key] ? '' : f.accept === 'image' ? '<img src="' + esc(obj[f.key]) + '" style="max-height:120px;border-radius:8px;border:1px solid var(--border)"/>' : '<div style="max-width:320px">' + videoEmbed(obj[f.key]) + '</div>'; };
+          inp.value = val || ''; drawPrev();
+          inp.onchange = () => { obj[f.key] = inp.value.trim(); dirty(); drawPrev(); };
+          g.querySelector('[data-pick]').onclick = () => pickMedia(f.accept, url => { obj[f.key] = url; inp.value = url; dirty(); drawPrev(); });
+        } else if (f.type === 'rows') {
+          obj[f.key] = obj[f.key] || [];
+          g.innerHTML = label + '<div class="rows"></div><button type="button" class="btn btn-outline btn-sm">＋ Add ' + esc((f.item || 'item').toLowerCase()) + '</button>';
+          const rows = g.querySelector('.rows');
+          const drawRows = () => {
+            rows.innerHTML = '';
+            obj[f.key].forEach((row, ri) => {
+              const r = document.createElement('div'); r.className = 'ed-row';
+              r.innerHTML = '<div class="ed-row-head"><span>' + esc(f.item || 'Item') + ' ' + (ri + 1) + '</span><span class="admin-actions"><button type="button" class="mini-btn" data-a="up"' + (ri === 0 ? ' disabled' : '') + '>▲</button><button type="button" class="mini-btn" data-a="down"' + (ri === obj[f.key].length - 1 ? ' disabled' : '') + '>▼</button><button type="button" class="mini-btn" data-a="del" style="color:var(--warn)">✕</button></span></div>';
+              renderFields(r, row, f.fields);
+              r.querySelectorAll(':scope > .ed-row-head [data-a]').forEach(btn => btn.onclick = () => {
+                const A = obj[f.key], a = btn.dataset.a;
+                if (a === 'up') [A[ri - 1], A[ri]] = [A[ri], A[ri - 1]];
+                if (a === 'down') [A[ri + 1], A[ri]] = [A[ri], A[ri + 1]];
+                if (a === 'del') A.splice(ri, 1);
+                dirty(); drawRows();
+              });
+              rows.appendChild(r);
+            });
+          };
+          g.querySelector(':scope > button').onclick = () => {
+            const row = {}; f.fields.forEach(sf => { row[sf.key] = sf.type === 'lines' ? [] : sf.type === 'number' ? 1 : sf.type === 'check' ? false : sf.type === 'select' ? sf.options[0][0] : ''; });
+            obj[f.key].push(row); dirty(); drawRows();
+          };
+          drawRows();
+        }
+        container.appendChild(g);
+      });
+    }
+
+    function validate() {
+      const m = ed.meta, c = ed.content, errs = [];
+      if (!m.title.trim()) errs.push('Add a course title.');
+      if (!m.slug) errs.push('Add a link name.');
+      if (m.status === 'draft' || m.status === 'archived') return errs;
+      if (!(Number(m.hours) > 0)) errs.push('Add the number of CPD hours.');
+      if (!String(m.summary).trim()) errs.push('Add a short summary.');
+      if (!m.outcomes.length) errs.push('Tick at least one GDC development outcome.');
+      if (!String(m.aims).trim()) errs.push('Add the aims.');
+      if (!m.objectives.length) errs.push('Add at least one objective.');
+      if (m.status === 'live') {
+        if (!m.price) errs.push('Add a price.');
+        if (!/^https:\/\//.test(m.stripeLink || '')) errs.push('Add the Stripe Payment Link (needed for a live course).');
+        if (!c.lessons.length) errs.push('Add at least one lesson.');
+        c.lessons.forEach((l, i) => { if (!l.blocks.length) errs.push('Lesson ' + (i + 1) + ' is empty.'); });
+        if (!c.quiz.questions.length) errs.push('Add some quiz questions.');
+        if (!c.reflection.length) errs.push('Add at least one reflection question.');
+      }
+      c.lessons.forEach((l, i) => l.blocks.forEach((b, bi) => {
+        const where = 'Lesson ' + (i + 1) + ', item ' + (bi + 1) + ' (' + (BLOCK_TYPES[b.type] || {}).label + '): ';
+        if (b.type === 'check' && !(b.answer >= 1 && b.answer <= (b.options || []).length)) errs.push(where + 'the correct option number does not match the options.');
+        if (b.type === 'scenario' && !(b.options || []).some(o => o.best)) errs.push(where + 'tick which choice is best.');
+        if (b.type === 'sort') (b.items || []).forEach((it, k) => { if (!(it.cat >= 1 && it.cat <= (b.categories || []).length)) errs.push(where + 'item ' + (k + 1) + ' has a group number that does not exist.'); });
+      }));
+      c.quiz.questions.forEach((q, i) => {
+        if ((q.options || []).length < 2) errs.push('Quiz question ' + (i + 1) + ' needs at least 2 options.');
+        else if (!(q.answer >= 1 && q.answer <= q.options.length)) errs.push('Quiz question ' + (i + 1) + ': the correct option number does not match the options.');
+      });
+      return errs;
+    }
+
+    async function saveCourse(thenPreview) {
+      const errs = validate();
+      if (errs.length) { alert('Please fix these before saving' + (ed.meta.status === 'live' ? ' (or set the status to Draft to save unfinished work)' : '') + ':\n\n• ' + errs.join('\n• ')); return; }
+      if (ed.isNew && (S.bySlug[ed.meta.slug] || await D.getCourse(ed.meta.slug))) { alert('A course with the link name "' + ed.meta.slug + '" already exists. Please change the link name.'); return; }
+      const btn = document.getElementById('edSave'); btn.disabled = true; btn.textContent = 'Saving...';
+      try {
+        const meta = JSON.parse(JSON.stringify(ed.meta)); meta.hours = Number(meta.hours);
+        await D.saveCourse(meta, JSON.parse(JSON.stringify(ed.content)));
+        ed.isNew = false; edDirty = false;
+        await loadAll();
+        drawEditor();
+        toast('Course saved.', 'success');
+        if (thenPreview) window.open(D.link('../learn.html?c=' + encodeURIComponent(ed.meta.slug)), '_blank');
+      } catch (e) { console.error(e); alert('Could not save: ' + e.message); btn.disabled = false; btn.textContent = 'Save'; }
+    }
+
+    function exportCourse() {
+      const data = JSON.stringify({ meta: ed.meta, content: ed.content }, null, 2);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+      a.download = 'cpd-course-' + (ed.meta.slug || 'new') + '.json'; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+
+    async function deleteCourse() {
+      const learners = Object.values(S.access).filter(a => a[ed.meta.slug]).length;
+      if (learners && !confirm(learners + ' learner(s) have access to this course. Deleting it means they can no longer open it or view their certificate. Setting the status to Archived is usually better. Delete anyway?')) return;
+      const typed = prompt('To delete this course for good, type its link name: ' + ed.meta.slug);
+      if (typed !== ed.meta.slug) return;
+      await D.deleteCourse(ed.meta.slug); edDirty = false; toast('Course deleted.'); show('courses');
+    }
+
+    // ══ Media ════════════════════════════════════════════════════════════
+    function checkFile(f) {
+      const isImg = f.type.startsWith('image/'), isVid = f.type.startsWith('video/');
+      if (!isImg && !isVid) return 'Only pictures and videos can be uploaded (' + f.name + ').';
+      const mb = f.size / 1024 / 1024;
+      if (isImg && mb > D.MAX_IMAGE_MB) return f.name + ' is ' + mb.toFixed(1) + 'MB. Pictures must be under ' + D.MAX_IMAGE_MB + 'MB.';
+      if (isVid && mb > D.MAX_VIDEO_MB) return f.name + ' is ' + mb.toFixed(0) + 'MB. Videos must be under ' + D.MAX_VIDEO_MB + 'MB - for longer videos use an unlisted YouTube video instead.';
+      return null;
+    }
+    async function uploadFiles(files, statusEl) {
+      const done = [];
+      for (const f of files) {
+        const problem = checkFile(f);
+        if (problem) { alert(problem); continue; }
+        try { done.push(await D.uploadMedia(f, me.email, p => { statusEl.textContent = 'Uploading ' + f.name + '... ' + Math.round(p * 100) + '%'; })); }
+        catch (e) { alert('Upload failed for ' + f.name + ': ' + e.message); }
+      }
+      statusEl.textContent = done.length ? done.length + ' file(s) uploaded.' : '';
+      return done;
+    }
+    function uploadZoneHtml(accept) {
+      return '<label class="upload-zone" style="display:block"><input type="file" multiple accept="' + (accept === 'video' ? 'video/*' : accept === 'image' ? 'image/*' : 'image/*,video/*') + '" style="display:none"/><div class="uz-icon">⬆</div><h4>Click to upload ' + (accept === 'video' ? 'a video' : accept === 'image' ? 'a picture' : 'pictures or videos') + '</h4><p>Pictures up to ' + D.MAX_IMAGE_MB + 'MB · videos up to ' + D.MAX_VIDEO_MB + 'MB</p></label><div class="upStatus" style="font-size:0.85rem;color:var(--teal-dark);margin:0.5rem 0 1rem"></div>';
+    }
+    const tileHtml = (m, i) => '<div class="media-tile" data-i="' + i + '"><div class="mt-prev">' + (m.type === 'video' ? '<video src="' + esc(m.url) + '" muted preload="metadata"></video>' : '<img src="' + esc(m.url) + '" alt="" loading="lazy"/>') + '</div><div class="mt-body"><div class="mt-name" title="' + esc(m.name) + '">' + (m.type === 'video' ? '🎬 ' : '') + esc(m.name) + '</div><div style="color:var(--ink-light)">' + (m.size / 1024 / 1024).toFixed(1) + 'MB · ' + fmtDate(m.uploadedAt) + '</div></div></div>';
+
+    async function tabMedia() {
+      const media = (await D.listMedia()).sort((a, b) => (b.uploadedAt || '').localeCompare(a.uploadedAt || ''));
+      body.innerHTML = '<div class="callout" style="margin-top:0"><div class="callout-label">Pictures &amp; videos</div><p>Upload pictures and short videos here, then add them to lessons with the Picture or Video blocks. Only upload images you own or have permission to use, and never upload anything that could identify a patient without their written consent. For videos longer than a couple of minutes, use an unlisted YouTube video and paste its link into a Video block.</p></div>'
+        + uploadZoneHtml('') + '<div class="media-grid" id="mGrid">' + (media.length ? media.map(tileHtml).join('') : '<p style="color:var(--ink-light)">Nothing uploaded yet.</p>') + '</div>';
+      const input = body.querySelector('.upload-zone input');
+      input.onchange = async () => { await uploadFiles([...input.files], body.querySelector('.upStatus')); tabMedia(); };
+      body.querySelectorAll('.media-tile').forEach(t => {
+        const m = media[t.dataset.i];
+        const actions = document.createElement('div'); actions.className = 'admin-actions'; actions.style.padding = '0 0.6rem 0.6rem';
+        actions.innerHTML = '<a class="submission-link" href="' + esc(m.url) + '" target="_blank">Open</a><a class="submission-link" href="#" data-copy>Copy link</a><a class="submission-link" href="#" data-del style="color:var(--warn)">Delete</a>';
+        actions.querySelector('[data-copy]').onclick = (e) => { e.preventDefault(); navigator.clipboard.writeText(m.url).then(() => toast('Link copied.')); };
+        actions.querySelector('[data-del]').onclick = async (e) => { e.preventDefault(); if (!confirm('Delete ' + m.name + '? Any lesson using it will show a broken picture.')) return; await D.deleteMedia(m); tabMedia(); };
+        t.appendChild(actions);
+      });
+    }
+
+    async function pickMedia(accept, onPick) {
+      const m = modal(accept === 'video' ? 'Choose a video' : 'Choose a picture', '<p>Loading...</p>', true);
+      const draw = async () => {
+        const media = (await D.listMedia()).filter(x => x.type === accept).sort((a, b) => (b.uploadedAt || '').localeCompare(a.uploadedAt || ''));
+        m.el.innerHTML = uploadZoneHtml(accept) + '<div class="media-grid">' + (media.length ? media.map(tileHtml).join('') : '<p style="color:var(--ink-light)">Nothing in the library yet. Upload one above.</p>') + '</div>';
+        const input = m.el.querySelector('.upload-zone input');
+        input.onchange = async () => { const up = await uploadFiles([...input.files], m.el.querySelector('.upStatus')); if (up.length === 1) { onPick(up[0].url); m.close(); } else draw(); };
+        m.el.querySelectorAll('.media-tile').forEach(t => { t.classList.add('pickable'); t.onclick = () => { onPick(media[t.dataset.i].url); m.close(); }; });
+      };
+      draw();
+    }
+
+    // ══ Completions ══════════════════════════════════════════════════════
+    function tabCompletions() {
+      const done = S.progress.filter(p => p.completedAt).sort((a, b) => b.completedAt.localeCompare(a.completedAt));
+      body.innerHTML = '<div class="cat-toolbar"><select id="cFilter" class="cat-search" style="max-width:320px;border-radius:var(--radius)"><option value="">All courses</option>' + S.courses.map(c => '<option value="' + esc(c.slug) + '">' + esc(c.title) + '</option>').join('') + '</select><button class="btn btn-outline btn-sm" id="csv">⬇ Export to spreadsheet (CSV)</button></div><div id="cTable"></div>'
+        + '<p style="font-size:0.8rem;color:var(--ink-light);margin-top:0.75rem">Keep a record of CPD you have provided. The CSV export can be opened in Excel.</p>';
+      const rowsFor = () => done.filter(p => !document.getElementById('cFilter').value || p.slug === document.getElementById('cFilter').value);
+      const draw = () => {
+        const list = rowsFor();
+        document.getElementById('cTable').innerHTML = list.length ? '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Learner</th><th>GDC</th><th>Course</th><th>Hours</th><th>Quiz</th><th>Completed</th><th>Certificate</th></tr></thead><tbody>'
+          + list.map(p => { const l = learnerOf(p.uid); return '<tr><td><div class="td-name">' + esc(l.name) + '</div><div class="td-email">' + esc(l.email) + '</div></td><td>' + esc(l.gdc) + '</td><td>' + esc(titleOf(p.slug)) + '</td><td>' + esc(p.hours) + '</td><td>' + esc(p.quiz && p.quiz.best) + '%</td><td>' + fmtDate(p.completedAt) + '</td><td><a class="submission-link" target="_blank" href="' + D.link('../certificate.html?c=' + encodeURIComponent(p.slug) + '&u=' + encodeURIComponent(p.uid)) + '">' + esc(p.certNo) + '</a></td></tr>'; }).join('')
+          + '</tbody></table></div>' : '<p style="color:var(--ink-light)">No completions yet.</p>';
+      };
+      document.getElementById('cFilter').onchange = draw;
+      document.getElementById('csv').onclick = () => {
+        const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+        const lines = [['Name', 'Email', 'GDC number', 'Course', 'CPD hours', 'GDC outcomes', 'Quiz best %', 'Quiz attempts', 'Completed', 'Certificate number'].map(q).join(',')]
+          .concat(rowsFor().map(p => { const l = learnerOf(p.uid); return [l.name, l.email, l.gdc, titleOf(p.slug), p.hours, ((S.bySlug[p.slug] || {}).outcomes || []).join(' '), p.quiz && p.quiz.best, p.quiz && p.quiz.attempts, p.completedAt.slice(0, 10), p.certNo].map(q).join(','); }));
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([lines.join('\r\n')], { type: 'text/csv' }));
+        a.download = 'cpd-completions-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click();
+      };
+      draw();
+    }
+
+    // ══ Feedback ═════════════════════════════════════════════════════════
+    function tabFeedback() {
+      const LABELS = { aims: 'Aims and objectives clear and met', relevant: 'Relevant to practice', quality: 'Good quality lessons and activities', recommend: 'Would recommend' };
+      const withFb = S.progress.filter(p => p.feedback);
+      const slugs = [...new Set(withFb.map(p => p.slug))];
+      body.innerHTML = slugs.length ? slugs.map(s => {
+        const fbs = withFb.filter(p => p.slug === s).map(p => p.feedback);
+        const avg = k => (fbs.reduce((t, f) => t + (f.ratings[k] || 0), 0) / fbs.length).toFixed(1);
+        const biasNo = fbs.filter(f => f.bias === 'No').length;
+        const times = {}; fbs.forEach(f => { times[f.time] = (times[f.time] || 0) + 1; });
+        const comments = withFb.filter(p => p.slug === s && p.feedback.comments);
+        return '<div class="content-card"><h2 style="font-size:1.15rem">' + esc(titleOf(s)) + ' <span style="font-size:0.85rem;color:var(--ink-light);font-weight:400">(' + fbs.length + ' response' + (fbs.length === 1 ? '' : 's') + ')</span></h2>'
+          + Object.entries(LABELS).map(([k, t]) => '<div class="rating-row"><span>' + t + '</span><strong style="color:var(--teal-dark)">' + avg(k) + ' / 5</strong></div>').join('')
+          + '<div class="rating-row"><span>Said the course was NOT free from commercial bias</span><strong style="color:' + (biasNo ? 'var(--warn)' : 'var(--success)') + '">' + biasNo + '</strong></div>'
+          + '<div class="rating-row"><span>Time taken</span><span style="font-size:0.85rem">' + Object.entries(times).map(([t, n]) => esc(t) + ': ' + n).join(' · ') + '</span></div>'
+          + (comments.length ? '<h3>Comments</h3>' + comments.map(p => '<div class="callout" style="margin:0.5rem 0"><p>"' + esc(p.feedback.comments) + '"</p><p style="font-size:0.78rem;color:var(--ink-light);margin-top:0.3rem">' + esc(learnerOf(p.uid).name) + ', ' + fmtDate(p.feedback.submittedAt) + '</p></div>').join('') : '')
+          + '</div>';
+      }).join('') : '<p style="color:var(--ink-light)">No feedback yet. It appears here as learners finish courses.</p>';
+    }
+
+    // ══ Admins ═══════════════════════════════════════════════════════════
+    async function tabAdmins() {
+      const extra = await D.listAdmins();
+      body.innerHTML = '<div class="callout" style="margin-top:0"><div class="callout-label">Adding an admin</div><p>Add the email address below. The person then creates a CPD Hub account with that same email (or logs in if they already have one) and the Admin button will appear for them. Admins can see all learner records and change courses, so only add people who need it.</p></div>'
+        + '<div class="content-card" style="max-width:640px"><h3 style="margin-top:0">Add an admin</h3><div style="display:flex;gap:0.5rem;flex-wrap:wrap"><input type="email" id="newAdmin" placeholder="name@dentalnurse.training" class="cat-search" style="border-radius:var(--radius)"/><button class="btn btn-primary btn-sm" id="addAdmin">Add admin</button></div></div>'
+        + '<div class="table-wrap" style="max-width:640px"><table class="admin-table"><thead><tr><th>Email</th><th>Added</th><th></th></tr></thead><tbody>'
+        + ADMIN_EMAILS.map(e => '<tr><td class="td-name">' + esc(e) + '</td><td><span class="pill pill-teal">Built-in</span></td><td style="font-size:0.78rem;color:var(--ink-light)">Change in config.js</td></tr>').join('')
+        + extra.filter(a => !ADMIN_EMAILS.includes(a.email)).map(a => '<tr><td class="td-name">' + esc(a.email) + '</td><td>' + fmtDate(a.addedAt) + ' by ' + esc(a.addedBy || '') + '</td><td><button class="btn btn-outline btn-sm" data-rm="' + esc(a.email) + '" style="color:var(--warn);border-color:var(--warn)">Remove</button></td></tr>').join('')
+        + '</tbody></table></div>';
+      document.getElementById('addAdmin').onclick = async () => {
+        const e = document.getElementById('newAdmin').value.trim().toLowerCase();
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) { toast('Please enter a valid email address.', 'error'); return; }
+        if (!confirm('Give ' + e + ' full admin access to the CPD Hub?')) return;
+        await D.addAdmin(e, me.email); toast('Admin added.', 'success'); tabAdmins();
+      };
+      body.querySelectorAll('[data-rm]').forEach(b => b.onclick = async () => {
+        if (b.dataset.rm === me.email.toLowerCase() && !confirm('This is you. You will lose admin access. Continue?')) return;
+        if (!confirm('Remove admin access for ' + b.dataset.rm + '?')) return;
+        await D.removeAdmin(b.dataset.rm); tabAdmins();
+      });
+    }
+
+    show(qs('tab') || 'payments');
+  </script>
+</body>
+</html>
