@@ -632,9 +632,11 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
     // ═══════════════════════════════════════════════════════════════════
     // PRACTICAL PORTFOLIO
     // Three components, submitted together for review:
-    //  1. Practical Competence sessions (6 patients / 9 sessions, topics 1-6),
-    //     plus an in-depth write-up (1500-2000 words) on the learner's chosen
-    //     Focus Topic (one of 1-3), replacing a standalone case study
+    //  1. Practical Competence sessions (9 sessions across topics 1-6; for
+    //     topics needing 2 sessions, the same patient for both is
+    //     recommended but not required), plus an in-depth write-up
+    //     (1500-2000 words) on the learner's chosen Focus Topic (one of
+    //     1-3), replacing a standalone case study
     //  2. Exhibition (report 800-1000 words + optional photo evidence)
     //  3. CPD Log & Personal Development Plan
     // ═══════════════════════════════════════════════════════════════════
@@ -650,10 +652,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
     }
     function pcasGroupsCovered() {
       const groups = new Set();
-      PCAS_TOPICS.forEach(t => {
-        const first = pcasEntriesFor(t.code)[0];
-        if (first && first.patientGroup) groups.add(first.patientGroup);
-      });
+      (learner.pcasEntries || []).forEach(e => { if (e.patientGroup) groups.add(e.patientGroup); });
       return groups.size;
     }
     function focusTopicEntry() {
@@ -729,7 +728,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
           && !!(pdp.strengths||'').trim() && !!(pdp.areas||'').trim() && !!(pdp.goals||'').trim() && !!(pdp.timescale||'').trim();
 
         const missing = [];
-        if (!pcasComplete()) missing.push('all 6 patient topics (9 sessions)');
+        if (!pcasComplete()) missing.push('all 9 sessions across the 6 topics');
         if (!groupsOk) missing.push('at least 4 different patient groups');
         if (!focusOk) missing.push('your in-depth write-up (1,500-2,000 words) on your chosen focus topic');
         if (!(exWc >= 800 && exWc <= 1000) || !(learner.exhibitionTopic||'').trim() || !(learner.exhibitionTargetGroup||'').trim()) missing.push('a complete exhibition report (800-1,000 words)');
@@ -755,20 +754,41 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
     function renderPcasSection(locked) {
       let html = `<div class="content-card" style="margin-bottom:1.25rem">
         <h2 style="margin:0 0 0.25rem">1. Practical Competence Sessions</h2>
-        <p style="margin:0 0 1rem;font-size:0.88rem;color:var(--ink-light)">6 patients, 9 supervised sessions in total, covering all 6 topics below and at least 4 different patient groups.</p>
-        <div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.25rem;overflow:hidden">
+        <p style="margin:0 0 1rem;font-size:0.88rem;color:var(--ink-light)">9 supervised sessions in total, covering all 6 topics below and at least 4 different patient groups.</p>
+        <div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;overflow:hidden">
           <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.pc-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="width:100%;text-align:left;padding:0.85rem 1rem;background:var(--teal-pale);border:none;cursor:pointer;font-size:0.9rem;font-weight:600;color:var(--teal-dark);display:flex;justify-content:space-between;align-items:center">
             📋 How this section works <span class="pc-arrow">▼</span>
           </button>
           <div style="display:none;padding:1.25rem;font-size:0.88rem;line-height:1.8;color:var(--ink-mid)">
             <ol style="padding-left:1.25rem;margin:0 0 0.75rem">
-              <li style="margin-bottom:0.85rem">Topics <strong>1-3</strong> (caries, periodontal disease, diet &amp; tooth wear) each need <strong>one patient seen for two sessions</strong> - an initial session and a follow-up.</li>
-              <li style="margin-bottom:0.85rem">Topics <strong>4-6</strong> (dentures/appliances, orthodontic appliances, additional needs) each need <strong>one patient seen for a single session</strong>.</li>
-              <li style="margin-bottom:0.85rem">Across your 6 patients, try to cover <strong>at least 4 of the 6 patient groups</strong> listed on each form - plan this in advance with your supervisor where you can.</li>
-              <li style="margin-bottom:0.85rem">Choose <strong>one of topics 1-3 as your Focus Topic</strong> below. That patient's follow-up session write-up will include an extended in-depth section instead of a separate case study.</li>
+              <li style="margin-bottom:0.85rem">Topics <strong>1-3</strong> (caries, periodontal disease, diet &amp; tooth wear) each need <strong>two sessions</strong>. Seeing the <strong>same patient again for a follow-up is recommended</strong> where you can, for continuity - but two different patients is absolutely fine too.</li>
+              <li style="margin-bottom:0.85rem">Topics <strong>4-6</strong> (dentures/appliances, orthodontic appliances, additional needs) each need <strong>one session</strong>.</li>
+              <li style="margin-bottom:0.85rem">Across all your sessions, you need to cover <strong>at least 4 of the 6 patient groups</strong> listed on each form - covering more, or all 6, is recommended but not required.</li>
+              <li style="margin-bottom:0.85rem">Choose <strong>one of topics 1-3 as your Focus Topic</strong> below. Your write-up for that topic's second session will include an extended in-depth section instead of a separate case study.</li>
               <li style="margin-bottom:0.85rem">Your supervising clinician must be <strong>physically present</strong> for every session and will be asked to countersign it.</li>
               <li style="margin-bottom:0"><strong>Complete each write-up within 14 days</strong> of the session taking place, while it's fresh - not weeks later.</li>
             </ol>
+          </div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.25rem;overflow:hidden">
+          <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.pcg-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="width:100%;text-align:left;padding:0.85rem 1rem;background:var(--teal-pale);border:none;cursor:pointer;font-size:0.9rem;font-weight:600;color:var(--teal-dark);display:flex;justify-content:space-between;align-items:center">
+            📝 What to include in each session write-up <span class="pcg-arrow">▼</span>
+          </button>
+          <div style="display:none;padding:1.25rem;font-size:0.88rem;line-height:1.85;color:var(--ink-mid)">
+            <ul style="padding-left:1.25rem;margin:0 0 1rem">
+              <li style="margin-bottom:0.85rem"><strong>Patient details:</strong> date, patient identifier (initials or a code - never a full name), patient group, age and gender. Keep identifiable information to a minimum, in line with the confidentiality standards covered in Module 5.</li>
+              <li style="margin-bottom:0.85rem"><strong>The patient &amp; their needs</strong> (or, for a same-patient follow-up, <strong>what's changed since the last visit</strong>): why this patient needs OHE, any relevant medical or dental history that affects your approach (e.g. medication causing dry mouth, anxiety, additional needs), and any social factors or barriers to care.</li>
+              <li style="margin-bottom:0.85rem"><strong>Setting &amp; resources:</strong> where the session took place and what resources or teaching aids you used - for example disclosing tablets, models, or leaflets.</li>
+              <li style="margin-bottom:0.85rem"><strong>Aim:</strong> one sentence stating the overall goal of the session.</li>
+              <li style="margin-bottom:0.85rem"><strong>Objectives:</strong> the specific, achievable steps that get you to that aim (see Module 6 for how to structure these).</li>
+              <li style="margin-bottom:0.85rem"><strong>Advice given / session narrative:</strong> what you actually said and did - specific enough that your assessor can picture the session, not a generic summary.</li>
+              <li style="margin-bottom:0.85rem"><strong>Methods of evaluation:</strong> how you know (or will know) whether the session worked - a plaque score, a follow-up questionnaire, patient-reported change, and so on.</li>
+              <li style="margin-bottom:0.85rem"><strong>Reflective account:</strong> your honest reflection on your own performance - strengths, weaknesses, and what you'd do differently. This is assessed, not a formality.</li>
+              <li style="margin-bottom:0"><strong>Supervisor details:</strong> the name, GDC number and email of the clinician who was physically present. They'll be asked to confirm the session before you can submit your portfolio.</li>
+            </ul>
+            <div style="padding:0.75rem 1rem;background:#FFF8E7;border-radius:var(--radius);border-left:3px solid #D97706;font-size:0.85rem;color:#92400E">
+              <strong>Common mistakes to avoid:</strong> a vague aim that can't be evaluated, generic advice that isn't tailored to the patient in front of you, skipping the assessment stage before giving advice, a reflection that just restates what happened rather than reflecting on your own practice, and writing the entry up weeks after the session instead of within 14 days.
+            </div>
           </div>
         </div>
         <div class="form-group" style="max-width:420px">
@@ -791,14 +811,14 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         html += `<div style="border:1px solid ${isFocus?'var(--teal)':'var(--border)'};border-radius:var(--radius);padding:1rem;background:${done?'#F0FAF5':'var(--off-white)'}">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:${entries.length?'0.75rem':'0'}">
             <div><strong style="font-size:0.9rem">Topic ${t.code} - ${esc(t.label)}</strong> ${isFocus?'<span style="font-size:0.72rem;font-weight:700;padding:0.15rem 0.55rem;border-radius:9999px;background:var(--teal-pale);color:var(--teal-dark);margin-left:0.4rem">📝 Focus topic</span>':''}
-              <div style="font-size:0.8rem;color:var(--ink-light);margin-top:0.15rem">${required===2?'2 sessions required (same patient)':'1 session required'}${isFocus?' + in-depth write-up (1,500-2,000 words)':''}</div>
+              <div style="font-size:0.8rem;color:var(--ink-light);margin-top:0.15rem">${required===2?'2 sessions required (same patient recommended, not required)':'1 session required'}${isFocus?' + in-depth write-up (1,500-2,000 words)':''}</div>
             </div>
             <span style="font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px;${done?'background:#D1FAE5;color:#065F46':'background:#F3F4F6;color:#6B7280'}">${entries.length}/${required} recorded</span>
           </div>
-          ${entries.length ? `<div style="font-size:0.85rem;color:var(--ink-mid);margin-bottom:0.5rem">Patient ${esc(entries[0].patientId||'-')} &middot; ${esc(entries[0].patientGroup||'-')} &middot; age ${esc(entries[0].age||'-')}</div>` : ''}
+          ${entries.length ? `<div style="font-size:0.85rem;color:var(--ink-mid);margin-bottom:0.5rem">${entries.map(e => `Session ${e.visit}: ${esc(e.patientId||'-')} &middot; ${esc(e.patientGroup||'-')} &middot; age ${esc(e.age||'-')}`).join('<br/>')}</div>` : ''}
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
             ${entries.map((e,i) => `<button class="btn btn-outline btn-sm" onclick="viewPcasEntry('${t.code}',${e.visit})">👁 Session ${e.visit}</button>`).join('')}
-            ${!locked && entries.length < required ? `<button class="btn btn-primary btn-sm" onclick="addPcasEntry('${t.code}',${entries.length+1})">+ ${entries.length===0?'Add patient (session 1)':'Add session 2 (follow-up)'}</button>` : ''}
+            ${!locked && entries.length < required ? `<button class="btn btn-primary btn-sm" onclick="addPcasEntry('${t.code}',${entries.length+1})">+ Add session ${entries.length+1}</button>` : ''}
             ${!locked && isFocus && entries.length >= required && !wordCount((entries.find(e=>e.visit===2)||{}).inDepthWriteup||'') ? `<button class="btn btn-primary btn-sm" onclick="addFocusWriteup('${t.code}')">✏ Add in-depth write-up</button>` : ''}
           </div>
         </div>`;
@@ -824,10 +844,11 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       if (!e) return;
       const rows = [
         ['Date', e.date], ['Patient ID', e.patientId], ['Patient group', e.patientGroup], ['Age', e.age], ['Gender', e.gender],
-        visit === 1 ? ['Reason for referral / need', e.referral] : null,
-        visit === 1 ? ['Medical & dental history', e.medHistory] : null,
-        visit === 1 ? ['Social factors / barriers', e.social] : null,
-        visit === 2 ? ['What has changed since the last visit', e.changes] : null,
+        visit === 2 ? ['Same patient as Session 1?', e.samePatientAsFirst ? 'Yes' : 'No - different patient'] : null,
+        !e.samePatientAsFirst ? ['Reason for referral / need', e.referral] : null,
+        !e.samePatientAsFirst ? ['Medical & dental history', e.medHistory] : null,
+        !e.samePatientAsFirst ? ['Social factors / barriers', e.social] : null,
+        e.samePatientAsFirst ? ['What has changed since the last visit', e.changes] : null,
         ['Setting & resources used', e.setting],
         ['Aim', e.aim], ['Objectives', e.objectives],
         ['Advice given / session narrative', e.advice],
@@ -855,8 +876,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       const supOptions = approvedSups.length
         ? approvedSups.map(s => `<option value="${esc(s.name)}|${esc(s.gdc)}">${esc(s.name)} (GDC: ${esc(s.gdc)})</option>`).join('')
         : '';
-      const priorEntry = pcasEntriesFor(topic)[0]; // for visit 2, carry over patient identity
-      const groupOptions = PATIENT_GROUPS.map(g => `<option value="${esc(g)}" ${priorEntry && priorEntry.patientGroup===g?'selected':''}>${esc(g)}</option>`).join('');
+      const groupOptions = PATIENT_GROUPS.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
       const topicInfo = PCAS_TOPICS.find(t => t.code === topic);
 
       const formDiv = document.createElement('div');
@@ -867,7 +887,15 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
           <h3 style="margin:0 0 0.35rem;color:var(--teal-dark)">Topic ${topic}: ${esc(topicInfo.label)} - Session ${visit}</h3>
           <p style="font-size:0.82rem;color:var(--ink-light);margin:0 0 1.25rem">All fields marked * are required.</p>
 
-          ${visit === 1 ? `
+          ${visit === 2 ? `
+          <div class="form-group" style="background:var(--teal-pale);padding:0.85rem 1rem;border-radius:var(--radius);margin-bottom:1.25rem">
+            <label style="display:flex;align-items:flex-start;gap:0.6rem;cursor:pointer;margin:0;font-weight:600">
+              <input type="checkbox" id="pc-samePatient" onchange="onPcasSamePatientToggle('${topic}')" style="margin-top:0.2rem;width:18px;height:18px;flex-shrink:0"/>
+              <span>This is a follow-up with the same patient as Session 1 for this topic <span style="font-weight:400;color:var(--ink-light)">(recommended where you can, for continuity - but seeing a different patient is fine)</span></span>
+            </label>
+          </div>
+          ` : ''}
+
           <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Patient Details</div>
           <div class="lb-grid-2">
             <div class="form-group" style="margin:0"><label>Date of session *</label><input type="date" id="pc-date" max="${new Date().toISOString().split('T')[0]}"/></div>
@@ -876,22 +904,24 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
             <div class="form-group" style="margin:0"><label>Age *</label><input type="text" id="pc-age" placeholder="e.g. 34"/></div>
             <div class="form-group span-2" style="margin:0"><label>Gender *</label><input type="text" id="pc-gender" placeholder="e.g. Female"/></div>
           </div>
-          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">The Patient &amp; Their Needs</div>
-          <div class="form-group"><label>Reason for referral / why this patient needs OHE *</label><textarea id="pc-referral" style="min-height:90px"></textarea></div>
-          <div class="form-group"><label>Relevant medical &amp; dental history *</label><textarea id="pc-medHistory" style="min-height:90px"></textarea></div>
-          <div class="form-group"><label>Social factors / barriers to care</label><textarea id="pc-social" style="min-height:70px"></textarea></div>
-          ` : `
-          <div style="background:var(--teal-pale);border-radius:var(--radius);padding:0.85rem 1rem;margin-bottom:1.25rem;font-size:0.88rem;color:var(--ink-mid)">
-            Follow-up for <strong>${esc(priorEntry?.patientId||'')}</strong> &middot; ${esc(priorEntry?.patientGroup||'')} &middot; age ${esc(priorEntry?.age||'')}
+
+          <div id="pc-freshPatientFields">
+            <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">The Patient &amp; Their Needs</div>
+            <div class="form-group"><label>Reason for referral / why this patient needs OHE *</label><textarea id="pc-referral" style="min-height:90px"></textarea></div>
+            <div class="form-group"><label>Relevant medical &amp; dental history *</label><textarea id="pc-medHistory" style="min-height:90px"></textarea></div>
+            <div class="form-group"><label>Social factors / barriers to care</label><textarea id="pc-social" style="min-height:70px"></textarea></div>
           </div>
-          <div class="form-group"><label>Date of session *</label><input type="date" id="pc-date" max="${new Date().toISOString().split('T')[0]}"/></div>
-          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Review</div>
-          <div class="form-group"><label>What has changed since the last visit? *</label><textarea id="pc-changes" style="min-height:90px"></textarea></div>
-          `}
+
+          ${visit === 2 ? `
+          <div id="pc-changesFieldWrap" style="display:none">
+            <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Review</div>
+            <div class="form-group"><label>What has changed since the last visit? *</label><textarea id="pc-changes" style="min-height:90px"></textarea></div>
+          </div>
+          ` : ''}
 
           ${(visit === 2 && topic === learner.focusTopic) ? `
           <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">In-Depth Write-Up (Focus Topic)</div>
-          <div class="callout" style="margin-bottom:1rem;font-size:0.85rem"><p style="margin:0">This is your chosen focus topic. Instead of a separate case study, expand this patient's care into a single in-depth write-up (1,500-2,000 words) covering: their background, needs and social circumstances; your aims, objectives and planning across both sessions; the advice and resources you used, with evidence-based reasoning; how you evaluated your approach; what changed for the patient; and your self-reflection on what you'd do differently.</p></div>
+          <div class="callout" style="margin-bottom:1rem;font-size:0.85rem"><p style="margin:0">This is your chosen focus topic. Instead of a separate case study, combine both of your sessions on this topic into a single in-depth write-up (1,500-2,000 words) covering: the patient(s)' background, needs and social circumstances; your aims, objectives and planning across both sessions; the advice and resources you used, with evidence-based reasoning; how you evaluated your approach; what changed; and your self-reflection on what you'd do differently. If you saw the same patient both times, write one connected account of their care. If you saw two different patients, use this write-up to go into more depth on one of them, or to compare your approach across both - either is fine.</p></div>
           <div class="form-group"><label>Your in-depth write-up *</label>
             <textarea id="pc-inDepth" style="min-height:360px;font-size:0.93rem;line-height:1.8" oninput="onPcasInDepthInput()"></textarea>
             <span id="pc-inDepthWc" style="font-size:0.82rem;font-weight:600;color:var(--ink-light);display:inline-block;margin-top:0.4rem">0 words</span>
@@ -902,7 +932,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
           <div class="form-group"><label>Setting &amp; resources used *</label><textarea id="pc-setting" style="min-height:70px" placeholder="Where the session took place, and what resources/teaching aids you used"></textarea></div>
           <div class="form-group"><label>Aim *</label><input type="text" id="pc-aim" placeholder="Your overall goal for this session"/></div>
           <div class="form-group"><label>Objectives *</label><textarea id="pc-objectives" style="min-height:70px" placeholder="A short numbered list of what you needed to do to reach your aim"></textarea></div>
-          <div class="form-group"><label>${visit===1?'Advice given / session narrative *':'Follow-up advice / session narrative *'}</label><textarea id="pc-advice" style="min-height:160px" placeholder="What you did and said during the session"></textarea></div>
+          <div class="form-group"><label>Advice given / session narrative *</label><textarea id="pc-advice" style="min-height:160px" placeholder="What you did and said during the session"></textarea></div>
           <div class="form-group"><label>Methods of evaluation *</label><textarea id="pc-evaluation" style="min-height:70px"></textarea></div>
 
           <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.6rem">Reflective Account</div>
@@ -933,6 +963,32 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       document.body.appendChild(formDiv);
     };
 
+    window.onPcasSamePatientToggle = (topic) => {
+      const checked = document.getElementById('pc-samePatient')?.checked;
+      const priorEntry = pcasEntriesFor(topic)[0];
+      const freshFields = document.getElementById('pc-freshPatientFields');
+      const changesWrap = document.getElementById('pc-changesFieldWrap');
+      const patientId = document.getElementById('pc-patientId');
+      const patientGroup = document.getElementById('pc-patientGroup');
+      const age = document.getElementById('pc-age');
+      const gender = document.getElementById('pc-gender');
+      if (checked) {
+        patientId.value = priorEntry?.patientId || ''; patientId.disabled = true;
+        patientGroup.value = priorEntry?.patientGroup || ''; patientGroup.disabled = true;
+        age.value = priorEntry?.age || ''; age.disabled = true;
+        gender.value = priorEntry?.gender || ''; gender.disabled = true;
+        if (freshFields) freshFields.style.display = 'none';
+        if (changesWrap) changesWrap.style.display = '';
+      } else {
+        patientId.value = ''; patientId.disabled = false;
+        patientGroup.value = ''; patientGroup.disabled = false;
+        age.value = ''; age.disabled = false;
+        gender.value = ''; gender.disabled = false;
+        if (freshFields) freshFields.style.display = '';
+        if (changesWrap) changesWrap.style.display = 'none';
+      }
+    };
+
     window.onPcasInDepthInput = () => {
       const ta = document.getElementById('pc-inDepth');
       const wcEl = document.getElementById('pc-inDepthWc');
@@ -959,19 +1015,20 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
     window.savePcasEntry = async (topic, visit) => {
       const errEl = document.getElementById('pc-err');
       const val = id => document.getElementById(id)?.value.trim() || '';
-      const priorEntry = pcasEntriesFor(topic)[0];
+      const samePatient = visit === 2 && !!document.getElementById('pc-samePatient')?.checked;
 
       const entry = {
         topic, visit,
         date: val('pc-date'),
-        patientId: visit === 1 ? val('pc-patientId') : (priorEntry?.patientId || ''),
-        patientGroup: visit === 1 ? val('pc-patientGroup') : (priorEntry?.patientGroup || ''),
-        age: visit === 1 ? val('pc-age') : (priorEntry?.age || ''),
-        gender: visit === 1 ? val('pc-gender') : (priorEntry?.gender || ''),
-        referral: visit === 1 ? val('pc-referral') : '',
-        medHistory: visit === 1 ? val('pc-medHistory') : '',
-        social: visit === 1 ? val('pc-social') : '',
-        changes: visit === 2 ? val('pc-changes') : '',
+        patientId: val('pc-patientId'),
+        patientGroup: val('pc-patientGroup'),
+        age: val('pc-age'),
+        gender: val('pc-gender'),
+        samePatientAsFirst: samePatient,
+        referral: samePatient ? '' : val('pc-referral'),
+        medHistory: samePatient ? '' : val('pc-medHistory'),
+        social: samePatient ? '' : val('pc-social'),
+        changes: samePatient ? val('pc-changes') : '',
         inDepthWriteup: (visit === 2 && topic === learner.focusTopic) ? val('pc-inDepth') : '',
         setting: val('pc-setting'),
         aim: val('pc-aim'),
@@ -985,10 +1042,10 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         notes: val('pc-notes'),
       };
 
-      const requiredCommon = ['date','setting','aim','objectives','advice','evaluation','reflectionText','supervisorName','supervisorGdc','supervisorEmail'];
-      const requiredV1 = ['patientId','patientGroup','age','gender','referral','medHistory'];
-      const requiredV2 = ['changes'];
-      const required = requiredCommon.concat(visit === 1 ? requiredV1 : requiredV2);
+      const requiredCommon = ['date','patientId','patientGroup','age','gender','setting','aim','objectives','advice','evaluation','reflectionText','supervisorName','supervisorGdc','supervisorEmail'];
+      const requiredFresh = ['referral','medHistory'];
+      const requiredFollowUp = ['changes'];
+      const required = requiredCommon.concat(samePatient ? requiredFollowUp : requiredFresh);
       if (required.some(k => !entry[k])) {
         errEl.textContent = 'Please complete all required fields marked *.';
         errEl.style.display = 'block'; return;
@@ -1025,7 +1082,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       formDiv.innerHTML = `
         <div class="lb-form-wrap">
           <h3 style="margin:0 0 0.35rem;color:var(--teal-dark)">Topic ${topic} - In-Depth Write-Up</h3>
-          <div class="callout" style="margin-bottom:1rem;font-size:0.85rem"><p style="margin:0">This is your chosen focus topic. Expand this patient's care into a single in-depth write-up (1,500-2,000 words) covering: their background, needs and social circumstances; your aims, objectives and planning across both sessions; the advice and resources you used, with evidence-based reasoning; how you evaluated your approach; what changed for the patient; and your self-reflection on what you'd do differently.</p></div>
+          <div class="callout" style="margin-bottom:1rem;font-size:0.85rem"><p style="margin:0">This is your chosen focus topic. Combine both of your sessions on this topic into a single in-depth write-up (1,500-2,000 words) covering: the patient(s)' background, needs and social circumstances; your aims, objectives and planning across both sessions; the advice and resources you used, with evidence-based reasoning; how you evaluated your approach; what changed; and your self-reflection on what you'd do differently. If you saw the same patient both times, write one connected account of their care. If you saw two different patients, use this write-up to go into more depth on one of them, or to compare your approach across both - either is fine.</p></div>
           <div class="form-group"><label>Your in-depth write-up *</label>
             <textarea id="pc-inDepth" style="min-height:360px;font-size:0.93rem;line-height:1.8" oninput="onPcasInDepthInput()">${esc(entry.inDepthWriteup||'')}</textarea>
             <span id="pc-inDepthWc" style="font-size:0.82rem;font-weight:600;color:var(--ink-light);display:inline-block;margin-top:0.4rem">0 words</span>
@@ -1589,7 +1646,7 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
               <li>Complete all <strong>six theory modules</strong> and pass each end-of-module MCQ (75% pass mark; unlimited retakes)</li>
               <li>Complete <strong>three written tasks</strong> (400-600 words each), answered directly in your dashboard</li>
               <li>Write a short <strong>starting reflection</strong> (300+ words) before you begin seeing patients</li>
-              <li>Complete a <strong>practical portfolio</strong>: 6 supervised patients across 9 sessions covering 6 topics and at least 4 patient groups, including an <strong>in-depth write-up</strong> (1,500-2,000 words) on your chosen focus topic, an <strong>exhibition</strong> you design, produce and evaluate (report 800-1,000 words), and a <strong>CPD log &amp; personal development plan</strong></li>
+              <li>Complete a <strong>practical portfolio</strong>: 9 supervised sessions covering 6 topics and at least 4 patient groups, including an <strong>in-depth write-up</strong> (1,500-2,000 words) on your chosen focus topic, an <strong>exhibition</strong> you design, produce and evaluate (report 800-1,000 words), and a <strong>CPD log &amp; personal development plan</strong></li>
               <li>Write a <strong>final reflective account</strong> (300-500 words) at the end of the course</li>
             </ul>
             <p style="margin-bottom:0;font-size:0.9rem">Course access: <strong>${COURSE_DURATION_MONTHS} months</strong> from enrolment. Extensions are available at £15 per additional month.</p>

@@ -59,10 +59,13 @@ const STAGES = [
 ];
 
 // ── Practical portfolio: patients & topics ───────────────────────────────
-// 6 supervised patients in total. 3 are seen for TWO sessions (one topic
-// each, from PCAS_TOPICS_TWICE), 3 are seen for ONE session (one topic
-// each, from PCAS_TOPICS_ONCE) - 9 sessions in total. Across the 6
-// patients, at least 4 of the 6 PATIENT_GROUPS below must be represented.
+// 9 supervised sessions in total across 6 topics: 3 topics (from
+// PCAS_TOPICS_TWICE) each need TWO sessions, 3 topics (from
+// PCAS_TOPICS_ONCE) each need ONE session. For a topic's second session,
+// seeing the same patient again for continuity is recommended where
+// possible but not required - a different patient is fine. Across all
+// sessions, at least 4 of the 6 PATIENT_GROUPS below must be represented
+// (covering more, or all 6, is recommended but not required).
 const PCAS_TOPICS_TWICE = [
   { code: "1", label: "Prevention of dental caries" },
   { code: "2", label: "Prevention and control of periodontal disease" },
