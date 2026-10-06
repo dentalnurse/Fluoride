@@ -57,6 +57,17 @@ function footerHtml(prefix) {
     ' Dental Nurse Training Ltd · CPD Hub · <a href="' + prefix + 'privacy-policy.html">Privacy Policy</a> &middot; <a href="' + prefix + 'terms.html">Terms</a></p></div></footer>';
 }
 
+// Course types: "verifiable" (GDC verifiable CPD) or "skills" (open to anyone,
+// certificate of completion, not verifiable CPD). Older courses count as verifiable.
+function isVerifiable(c) { return ((c && c.cpdType) || 'verifiable') === 'verifiable'; }
+function hoursText(c) {
+  const h = Number(c && c.hours) || 0;
+  return h + ' hour' + (h === 1 ? '' : 's') + (isVerifiable(c) ? ' verifiable CPD' : ' learning');
+}
+function typePill(c) {
+  return isVerifiable(c) ? '<span class="pill pill-teal">Verifiable CPD</span>' : '<span class="pill pill-orange">Skills course</span>';
+}
+
 function shuffle(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }

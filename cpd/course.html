@@ -39,7 +39,7 @@
           <p style="margin-bottom:0.25rem">By the end of this course you will be able to:</p>
           <ul id="cObjectives"></ul>
         </div>
-        <div class="content-card">
+        <div class="content-card" id="outcomesCard">
           <h2>GDC development outcomes</h2>
           <div id="cOutcomes"></div>
         </div>
@@ -51,13 +51,14 @@
       <div>
         <div class="side-card">
           <h3 style="color:var(--white);margin-bottom:1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;opacity:0.7">Course at a glance</h3>
-          <div class="side-row"><span>Verifiable CPD</span><span id="sHours"></span></div>
+          <div class="side-row"><span>Course type</span><span id="sType"></span></div>
+          <div class="side-row"><span id="sHoursLabel">Verifiable CPD</span><span id="sHours"></span></div>
           <div class="side-row"><span>Lessons</span><span id="sLessons"></span></div>
           <div class="side-row"><span>Assessment</span><span id="sQuiz"></span></div>
-          <div class="side-row"><span>Outcomes</span><span id="sOutcomes"></span></div>
+          <div class="side-row" id="sOutcomesRow"><span>GDC outcomes</span><span id="sOutcomes"></span></div>
           <div class="side-row" style="border-bottom:none"><span>Fee</span><span id="sPrice"></span></div>
           <div id="action" style="margin-top:1.25rem"></div>
-          <p style="font-size:0.78rem;color:rgba(255,255,255,0.55);margin-top:1rem;line-height:1.6">For GDC-registered dental nurses. Content last reviewed <span id="sUpdated"></span>.</p>
+          <p style="font-size:0.78rem;color:rgba(255,255,255,0.55);margin-top:1rem;line-height:1.6"><span id="sAudience"></span> Content last reviewed <span id="sUpdated"></span>.</p>
         </div>
       </div>
     </div>
@@ -89,7 +90,12 @@
     document.getElementById('cObjectives').innerHTML = (course.objectives || []).map(o => '<li>' + esc(o) + '</li>').join('');
     document.getElementById('cOutcomes').innerHTML = (course.outcomes || []).map(o => '<div class="outcome-item"><span class="outcome-letter">' + esc(o) + '</span><span>' + esc(GDC_OUTCOMES[o] || '') + '</span></div>').join('');
     document.getElementById('cLessons').innerHTML = (course.lessonTitles || []).map(t => '<li>' + esc(t) + '</li>').join('')
-      + '<li>End of course quiz (pass mark ' + esc(course.passMark || 80) + '%)</li><li>Reflection on your learning</li><li>Course feedback</li><li>Downloadable verifiable CPD certificate</li>';
+      + '<li>End of course quiz (pass mark ' + esc(course.passMark || 80) + '%)</li><li>Reflection on your learning</li><li>Course feedback</li><li>' + (isVerifiable(course) ? 'Downloadable verifiable CPD certificate' : 'Downloadable certificate of completion (not verifiable CPD)') + '</li>';
+    const ver = isVerifiable(course);
+    document.getElementById('sType').textContent = ver ? 'Verifiable CPD' : 'Skills course';
+    document.getElementById('sHoursLabel').textContent = ver ? 'Verifiable CPD' : 'Learning time';
+    document.getElementById('sAudience').textContent = ver ? 'For GDC-registered dental professionals.' : 'Open to everyone. This is not verifiable CPD.';
+    if (!ver) { document.getElementById('outcomesCard').style.display = 'none'; document.getElementById('sOutcomesRow').style.display = 'none'; }
     document.getElementById('sHours').textContent = course.hours + ' hour' + (Number(course.hours) === 1 ? '' : 's');
     document.getElementById('sLessons').textContent = (course.lessonTitles || []).length;
     document.getElementById('sQuiz').textContent = (course.questionCount || 0) + ' question quiz';
@@ -125,6 +131,7 @@
     }
 
     async function buy() {
+      if (isVerifiable(course) && !user.gdc && !confirm('Verifiable CPD certificates show your GDC number, and you have not added one yet. You can add it any time in My CPD → My details.\n\nContinue to buy anyway?')) return;
       if (!D.PREVIEW && !course.stripeLink) { toast('Payment for this course is not set up yet. Please contact us.', 'error'); return; }
       try { await D.createOrder(user, course); } catch (e) { console.error(e); toast('Something went wrong. Please try again.', 'error'); return; }
       if (D.PREVIEW) {

@@ -25,9 +25,9 @@
   <section class="hero">
     <div class="container hero-inner">
       <div>
-        <div class="hero-badge">Verifiable CPD</div>
+        <div class="hero-badge">CPD and short courses</div>
         <h1>DNT CPD Hub</h1>
-        <p>Short online CPD courses for GDC-registered dental nurses. Learn at your own pace, try the interactive activities, pass the quiz and download your verifiable CPD certificate straight away.</p>
+        <p>Short online courses you can take at your own pace. Verifiable CPD for dental nurses and the dental team, plus skills courses open to everyone. Try the interactive activities, pass the quiz and download your certificate straight away.</p>
         <div class="hero-actions">
           <a href="#courses" class="btn btn-white btn-lg">Browse courses</a>
           <a href="#how" class="btn btn-outline btn-lg" style="border-color:rgba(255,255,255,0.4);color:rgba(255,255,255,0.9)">How it works</a>
@@ -39,7 +39,7 @@
         <div class="hero-stat"><span class="hero-stat-icon">🧩</span> Interactive activities</div>
         <div class="hero-stat"><span class="hero-stat-icon">✅</span> End of course quiz</div>
         <div class="hero-stat"><span class="hero-stat-icon">🪞</span> Guided reflection</div>
-        <div class="hero-stat"><span class="hero-stat-icon">🏅</span> Verifiable CPD certificate</div>
+        <div class="hero-stat"><span class="hero-stat-icon">🏅</span> Certificate on completion</div>
         <div class="hero-stat"><span class="hero-stat-icon">🗂️</span> All your certificates in one place</div>
       </div>
     </div>
@@ -48,7 +48,7 @@
   <section class="section" id="courses">
     <div class="container">
       <span class="section-label">Course catalogue</span>
-      <h2 style="margin-bottom:1.25rem">Short CPD courses</h2>
+      <h2 style="margin-bottom:1.25rem">Short courses</h2>
       <div class="cat-toolbar">
         <input type="search" id="search" class="cat-search" placeholder="Search courses..."/>
         <div id="chips" style="display:flex;gap:0.4rem;flex-wrap:wrap"></div>
@@ -65,7 +65,7 @@
         <div class="card card-teal">
           <div style="font-size:1.8rem;margin-bottom:0.75rem">👤</div>
           <h3>1. Create a free account</h3>
-          <p style="font-size:0.9rem">Register once with your name and GDC number. Every course you take is saved to the same account.</p>
+          <p style="font-size:0.9rem">Register once with your name (and your GDC number if you are a dental professional). Every course you take is saved to the same account.</p>
         </div>
         <div class="card card-teal">
           <div style="font-size:1.8rem;margin-bottom:0.75rem">💳</div>
@@ -79,8 +79,9 @@
         </div>
       </div>
       <div class="callout" style="margin-top:2rem">
-        <div class="callout-label">Your GDC CPD</div>
-        <p>Dental nurses need at least 50 hours of verifiable CPD in each 5-year cycle, recorded against the GDC development outcomes and planned in a personal development plan (PDP). Each certificate shows the hours, development outcomes, aims and objectives you need for your CPD record.</p>
+        <div class="callout-label">Verifiable CPD or skills course?</div>
+        <p><strong>Verifiable CPD</strong> courses are for GDC-registered dental professionals. Dental nurses need at least 50 hours of verifiable CPD in each 5-year cycle, and these certificates show the hours, GDC development outcomes, aims and objectives you need for your CPD record.</p>
+        <p style="margin-top:0.5rem"><strong>Skills courses</strong> are open to everyone. You get a certificate of completion, but they are not verifiable CPD.</p>
       </div>
     </div>
   </section>
@@ -125,7 +126,7 @@
         + (c.thumbnail ? '<img class="cc-thumb" src="' + esc(c.thumbnail) + '" alt=""/>' : '')
         + '<div class="cc-body">' + (c.thumbnail ? '' : '<div class="cc-icon">' + esc(c.icon || '📘') + '</div>')
         + '<div class="cc-cat">' + esc(c.category || 'CPD') + '</div><h3>' + esc(c.title) + '</h3><p>' + esc(c.summary || '') + '</p></div>'
-        + '<div class="cc-foot"><span class="cc-meta"><strong>' + esc(c.hours) + ' hr' + (Number(c.hours) === 1 ? '' : 's') + '</strong> verifiable CPD</span>'
+        + '<div class="cc-foot"><span class="cc-meta">' + typePill(c) + ' <strong>' + esc(c.hours) + ' hr' + (Number(c.hours) === 1 ? '' : 's') + '</strong></span>'
         + (c.status === 'coming-soon' ? '<span class="pill pill-grey">Coming soon</span>' : '<span class="pill pill-teal">' + esc(c.price) + '</span>') + '</div></a>').join('');
     }
     draw();

@@ -52,6 +52,9 @@ After logging in you will see an **Admin** button.
 1. Admin → **Courses → New course**.
 2. Fill in **Course details** (title, hours, price, aims, objectives, GDC
    development outcomes). Leave the status as **Draft** while you work.
+   Choose the **Course type**: *Verifiable CPD* (for GDC-registered dental
+   professionals) or *Skills course* (open to anyone, certificate of
+   completion, not verifiable CPD, no GDC outcomes needed).
 3. Click each lesson on the left to add text, key point boxes, pictures,
    videos and activities. Use **＋ Add lesson** for more lessons.
 4. Add **Quiz** questions and check the **Reflection questions**.

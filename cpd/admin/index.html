@@ -209,7 +209,7 @@
               const learners = Object.values(S.access).filter(a => a[c.slug]).length;
               const done = S.progress.filter(p => p.slug === c.slug && p.completedAt).length;
               return '<tr><td><div class="td-name">' + esc(c.icon || '') + ' ' + esc(c.title) + '</div><div class="td-email">' + esc(c.category || '') + ' · ' + (c.lessonTitles || []).length + ' lessons · ' + (c.questionCount || 0) + ' quiz questions</div></td>'
-                + '<td><span class="pill ' + (STATUS_PILL[c.status] || 'pill-grey') + '">' + esc(c.status) + '</span></td><td>' + esc(c.hours) + '</td><td>' + esc(c.price) + '</td><td>' + learners + '</td><td>' + done + '</td>'
+                + '<td><span class="pill ' + (STATUS_PILL[c.status] || 'pill-grey') + '">' + esc(c.status) + '</span> ' + typePill(c) + '</td><td>' + esc(c.hours) + '</td><td>' + esc(c.price) + '</td><td>' + learners + '</td><td>' + done + '</td>'
                 + '<td><div class="admin-actions"><button class="btn btn-primary btn-sm" data-edit="' + esc(c.slug) + '">Edit</button><a class="btn btn-outline btn-sm" target="_blank" href="' + D.link('../learn.html?c=' + encodeURIComponent(c.slug)) + '">Preview</a></div></td></tr>';
             }).join('') + '</tbody></table></div>'
           : '<div class="empty-state"><div class="es-icon">📚</div><h3>No courses yet</h3><p>Click "New course" to build your first one, or import a course file.</p></div>');
@@ -247,22 +247,24 @@
       'Is there anything you would like to learn more about? (Add it to your personal development plan.)',
     ];
     const newId = () => 'l' + Math.random().toString(36).slice(2, 8);
-    const blankMeta = () => ({ slug: '', title: '', category: '', icon: '📘', thumbnail: '', summary: '', hours: 1, price: '£15', stripeLink: '', status: 'draft', outcomes: [], aims: '', objectives: [], updated: new Date().toISOString().slice(0, 10) });
+    const blankMeta = () => ({ cpdType: 'verifiable', certNote: '', slug: '', title: '', category: '', icon: '📘', thumbnail: '', summary: '', hours: 1, price: '£15', stripeLink: '', status: 'draft', outcomes: [], aims: '', objectives: [], updated: new Date().toISOString().slice(0, 10) });
 
     const DETAIL_FIELDS = [
       { key: 'title', label: 'Course title *', type: 'text' },
       { key: 'slug', label: 'Link name *', type: 'slug', help: 'Used in the course web address. Set automatically from the title and cannot be changed after the first save.' },
+      { key: 'cpdType', label: 'Course type', type: 'select', options: [['verifiable', 'Verifiable CPD - for GDC-registered dental professionals'], ['skills', 'Skills course - open to everyone, not verifiable CPD']], help: 'Skills courses get a certificate of completion and do not need GDC development outcomes.' },
       { key: 'status', label: 'Status', type: 'select', options: [['draft', 'Draft - hidden from learners'], ['coming-soon', 'Coming soon - shown, cannot be bought'], ['live', 'Live - can be bought'], ['archived', 'Archived - hidden, existing learners keep access']] },
       { key: 'category', label: 'Category', type: 'text', placeholder: 'e.g. Clinical, Infection Control, Professionalism', list: 'catList' },
       { key: 'icon', label: 'Icon (an emoji)', type: 'text' },
       { key: 'thumbnail', label: 'Course card picture (optional)', type: 'media', accept: 'image' },
       { key: 'summary', label: 'Short summary for the course card *', type: 'md', short: true },
-      { key: 'hours', label: 'Verifiable CPD hours *', type: 'number', step: 0.5, min: 0.5, help: 'Must reflect the time a learner realistically spends on the course, including the quiz and reflection.' },
+      { key: 'hours', label: 'Hours (verifiable CPD hours, or learning time for a skills course) *', type: 'number', step: 0.5, min: 0.5, help: 'Must reflect the time a learner realistically spends on the course, including the quiz and reflection.' },
       { key: 'price', label: 'Price *', type: 'text', placeholder: '£15' },
       { key: 'stripeLink', label: 'Stripe Payment Link', type: 'text', placeholder: 'https://buy.stripe.com/...', help: 'In Stripe, set this link to redirect after payment to: https://fluoride.dentalnurse.training/cpd/payment-success.html?c=LINK-NAME' },
-      { key: 'outcomes', label: 'GDC development outcomes covered *', type: 'outcomes' },
+      { key: 'outcomes', label: 'GDC development outcomes covered (verifiable CPD only)', type: 'outcomes' },
       { key: 'aims', label: 'Aims *', type: 'md', short: true, help: 'What the course sets out to do. GDC requirement for verifiable CPD.' },
       { key: 'objectives', label: 'Objectives * (one per line, finishing "By the end of this course you will be able to...")', type: 'lines', help: 'GDC requirement for verifiable CPD.' },
+      { key: 'certNote', label: 'Important note (optional)', type: 'md', short: true, help: 'Shown on the course overview and printed on the certificate. For example: "This awareness course is not a regulated First Aid at Work qualification."' },
       { key: 'updated', label: 'Content last reviewed', type: 'date' },
     ];
     const QUIZ_FIELDS = [
@@ -463,7 +465,7 @@
       if (m.status === 'draft' || m.status === 'archived') return errs;
       if (!(Number(m.hours) > 0)) errs.push('Add the number of CPD hours.');
       if (!String(m.summary).trim()) errs.push('Add a short summary.');
-      if (!m.outcomes.length) errs.push('Tick at least one GDC development outcome.');
+      if (isVerifiable(m) && !m.outcomes.length) errs.push('Tick at least one GDC development outcome (or change the course type to Skills course).');
       if (!String(m.aims).trim()) errs.push('Add the aims.');
       if (!m.objectives.length) errs.push('Add at least one objective.');
       if (m.status === 'live') {
@@ -587,8 +589,8 @@
       document.getElementById('cFilter').onchange = draw;
       document.getElementById('csv').onclick = () => {
         const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-        const lines = [['Name', 'Email', 'GDC number', 'Course', 'CPD hours', 'GDC outcomes', 'Quiz best %', 'Quiz attempts', 'Completed', 'Certificate number'].map(q).join(',')]
-          .concat(rowsFor().map(p => { const l = learnerOf(p.uid); return [l.name, l.email, l.gdc, titleOf(p.slug), p.hours, ((S.bySlug[p.slug] || {}).outcomes || []).join(' '), p.quiz && p.quiz.best, p.quiz && p.quiz.attempts, p.completedAt.slice(0, 10), p.certNo].map(q).join(','); }));
+        const lines = [['Name', 'Email', 'GDC number', 'Course', 'Course type', 'Hours', 'GDC outcomes', 'Quiz best %', 'Quiz attempts', 'Completed', 'Certificate number'].map(q).join(',')]
+          .concat(rowsFor().map(p => { const l = learnerOf(p.uid); return [l.name, l.email, l.gdc, titleOf(p.slug), isVerifiable(S.bySlug[p.slug] || { cpdType: p.cpdType }) ? 'Verifiable CPD' : 'Skills course', p.hours, ((S.bySlug[p.slug] || {}).outcomes || []).join(' '), p.quiz && p.quiz.best, p.quiz && p.quiz.attempts, p.completedAt.slice(0, 10), p.certNo].map(q).join(','); }));
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([lines.join('\r\n')], { type: 'text/csv' }));
         a.download = 'cpd-completions-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click();
       };

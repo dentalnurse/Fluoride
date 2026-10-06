@@ -81,20 +81,21 @@
     const c = course || { title: prog.title, hours: prog.hours, outcomes: [], objectives: [] };
     document.title = 'CPD Certificate - ' + c.title;
     const outcomes = c.outcomes || [];
+    const ver = isVerifiable(course || { cpdType: prog.cpdType });
 
     out.innerHTML = '<div class="cert-page">'
       + '<div class="cert-logo"><img src="' + LOGO_URL + '" alt="Dental Nurse Training" onerror="this.style.display=\'none\'"/></div>'
-      + '<div class="cert-type">Certificate of verifiable CPD</div>'
+      + '<div class="cert-type">' + (ver ? 'Certificate of verifiable CPD' : 'Certificate of completion') + '</div>'
       + '<div class="cert-title">' + esc(c.title) + '</div>'
       + '<div class="cert-provider">Provided by ' + esc(PROVIDER_NAME) + '</div>'
       + '<div class="cert-certifies">This is to certify that</div>'
       + '<div class="cert-name">' + esc(learner.name || '') + '</div>'
-      + '<div class="cert-gdc">GDC registration number: ' + esc(learner.gdc || 'not given') + '</div>'
-      + '<div class="cert-certifies">has successfully completed the above online CPD course, including the end of course assessment, reflection and feedback.</div>'
+      + (ver || learner.gdc ? '<div class="cert-gdc">GDC registration number: ' + esc(learner.gdc || 'not given') + '</div>' : '<div style="height:0.6rem"></div>')
+      + '<div class="cert-certifies">has successfully completed the above online ' + (ver ? 'CPD ' : '') + 'course, including the end of course assessment, reflection and feedback.</div>'
       + '<div style="height:1.25rem"></div>'
       + '<div class="cpd-summary">'
-      + '<div class="cpd-col"><div class="cpd-label">Verifiable CPD</div><div class="cpd-value">' + esc(c.hours) + ' hour' + (Number(c.hours) === 1 ? '' : 's') + '</div></div>'
-      + '<div class="cpd-col"><div class="cpd-label">GDC development outcomes</div><div class="cpd-value">' + esc(outcomes.join(', ') || '-') + '</div></div>'
+      + '<div class="cpd-col"><div class="cpd-label">' + (ver ? 'Verifiable CPD' : 'Learning time') + '</div><div class="cpd-value">' + esc(c.hours) + ' hour' + (Number(c.hours) === 1 ? '' : 's') + '</div></div>'
+      + (ver ? '<div class="cpd-col"><div class="cpd-label">GDC development outcomes</div><div class="cpd-value">' + esc(outcomes.join(', ') || '-') + '</div></div>' : '<div class="cpd-col"><div class="cpd-label">Course type</div><div class="cpd-value">Skills course</div></div>')
       + '<div class="cpd-col"><div class="cpd-label">Date completed</div><div class="cpd-value">' + fmtDate(prog.completedAt) + '</div></div>'
       + '</div>'
       + '<div class="sig-section"><div class="sig-block"><img src="../images/signature.png" alt="" onerror="this.style.display=\'none\'"/><div class="sig-name">' + esc(CERT_SIGNATORY_NAME) + '</div><div class="sig-role">' + esc(CERT_SIGNATORY_ROLE) + '</div></div>'
@@ -104,9 +105,11 @@
       + '<div class="cert-page cert-back">'
       + '<h3>Educational aims</h3><p>' + esc(c.aims || '') + '</p>'
       + '<h3>Objectives</h3><ul>' + (c.objectives || []).map(o => '<li>' + esc(o) + '</li>').join('') + '</ul>'
-      + '<h3>Anticipated outcomes (GDC development outcomes)</h3>' + outcomes.map(o => '<div class="outcome"><b>' + esc(o) + '</b><p>' + esc(GDC_OUTCOMES[o] || '') + '</p></div>').join('')
+      + (ver ? '<h3>Anticipated outcomes (GDC development outcomes)</h3>' : '') + (ver ? outcomes : []).map(o => '<div class="outcome"><b>' + esc(o) + '</b><p>' + esc(GDC_OUTCOMES[o] || '') + '</p></div>').join('')
       + (prog.reflection ? '<h3>Learner reflection</h3>' + (prog.reflection.questions || []).map((q, i) => '<p class="refl-q">' + esc(q) + '</p><p>' + esc((prog.reflection.answers || [])[i] || '') + '</p>').join('') : '')
-      + '<div class="qa"><p><strong>Quality assurance.</strong> This activity has been planned and quality assured by ' + esc(PROVIDER_NAME) + ', and learners are given the opportunity to give feedback. It includes an assessment of learning and is offered as verifiable CPD in line with the General Dental Council enhanced CPD scheme. Please keep this certificate as evidence for your CPD record for at least five years after the end of your CPD cycle, and log the hours against your personal development plan.</p></div>'
+      + (ver ? '<div class="qa"><p><strong>Quality assurance.</strong> This activity has been planned and quality assured by ' + esc(PROVIDER_NAME) + ', and learners are given the opportunity to give feedback. It includes an assessment of learning and is offered as verifiable CPD in line with the General Dental Council enhanced CPD scheme. Please keep this certificate as evidence for your CPD record for at least five years after the end of your CPD cycle, and log the hours against your personal development plan.</p></div>'
+        : '<div class="qa"><p><strong>About this certificate.</strong> This short course has been planned and quality assured by ' + esc(PROVIDER_NAME) + ' and includes an assessment of learning. It is a skills course and is not verifiable CPD under the General Dental Council scheme.</p></div>')
+      + (c.certNote ? '<p class="small" style="margin-top:0.75rem">' + esc(c.certNote) + '</p>' : '')
       + '<p class="small" style="margin-top:1rem">' + esc(PROVIDER_NAME) + ' · dentalnurse.training · Certificate ' + esc(prog.certNo || '') + '</p>'
       + '</div>';
   </script>
