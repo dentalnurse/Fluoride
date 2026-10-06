@@ -850,6 +850,7 @@
           m3: mp[3] === 2 ? fmt(qp[3]) || '✓' : '-',
           m4: mp[4] === 2 ? fmt(qp[4]) || '✓' : '-',
           m5: mp[5] === 2 ? fmt(qp[5]) || '✓' : '-',
+          m6: mp[6] === 2 ? fmt(qp[6]) || '✓' : '-',
           written:      l.writtenSubmitted ? fmt(l.writtenSubmittedAt) || '✓' : '-',
           writtenPassed:l.writtenPassed ? '✓ Passed' : l.writtenSubmitted ? 'Awaiting' : '-',
           practical:    l.practicalSubmitted ? fmt(l.practicalSubmittedAt) || '✓' : l.practicalPendingSignoff ? 'Signoff pending' : '-',
@@ -885,6 +886,7 @@
               <th style="${thStyle}">M3</th>
               <th style="${thStyle}">M4</th>
               <th style="${thStyle}">M5</th>
+              <th style="${thStyle}">M6</th>
               <th style="${thStyle}">Written</th>
               <th style="${thStyle}">Practical</th>
               <th style="${thStyle}">Cert Issued</th>
@@ -904,6 +906,7 @@
                 <td style="${tdStyle};text-align:center;color:${r.m3!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m3}</td>
                 <td style="${tdStyle};text-align:center;color:${r.m4!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m4}</td>
                 <td style="${tdStyle};text-align:center;color:${r.m5!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m5}</td>
+                <td style="${tdStyle};text-align:center;color:${r.m6!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.m6}</td>
                 <td style="${tdStyle};color:${r.writtenPassed.includes('Passed')?'#1A7F4B':r.written!=='-'?'var(--warn)':'var(--ink-light)'}">${r.written}<br/><span style="font-size:0.73rem">${r.writtenPassed!=='-'?r.writtenPassed:''}</span></td>
                 <td style="${tdStyle};color:${r.practicalPassed.includes('Passed')?'#1A7F4B':r.practical!=='-'?'var(--warn)':'var(--ink-light)'}">${r.practical}<br/><span style="font-size:0.73rem">${r.practicalPassed!=='-'?r.practicalPassed:''}</span></td>
                 <td style="${tdStyle};font-family:monospace;font-size:0.75rem;color:${r.certIssued!=='-'?'#1A7F4B':'var(--ink-light)'}">${r.certIssued}</td>
@@ -915,7 +918,7 @@
     }
 
     window.exportAuditCSV = () => {
-      const headers = ['Cert No','Name','Email','GDC','Workplace','Enrolled','Approved','M1','M2','M3','M4','M5','Written Submitted','Written Status','Practical Submitted','Practical Status','Cert Issued','Status'];
+      const headers = ['Cert No','Name','Email','GDC','Workplace','Enrolled','Approved','M1','M2','M3','M4','M5','M6','Written Submitted','Written Status','Practical Submitted','Practical Status','Cert Issued','Status'];
       const fmt = (ts) => {
         if (!ts) return '';
         const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -944,6 +947,7 @@
           mp[3]===2 ? fmt(qp[3]) || 'Passed' : '',
           mp[4]===2 ? fmt(qp[4]) || 'Passed' : '',
           mp[5]===2 ? fmt(qp[5]) || 'Passed' : '',
+          mp[6]===2 ? fmt(qp[6]) || 'Passed' : '',
           l.writtenSubmitted ? fmt(l.writtenSubmittedAt) || 'Yes' : '',
           l.writtenPassed ? 'Passed' : l.writtenSubmitted ? 'Awaiting' : '',
           l.practicalSubmitted ? fmt(l.practicalSubmittedAt) || 'Yes' : l.practicalPendingSignoff ? 'Signoff pending' : '',
@@ -1055,6 +1059,7 @@
                  ['Module 3', mp[3]===2?'✅ Passed':mp[3]===1?'In progress':'Not started'],
                  ['Module 4', mp[4]===2?'✅ Passed':mp[4]===1?'In progress':'Not started'],
                  ['Module 5', mp[5]===2?'✅ Passed':mp[5]===1?'In progress':'Not started'],
+                 ['Module 6', mp[6]===2?'✅ Passed':mp[6]===1?'In progress':'Not started'],
                  ['Written',    l.writtenSubmitted ? (l.writtenPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
                  ['Practical',  l.practicalSubmitted ? (l.practicalPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],
                  ['Reflection', l.reflectionSubmitted ? (l.reflectionPassed?'✅ Passed':'✅ Submitted') : 'Not submitted'],

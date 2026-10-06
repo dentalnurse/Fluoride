@@ -315,7 +315,7 @@
       if (id === 'profile') { renderProfile(main); return; }
     };function renderHome(el, mp, allPassed) {
       const passed = [1,2,3,4,5,6].filter(i => mp[i] === 2 || mp[i] === '2').length;
-      const pct = Math.round(passed / 5 * 100);
+      const pct = Math.round(passed / 6 * 100);
       const icons = ['🪥','🍎','🦷','💬','⚖️','📋'];
       const courseCompleted = !!learner.certNumber || !!(learner.writtenPassed && learner.practicalPassed && learner.reflectionPassed);
       let timeRemainingHtml = '';
@@ -331,7 +331,7 @@
       }
       el.innerHTML = '<div class="dash-header"><h1>Welcome back, ' + (learner.name||'').split(' ')[0] + ' 👋</h1><p>GDC: ' + (learner.gdc||'-') + '</p></div>'
         + timeRemainingHtml
-        + '<div class="content-card" style="margin-bottom:1.25rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem"><strong>Theory progress</strong><span style="font-size:0.85rem;color:var(--teal-dark);font-weight:700">' + passed + '/5 modules complete</span></div><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div></div>'
+        + '<div class="content-card" style="margin-bottom:1.25rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem"><strong>Theory progress</strong><span style="font-size:0.85rem;color:var(--teal-dark);font-weight:700">' + passed + '/6 modules complete</span></div><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div></div>'
         + '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0.85rem;margin-bottom:1.5rem">'
         + [1,2,3,4,5,6].map(i => {
             const accessible = i === 1 || mp[i-1] === 2 || mp[i-1] === '2';
@@ -362,8 +362,8 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         + (passed
           ? '<div style="font-size:2rem;margin-bottom:0.75rem">✅</div>'
             + '<h3 style="color:var(--success);margin-bottom:0.5rem">Quiz passed!</h3>'
-            + '<p style="margin-bottom:1.25rem;color:var(--ink-light)">' + (modNum < 5 ? 'Continue to the next module.' : 'All modules complete - proceed to written tasks.') + '</p>'
-            + (modNum < 5
+            + '<p style="margin-bottom:1.25rem;color:var(--ink-light)">' + (modNum < 6 ? 'Continue to the next module.' : 'All modules complete - proceed to written tasks.') + '</p>'
+            + (modNum < 6
               ? '<button class="btn btn-primary" onclick="showSection(\'m' + (modNum+1) + '\')">Continue to Module ' + (modNum+1) + ' →</button>'
               : '<button class="btn btn-primary" onclick="showSection(\'written\')">Proceed to Written Tasks →</button>')
           : '<div style="font-size:2rem;margin-bottom:0.75rem">📝</div>'
@@ -751,10 +751,8 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
     }
 
     // ── 1. PCAS patient sessions ──────────────────────────────────────────
-    function renderPcasSection(locked) {
-      let html = `<div class="content-card" style="margin-bottom:1.25rem">
-        <h2 style="margin:0 0 0.25rem">1. Practical Competence Sessions</h2>
-        <p style="margin:0 0 1rem;font-size:0.88rem;color:var(--ink-light)">9 supervised sessions in total, covering all 6 topics below and at least 4 different patient groups.</p>
+    function pcasGuidanceBlock() {
+      return `
         <div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;overflow:hidden">
           <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.pc-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="width:100%;text-align:left;padding:0.85rem 1rem;background:var(--teal-pale);border:none;cursor:pointer;font-size:0.9rem;font-weight:600;color:var(--teal-dark);display:flex;justify-content:space-between;align-items:center">
             📋 How this section works <span class="pc-arrow">▼</span>
@@ -790,7 +788,14 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
               <strong>Common mistakes to avoid:</strong> a vague aim that can't be evaluated, generic advice that isn't tailored to the patient in front of you, skipping the assessment stage before giving advice, a reflection that just restates what happened rather than reflecting on your own practice, and writing the entry up weeks after the session instead of within 14 days.
             </div>
           </div>
-        </div>
+        </div>`;
+    }
+
+    function renderPcasSection(locked) {
+      let html = `<div class="content-card" style="margin-bottom:1.25rem">
+        <h2 style="margin:0 0 0.25rem">1. Practical Competence Sessions</h2>
+        <p style="margin:0 0 1rem;font-size:0.88rem;color:var(--ink-light)">9 supervised sessions in total, covering all 6 topics below and at least 4 different patient groups.</p>
+        ${pcasGuidanceBlock()}
         <div class="form-group" style="max-width:420px">
           <label for="pcFocusTopic">Focus Topic <span style="font-weight:400;color:var(--ink-light)">(pick one of topics 1-3 for your in-depth write-up)</span></label>
           ${locked
@@ -886,6 +891,8 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         <div class="lb-form-wrap">
           <h3 style="margin:0 0 0.35rem;color:var(--teal-dark)">Topic ${topic}: ${esc(topicInfo.label)} - Session ${visit}</h3>
           <p style="font-size:0.82rem;color:var(--ink-light);margin:0 0 1.25rem">All fields marked * are required.</p>
+
+          ${pcasGuidanceBlock()}
 
           ${visit === 2 ? `
           <div class="form-group" style="background:var(--teal-pale);padding:0.85rem 1rem;border-radius:var(--radius);margin-bottom:1.25rem">
