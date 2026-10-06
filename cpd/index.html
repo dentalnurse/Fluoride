@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="js/gate.js"></script>
+  <meta name="robots" content="noindex, nofollow"/>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0L9NXXFBFR');
+  </script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CPD Hub - Dental Nurse Training</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="css/cpd.css"/>
+</head>
+<body>
+  <div id="navHolder"></div>
+
+  <section class="hero">
+    <div class="container hero-inner">
+      <div>
+        <div class="hero-badge">Verifiable CPD</div>
+        <h1>DNT CPD Hub</h1>
+        <p>Short online CPD courses for GDC-registered dental nurses. Learn at your own pace, try the interactive activities, pass the quiz and download your verifiable CPD certificate straight away.</p>
+        <div class="hero-actions">
+          <a href="#courses" class="btn btn-white btn-lg">Browse courses</a>
+          <a href="#how" class="btn btn-outline btn-lg" style="border-color:rgba(255,255,255,0.4);color:rgba(255,255,255,0.9)">How it works</a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <h3>Every course includes</h3>
+        <div class="hero-stat"><span class="hero-stat-icon">📚</span> Short, focused lessons</div>
+        <div class="hero-stat"><span class="hero-stat-icon">🧩</span> Interactive activities</div>
+        <div class="hero-stat"><span class="hero-stat-icon">✅</span> End of course quiz</div>
+        <div class="hero-stat"><span class="hero-stat-icon">🪞</span> Guided reflection</div>
+        <div class="hero-stat"><span class="hero-stat-icon">🏅</span> Verifiable CPD certificate</div>
+        <div class="hero-stat"><span class="hero-stat-icon">🗂️</span> All your certificates in one place</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="courses">
+    <div class="container">
+      <span class="section-label">Course catalogue</span>
+      <h2 style="margin-bottom:1.25rem">Short CPD courses</h2>
+      <div class="cat-toolbar">
+        <input type="search" id="search" class="cat-search" placeholder="Search courses..."/>
+        <div id="chips" style="display:flex;gap:0.4rem;flex-wrap:wrap"></div>
+      </div>
+      <div id="grid" class="course-grid"><p style="color:var(--ink-light)">Loading courses...</p></div>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="how">
+    <div class="container">
+      <span class="section-label">How it works</span>
+      <h2 style="margin-bottom:1.5rem">One account for all your CPD</h2>
+      <div class="card-grid-3">
+        <div class="card card-teal">
+          <div style="font-size:1.8rem;margin-bottom:0.75rem">👤</div>
+          <h3>1. Create a free account</h3>
+          <p style="font-size:0.9rem">Register once with your name and GDC number. Every course you take is saved to the same account.</p>
+        </div>
+        <div class="card card-teal">
+          <div style="font-size:1.8rem;margin-bottom:0.75rem">💳</div>
+          <h3>2. Choose a course</h3>
+          <p style="font-size:0.9rem">Pay securely by card for the course you want. Your course is unlocked once your payment has been checked, within 1 working day.</p>
+        </div>
+        <div class="card card-teal">
+          <div style="font-size:1.8rem;margin-bottom:0.75rem">🏅</div>
+          <h3>3. Learn and get certified</h3>
+          <p style="font-size:0.9rem">Work through the lessons, pass the quiz, complete a short reflection and feedback form, then download your certificate.</p>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:2rem">
+        <div class="callout-label">Your GDC CPD</div>
+        <p>Dental nurses need at least 50 hours of verifiable CPD in each 5-year cycle, recorded against the GDC development outcomes and planned in a personal development plan (PDP). Each certificate shows the hours, development outcomes, aims and objectives you need for your CPD record.</p>
+      </div>
+    </div>
+  </section>
+
+  <div id="footHolder"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/demo-course.js"></script>
+  <script type="module">
+    import * as D from './js/data.js';
+    await D.mountChrome();
+
+    let courses = [];
+    try { courses = await D.listCourses(false); } catch (e) { console.error(e); }
+    courses.sort((a, b) => (a.status === 'live' ? 0 : 1) - (b.status === 'live' ? 0 : 1) || a.title.localeCompare(b.title));
+
+    const cats = [...new Set(courses.map(c => c.category).filter(Boolean))].sort();
+    let cat = 'All';
+    const chips = document.getElementById('chips');
+    if (cats.length > 1) {
+      ['All', ...cats].forEach(c => {
+        const b = document.createElement('button');
+        b.className = 'chip' + (c === cat ? ' active' : ''); b.textContent = c;
+        b.onclick = () => { cat = c; chips.querySelectorAll('.chip').forEach(x => x.classList.toggle('active', x === b)); draw(); };
+        chips.appendChild(b);
+      });
+    }
+    document.getElementById('search').oninput = draw;
+
+    function draw() {
+      const term = document.getElementById('search').value.trim().toLowerCase();
+      const list = courses.filter(c => (cat === 'All' || c.category === cat)
+        && (!term || (c.title + ' ' + (c.summary || '') + ' ' + (c.category || '')).toLowerCase().includes(term)));
+      const grid = document.getElementById('grid');
+      if (!courses.length) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="es-icon">🌱</div><h3>Courses coming soon</h3><p style="max-width:440px;margin:0.5rem auto 0">We are busy building our first CPD courses. Create a free account now and you will be ready to start as soon as they launch.</p></div>';
+        return;
+      }
+      if (!list.length) { grid.innerHTML = '<p style="color:var(--ink-light)">No courses match your search.</p>'; return; }
+      grid.innerHTML = list.map(c => '<a class="course-card" href="' + D.link('course.html?c=' + encodeURIComponent(c.slug)) + '">'
+        + (c.thumbnail ? '<img class="cc-thumb" src="' + esc(c.thumbnail) + '" alt=""/>' : '')
+        + '<div class="cc-body">' + (c.thumbnail ? '' : '<div class="cc-icon">' + esc(c.icon || '📘') + '</div>')
+        + '<div class="cc-cat">' + esc(c.category || 'CPD') + '</div><h3>' + esc(c.title) + '</h3><p>' + esc(c.summary || '') + '</p></div>'
+        + '<div class="cc-foot"><span class="cc-meta"><strong>' + esc(c.hours) + ' hr' + (Number(c.hours) === 1 ? '' : 's') + '</strong> verifiable CPD</span>'
+        + (c.status === 'coming-soon' ? '<span class="pill pill-grey">Coming soon</span>' : '<span class="pill pill-teal">' + esc(c.price) + '</span>') + '</div></a>').join('');
+    }
+    draw();
+  </script>
+</body>
+</html>

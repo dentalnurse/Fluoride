@@ -24,3 +24,6 @@ defaults:
 # to be published on the live site
 exclude:
   - firestore.rules
+  - cpd/firestore.rules
+  - cpd/storage.rules
+  - cpd/SETUP-GUIDE.md

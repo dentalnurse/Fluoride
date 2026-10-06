@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="js/gate.js"></script>
+  <meta name="robots" content="noindex, nofollow"/>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0L9NXXFBFR');
+  </script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Log in - Dental Nurse Training CPD Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="css/cpd.css"/>
+</head>
+<body>
+  <div id="navHolder"></div>
+  <div class="auth-wrap" style="min-height:calc(100vh - var(--nav-h))">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <img src="https://dentalnurse.training/wp-content/uploads/2023/05/WEBLOGO.png" alt="Dental Nurse Training" style="height:56px;margin:0 auto 0.75rem" onerror="this.style.display='none'"/>
+        <h2>CPD Hub</h2>
+      </div>
+      <div class="form-group"><label for="email">Email address</label><input type="email" id="email" placeholder="your@email.com" autocomplete="email"/></div>
+      <div class="form-group"><label for="pass">Password</label><input type="password" id="pass" placeholder="••••••••" autocomplete="current-password"/></div>
+      <div id="err" class="form-error" style="display:none"></div>
+      <button class="btn btn-primary form-submit" id="loginBtn">Log in</button>
+      <div class="auth-switch"><a href="#" id="forgot">Forgot password?</a></div>
+      <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);text-align:center">
+        <p style="font-size:0.88rem;color:var(--ink-light);margin-bottom:0.75rem">New to the CPD Hub?</p>
+        <a href="register.html" id="regLink" class="btn btn-outline btn-sm" style="width:100%">Create a free account</a>
+      </div>
+    </div>
+  </div>
+  <div id="footHolder"></div>
+  <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/demo-course.js"></script>
+  <script type="module">
+    import * as D from './js/data.js';
+    const user = await D.mountChrome();
+    const rawNext = qs('next') || '';
+    const next = /^[\w./?=&%-]+$/.test(rawNext) && !rawNext.includes('//') ? rawNext : 'dashboard.html';
+    document.getElementById('regLink').href = D.link('register.html' + (rawNext ? '?next=' + encodeURIComponent(next) : ''));
+    if (user) { location.href = D.link(user.isAdmin && !rawNext ? 'admin/index.html' : next); }
+
+    const err = (m) => { const e = document.getElementById('err'); e.textContent = m; e.style.display = m ? 'block' : 'none'; };
+    async function doLogin() {
+      const email = document.getElementById('email').value.trim(), pass = document.getElementById('pass').value;
+      err('');
+      if (!D.PREVIEW && !D.CONFIGURED) { err('The CPD Hub is not open yet.'); return; }
+      if (!email || !pass) { err('Please enter your email and password.'); return; }
+      try {
+        await D.login(email, pass);
+        const u = await D.getSessionUser();
+        location.href = D.link(u && u.isAdmin && !rawNext ? 'admin/index.html' : next);
+      } catch (e) { err(e.code === 'auth/invalid-credential' ? 'Incorrect email or password.' : 'Login failed. Please try again.'); }
+    }
+    document.getElementById('loginBtn').onclick = doLogin;
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('forgot').onclick = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email) { err('Enter your email address above first, then click "Forgot password?" again.'); return; }
+      try { await D.resetPassword(email); alert('If an account exists for ' + email + ', a password reset email is on its way. It comes from a Firebase address, so please check your spam or junk folder too.'); }
+      catch (e2) { err('Could not send the reset email. Please check the address and try again.'); }
+    };
+  </script>
+</body>
+</html>

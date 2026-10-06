@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="js/gate.js"></script>
+  <meta name="robots" content="noindex, nofollow"/>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0L9NXXFBFR');
+  </script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Course - Dental Nurse Training CPD Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="css/cpd.css"/>
+  <style>
+    .mobile-menu-btn { display:none; margin-bottom:1rem; }
+    @media (max-width:960px) { .mobile-menu-btn { display:inline-flex; } }
+  </style>
+</head>
+<body>
+  <div id="navHolder"></div>
+  <div class="dash-layout">
+    <aside class="dash-sidebar" id="sidebar"></aside>
+    <div class="sidebar-backdrop" id="backdrop"></div>
+    <main class="dash-main">
+      <button class="btn btn-outline btn-sm mobile-menu-btn" id="menuBtn">☰ Course menu</button>
+      <div id="adminNote"></div>
+      <div id="main"><p style="color:var(--ink-light)">Loading course...</p></div>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/demo-course.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
+  <script type="module">
+    import * as D from './js/data.js';
+    const user = await D.mountChrome();
+    const slug = qs('c');
+    const main = document.getElementById('main');
+    const sidebar = document.getElementById('sidebar');
+
+    if (!user) { location.href = D.link('login.html?next=' + encodeURIComponent('learn.html?c=' + slug)); throw 0; }
+    const course = await D.getCourse(slug);
+    const access = await D.getAccess(user.uid);
+    const hasAccess = !!access[slug];
+    const adminView = !hasAccess && user.isAdmin;
+    if (!course || (!hasAccess && !adminView)) { location.href = D.link('course.html?c=' + encodeURIComponent(slug || '')); throw 0; }
+    const content = await D.getCourseContent(slug) || { lessons: [], quiz: { passMark: 80, questions: [] }, reflection: [] };
+    const lessons = content.lessons || [];
+    const quiz = content.quiz || { passMark: 80, questions: [] };
+    let prog = (hasAccess ? await D.getProgress(user.uid, slug) : null) || { lessonsDone: [] };
+    prog.lessonsDone = prog.lessonsDone || [];
+    document.title = course.title + ' - DNT CPD Hub';
+
+    if (adminView) document.getElementById('adminNote').innerHTML = '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Admin view</div><p>You are viewing this course as an admin. Everything is unlocked and nothing you do here is saved.</p></div>';
+
+    async function save(data) {
+      Object.assign(prog, data);
+      if (adminView) return;
+      prog.percent = Math.round(D.stepsDone(content, prog) / D.courseSteps(content) * 100);
+      try { await D.saveProgress(user.uid, slug, { ...data, percent: prog.percent, title: course.title, hours: course.hours }); }
+      catch (e) { console.error(e); toast('Could not save your progress. Please check your connection.', 'error'); throw e; }
+    }
+
+    // ── Steps and locking ────────────────────────────────────────────────
+    const lessonDone = id => prog.lessonsDone.includes(id);
+    const allLessonsDone = () => lessons.every(l => lessonDone(l.id));
+    function unlocked(step) {
+      if (adminView) return true;
+      if (step === 'intro') return true;
+      if (step.startsWith('lesson:')) { const i = lessons.findIndex(l => 'lesson:' + l.id === step); return lessons.slice(0, i).every(l => lessonDone(l.id)); }
+      if (step === 'quiz') return allLessonsDone();
+      if (step === 'reflection') return !!(prog.quiz && prog.quiz.passed);
+      if (step === 'feedback') return !!prog.reflection;
+      if (step === 'done') return !!prog.feedback;
+      return false;
+    }
+    function isDone(step) {
+      if (step.startsWith('lesson:')) return lessonDone(step.slice(7));
+      return { quiz: prog.quiz && prog.quiz.passed, reflection: !!prog.reflection, feedback: !!prog.feedback, done: !!prog.completedAt, intro: false }[step];
+    }
+    const steps = [['intro', '🏠', 'Course overview'], ...lessons.map((l, i) => ['lesson:' + l.id, String(i + 1), l.title]),
+      ['quiz', '✅', 'Quiz'], ['reflection', '🪞', 'Reflection'], ['feedback', '💬', 'Feedback'], ['done', '🏅', 'Certificate']];
+
+    let current = 'intro';
+    function drawSidebar() {
+      const pct = Math.round(D.stepsDone(content, prog) / D.courseSteps(content) * 100);
+      sidebar.innerHTML = '<div style="padding:0 0.5rem 0.75rem;color:var(--white)"><div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;opacity:0.5">CPD course</div><div style="font-weight:700;line-height:1.3;margin-top:0.2rem">' + esc(course.title) + '</div>'
+        + '<div class="progress-bar-wrap" style="background:rgba(255,255,255,0.15)"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div><div style="font-size:0.75rem;opacity:0.6">' + pct + '% complete</div></div>'
+        + '<div class="sidebar-section-title">Lessons</div>'
+        + steps.map(([id, icon, label], i) => {
+            const lock = !unlocked(id), done = isDone(id);
+            const section = id === 'quiz' ? '<div class="sidebar-section-title">Finish</div>' : '';
+            return section + '<button class="sidebar-item' + (id === current ? ' active' : '') + (lock ? ' locked' : '') + '" data-step="' + esc(id) + '"><span class="si-icon">' + esc(icon) + '</span><span>' + esc(label) + '</span>'
+              + (done ? '<span class="si-badge badge-done">✓</span>' : lock ? '<span class="si-badge badge-lock">🔒</span>' : '') + '</button>';
+          }).join('')
+        + '<div style="margin-top:1.25rem;padding:0 0.5rem"><a href="' + D.link('dashboard.html') + '" style="color:rgba(255,255,255,0.6);font-size:0.82rem">← Back to My CPD</a></div>';
+      sidebar.querySelectorAll('[data-step]').forEach(b => b.onclick = () => { if (unlocked(b.dataset.step)) go(b.dataset.step); else toast('Finish the earlier steps first to unlock this.'); });
+    }
+
+    function go(step) {
+      current = step;
+      sidebar.classList.remove('mobile-open'); document.getElementById('backdrop').classList.remove('visible');
+      drawSidebar();
+      window.scrollTo(0, 0);
+      if (step === 'intro') return showIntro();
+      if (step.startsWith('lesson:')) return showLesson(lessons.findIndex(l => 'lesson:' + l.id === step));
+      ({ quiz: showQuiz, reflection: showReflection, feedback: showFeedback, done: showDone })[step]();
+    }
+    function nextStep() {
+      const i = steps.findIndex(s => s[0] === current);
+      return steps[i + 1] ? steps[i + 1][0] : null;
+    }
+    function firstOpenStep() {
+      for (const [id] of steps) if (id !== 'intro' && unlocked(id) && !isDone(id)) return id;
+      return prog.completedAt ? 'done' : 'intro';
+    }
+
+    // ── Overview ─────────────────────────────────────────────────────────
+    function showIntro() {
+      const started = prog.lessonsDone.length || prog.quiz;
+      main.innerHTML = '<div class="dash-header"><h1>' + esc(course.icon || '') + ' ' + esc(course.title) + '</h1><p>' + esc(course.hours) + ' hour' + (Number(course.hours) === 1 ? '' : 's') + ' verifiable CPD · GDC development outcome' + ((course.outcomes || []).length === 1 ? '' : 's') + ' ' + esc((course.outcomes || []).join(', ')) + '</p></div>'
+        + '<div class="content-card"><h2>About this course</h2><h3>Aims</h3><p>' + esc(course.aims || '') + '</p><h3>Objectives</h3><p>By the end of this course you will be able to:</p><ul>' + (course.objectives || []).map(o => '<li>' + esc(o) + '</li>').join('') + '</ul>'
+        + '<h3>GDC development outcomes</h3>' + (course.outcomes || []).map(o => '<div class="outcome-item"><span class="outcome-letter">' + esc(o) + '</span><span>' + esc(GDC_OUTCOMES[o] || '') + '</span></div>').join('') + '</div>'
+        + '<div class="content-card"><h2>How to complete this course</h2><ol><li>Work through each lesson and try the activities.</li><li>Pass the end of course quiz (pass mark ' + esc(quiz.passMark || 80) + '%). You can retake it as many times as you need.</li><li>Write a short reflection on what you learned and how you will use it.</li><li>Fill in the feedback form.</li><li>Download your verifiable CPD certificate and add it to your CPD record.</li></ol>'
+        + '<button class="btn btn-primary btn-lg" id="startBtn" style="margin-top:0.5rem">' + (prog.completedAt ? 'View my certificate' : started ? 'Continue course →' : 'Start course →') + '</button></div>';
+      document.getElementById('startBtn').onclick = () => go(firstOpenStep() === 'intro' ? (steps[1] ? steps[1][0] : 'quiz') : firstOpenStep());
+    }
+
+    // ── Lessons ──────────────────────────────────────────────────────────
+    function showLesson(i) {
+      const l = lessons[i];
+      main.innerHTML = '<div class="dash-header"><span class="mc-mod">Lesson ' + (i + 1) + ' of ' + lessons.length + '</span><h1>' + esc(l.title) + '</h1></div><div class="content-card" id="lessonBody"></div>'
+        + '<div class="lesson-nav"><button class="btn btn-outline" id="prevBtn">← Back</button><div style="text-align:right"><button class="btn btn-primary" id="doneBtn"></button><div id="todo" style="font-size:0.8rem;color:var(--ink-light);margin-top:0.4rem"></div></div></div>';
+      const body = document.getElementById('lessonBody');
+      const blocks = l.blocks || [];
+      let needed = blocks.filter(b => BLOCK_TYPES[b.type] && BLOCK_TYPES[b.type].interactive).length;
+      const already = lessonDone(l.id) || adminView;
+      const btn = document.getElementById('doneBtn');
+      const update = () => {
+        const ready = already || needed <= 0;
+        btn.disabled = !ready;
+        btn.textContent = lessonDone(l.id) ? 'Next →' : 'Complete lesson and continue →';
+        document.getElementById('todo').textContent = ready ? '' : 'Try the ' + needed + ' remaining activit' + (needed === 1 ? 'y' : 'ies') + ' on this page to continue.';
+      };
+      blocks.forEach(b => body.appendChild(renderBlock(b, () => { needed--; update(); })));
+      if (!blocks.length) body.innerHTML = '<p style="color:var(--ink-light)">This lesson has no content yet.</p>';
+      update();
+      document.getElementById('prevBtn').onclick = () => go(i === 0 ? 'intro' : 'lesson:' + lessons[i - 1].id);
+      btn.onclick = async () => {
+        if (!lessonDone(l.id)) { try { await save({ lessonsDone: [...prog.lessonsDone, l.id] }); } catch (e) { return; } }
+        go(nextStep());
+      };
+    }
+
+    // ── Quiz ─────────────────────────────────────────────────────────────
+    function showQuiz() {
+      const pass = Number(quiz.passMark || 80);
+      const qs_ = quiz.questions || [];
+      if (prog.quiz && prog.quiz.passed && !main.dataset.retake) {
+        main.innerHTML = '<div class="content-card quiz-result"><div class="quiz-score quiz-pass">' + prog.quiz.best + '%</div><div class="quiz-score-sub">You passed the quiz.</div><button class="btn btn-primary" id="nx">Continue →</button></div>';
+        document.getElementById('nx').onclick = () => go('reflection');
+        return;
+      }
+      if (!qs_.length) { main.innerHTML = '<div class="content-card"><p>This course has no quiz questions yet.</p></div>'; return; }
+      // Shuffle questions, and options within each question.
+      const paper = shuffle(qs_.map((q, qi) => qi)).map(qi => {
+        const q = qs_[qi];
+        const order = shuffle(q.options.map((o, oi) => oi));
+        return { q, order, correct: order.indexOf(Number(q.answer) - 1) };
+      });
+      const answers = {};
+      main.innerHTML = '<div class="dash-header"><h1>End of course quiz</h1><p>' + paper.length + ' questions · pass mark ' + pass + '%. Answer every question, then submit.</p></div>'
+        + paper.map((p, i) => '<div class="content-card quiz-wrap" style="max-width:none"><div class="quiz-progress"><span>Question ' + (i + 1) + ' of ' + paper.length + '</span></div><div class="quiz-q">' + esc(p.q.q) + '</div><div class="quiz-options" data-q="' + i + '">'
+          + p.order.map((oi, k) => '<div class="quiz-option" data-k="' + k + '"><span class="quiz-option-key">' + 'ABCDEFGH'[k] + '</span><span>' + esc(p.q.options[oi]) + '</span></div>').join('') + '</div><div class="fb"></div></div>').join('')
+        + '<div id="quizErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div><button class="btn btn-primary btn-lg" id="submitQuiz">Submit answers</button>';
+      main.querySelectorAll('.quiz-options').forEach(box => box.querySelectorAll('.quiz-option').forEach(opt => opt.onclick = () => {
+        if (box.dataset.locked) return;
+        box.querySelectorAll('.quiz-option').forEach(x => x.classList.remove('selected'));
+        opt.classList.add('selected'); answers[box.dataset.q] = Number(opt.dataset.k);
+      }));
+      document.getElementById('submitQuiz').onclick = async () => {
+        if (Object.keys(answers).length < paper.length) { const e = document.getElementById('quizErr'); e.textContent = 'Please answer every question before submitting.'; e.style.display = 'block'; return; }
+        let right = 0;
+        paper.forEach((p, i) => {
+          const box = main.querySelector('.quiz-options[data-q="' + i + '"]'); box.dataset.locked = '1';
+          const ok = answers[i] === p.correct; if (ok) right++;
+          box.querySelectorAll('.quiz-option').forEach((x, k) => { x.classList.add('disabled'); if (k === p.correct) x.classList.add('correct'); else if (k === answers[i]) x.classList.add('wrong'); });
+          box.nextElementSibling.innerHTML = '<div class="act-feedback ' + (ok ? 'good' : 'bad') + '"><strong>' + (ok ? 'Correct.' : 'Incorrect.') + '</strong>' + (p.q.explain ? ' ' + esc(p.q.explain) : '') + '</div>';
+        });
+        const score = Math.round(right / paper.length * 100), passed = score >= pass;
+        const prev = prog.quiz || {};
+        try {
+          await save({ quiz: { best: Math.max(prev.best || 0, score), last: score, attempts: (prev.attempts || 0) + 1, passed: prev.passed || passed, passedAt: prev.passedAt || (passed ? new Date().toISOString() : null) } });
+        } catch (e) { return; }
+        drawSidebar();
+        document.getElementById('submitQuiz').remove();
+        const res = document.createElement('div');
+        res.className = 'content-card quiz-result';
+        res.innerHTML = '<div class="quiz-score ' + (passed ? 'quiz-pass' : 'quiz-fail') + '">' + score + '%</div><div class="quiz-score-sub">' + right + ' of ' + paper.length + ' correct. ' + (passed ? 'Well done, you passed!' : 'The pass mark is ' + pass + '%. Look over the answers above, then try again.') + '</div>'
+          + (passed ? '<button class="btn btn-primary" id="nx">Continue to reflection →</button>' : '<button class="btn btn-primary" id="retry">Try again</button>');
+        main.prepend(res); window.scrollTo(0, 0);
+        if (passed) document.getElementById('nx').onclick = () => go('reflection');
+        else document.getElementById('retry').onclick = () => { main.dataset.retake = '1'; showQuiz(); delete main.dataset.retake; };
+      };
+    }
+
+    // ── Reflection ───────────────────────────────────────────────────────
+    function showReflection() {
+      const questions = (content.reflection && content.reflection.length) ? content.reflection : ['What did you learn from this course?', 'How will you apply it in your practice?'];
+      const saved = (prog.reflection && prog.reflection.answers) || [];
+      main.innerHTML = '<div class="dash-header"><h1>Reflection</h1><p>Reflecting on your learning is part of the GDC enhanced CPD scheme. Your answers are saved with your CPD record and shown on the back of your certificate.</p></div>'
+        + '<div class="content-card">' + questions.map((q, i) => '<div class="form-group"><label>' + esc(q) + '</label><textarea data-i="' + i + '" class="short">' + esc(saved[i] || '') + '</textarea></div>').join('')
+        + '<div id="refErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div><button class="btn btn-primary" id="saveRef">' + (prog.reflection ? 'Update reflection' : 'Save and continue →') + '</button></div>';
+      document.getElementById('saveRef').onclick = async () => {
+        const answers = [...main.querySelectorAll('textarea')].map(t => t.value.trim());
+        if (answers.some(a => a.length < 30)) { const e = document.getElementById('refErr'); e.textContent = 'Please write a little more for each question (at least a sentence or two).'; e.style.display = 'block'; return; }
+        try { await save({ reflection: { questions, answers, submittedAt: new Date().toISOString() } }); } catch (e) { return; }
+        go(prog.feedback ? 'done' : 'feedback');
+      };
+    }
+
+    // ── Feedback ─────────────────────────────────────────────────────────
+    const FEEDBACK_ITEMS = [
+      ['aims', 'The aims and objectives were clear and were met'],
+      ['relevant', 'The content was relevant to my practice'],
+      ['quality', 'The lessons and activities were good quality'],
+      ['recommend', 'I would recommend this course to a colleague'],
+    ];
+    function showFeedback() {
+      const f = prog.feedback || { ratings: {} };
+      const ratings = { ...(f.ratings || {}) };
+      main.innerHTML = '<div class="dash-header"><h1>Course feedback</h1><p>Your feedback helps us keep our CPD high quality. Rate each statement from 1 (strongly disagree) to 5 (strongly agree).</p></div>'
+        + '<div class="content-card">' + FEEDBACK_ITEMS.map(([k, label]) => '<div class="rating-row"><span>' + esc(label) + '</span><span class="rating-btns" data-k="' + k + '">' + [1, 2, 3, 4, 5].map(n => '<button type="button" data-n="' + n + '"' + (ratings[k] === n ? ' class="on"' : '') + '>' + n + '</button>').join('') + '</span></div>').join('')
+        + '<div class="form-group" style="margin-top:1.25rem"><label>Was the course free from commercial bias (for example, promoting a particular product)?</label><select id="bias"><option value="">Select...</option><option' + (f.bias === 'Yes' ? ' selected' : '') + '>Yes</option><option' + (f.bias === 'No' ? ' selected' : '') + '>No</option></select></div>'
+        + '<div class="form-group"><label>Roughly how long did the course take you?</label><select id="time"><option value="">Select...</option>' + ['Less than 30 minutes', '30 minutes to 1 hour', '1 to 2 hours', '2 to 3 hours', 'More than 3 hours'].map(t => '<option' + (f.time === t ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></div>'
+        + '<div class="form-group"><label>Any other comments or suggestions? (optional)</label><textarea id="comments" class="short">' + esc(f.comments || '') + '</textarea></div>'
+        + '<div id="fbErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div><button class="btn btn-primary" id="saveFb">' + (prog.feedback ? 'Update feedback' : 'Submit and get my certificate →') + '</button></div>';
+      main.querySelectorAll('.rating-btns').forEach(g => g.querySelectorAll('button').forEach(b => b.onclick = () => {
+        g.querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on'); ratings[g.dataset.k] = Number(b.dataset.n);
+      }));
+      document.getElementById('saveFb').onclick = async () => {
+        const bias = document.getElementById('bias').value, time = document.getElementById('time').value;
+        if (FEEDBACK_ITEMS.some(([k]) => !ratings[k]) || !bias || !time) { const e = document.getElementById('fbErr'); e.textContent = 'Please answer every rating and both drop-down questions.'; e.style.display = 'block'; return; }
+        const data = { feedback: { ratings, bias, time, comments: document.getElementById('comments').value.trim(), submittedAt: new Date().toISOString() } };
+        const first = !prog.completedAt;
+        if (first) {
+          const d = new Date();
+          data.completedAt = d.toISOString();
+          data.certNo = 'DNT-CPD-' + String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '-' + Math.random().toString(36).slice(2, 7).toUpperCase();
+        }
+        try { await save(data); } catch (e) { return; }
+        if (first && !adminView) D.notify('CPD course completed - ' + course.title, user.name + ' (' + user.email + ', GDC ' + user.gdc + ') has completed "' + course.title + '". Certificate number ' + data.certNo + '.', user);
+        go('done');
+      };
+    }
+
+    // ── Done ─────────────────────────────────────────────────────────────
+    function showDone() {
+      main.innerHTML = '<div class="content-card" style="text-align:center;padding:3rem 2rem"><div style="font-size:3.5rem;margin-bottom:0.75rem">🎉</div><h2 style="border:none;padding:0;margin-bottom:0.5rem">Course complete!</h2>'
+        + '<p>Well done ' + esc(user.name.split(' ')[0]) + '. You have earned <strong>' + esc(course.hours) + ' hour' + (Number(course.hours) === 1 ? '' : 's') + '</strong> of verifiable CPD.</p>'
+        + '<p style="font-size:0.9rem">Keep a copy of your certificate for your CPD record, and remember to log the hours against your personal development plan (PDP) for your GDC annual statement.</p>'
+        + '<a class="btn btn-primary btn-lg" target="_blank" href="' + D.link('certificate.html?c=' + encodeURIComponent(slug)) + '" style="margin-top:0.75rem">🏅 View and print certificate</a><br/>'
+        + '<a class="btn btn-outline" href="' + D.link('dashboard.html') + '" style="margin-top:0.75rem">Back to My CPD</a></div>';
+      if (adminView) main.querySelector('.btn-primary').outerHTML = '<p style="color:var(--ink-light);font-size:0.85rem">(Certificates are only created for learners.)</p>';
+    }
+
+    document.getElementById('menuBtn').onclick = () => { sidebar.classList.add('mobile-open'); document.getElementById('backdrop').classList.add('visible'); };
+    document.getElementById('backdrop').onclick = () => { sidebar.classList.remove('mobile-open'); document.getElementById('backdrop').classList.remove('visible'); };
+
+    const startAt = qs('step');
+    go(startAt && unlocked(startAt) ? startAt : (prog.lessonsDone.length ? firstOpenStep() : 'intro'));
+  </script>
+</body>
+</html>

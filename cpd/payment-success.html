@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="js/gate.js"></script>
+  <meta name="robots" content="noindex, nofollow"/>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0L9NXXFBFR');
+  </script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment received - Dental Nurse Training CPD Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="css/cpd.css"/>
+</head>
+<body>
+  <!-- Set each course's Stripe Payment Link to redirect here after payment:
+       https://fluoride.dentalnurse.training/cpd/payment-success.html?c=<course slug> -->
+  <div id="navHolder"></div>
+  <div class="auth-wrap" style="min-height:calc(100vh - var(--nav-h))">
+    <div class="auth-card" style="text-align:center;max-width:500px">
+      <div style="font-size:3.5rem;margin-bottom:0.75rem">✅</div>
+      <h2 style="margin-bottom:0.75rem">Thank you for your payment</h2>
+      <p id="msg" style="margin-bottom:1.25rem">We will check your payment and unlock your course within <strong>1 working day</strong>. We will email you as soon as it is ready.</p>
+      <a href="dashboard.html" id="dashLink" class="btn btn-primary">Go to My CPD</a>
+      <p style="margin-top:1.5rem;font-size:0.8rem;color:var(--ink-light)">Questions? Email <a id="mail" style="color:var(--teal)"></a></p>
+    </div>
+  </div>
+  <div id="footHolder"></div>
+  <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/demo-course.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
+  <script type="module">
+    import * as D from './js/data.js';
+    const user = await D.mountChrome();
+    document.getElementById('dashLink').href = D.link('dashboard.html');
+    const mail = document.getElementById('mail'); mail.textContent = NOTIFY_EMAIL; mail.href = 'mailto:' + NOTIFY_EMAIL;
+    const slug = qs('c');
+    const course = slug ? await D.getCourse(slug) : null;
+    if (course) document.getElementById('msg').innerHTML = 'We will check your payment for <strong>' + esc(course.title) + '</strong> and unlock it within <strong>1 working day</strong>. We will email you as soon as it is ready.';
+    // Tell the team once per browser, so a refresh doesn't send it twice.
+    const key = 'cpd_paid_' + slug;
+    if (user && course && !sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, '1');
+      D.notify('CPD payment to check - ' + course.title, user.name + ' (' + user.email + ', GDC ' + user.gdc + ') says they have paid ' + course.price + ' for "' + course.title + '". Please check Stripe, then unlock it in the CPD admin hub under Payments.', user);
+    }
+  </script>
+</body>
+</html>
