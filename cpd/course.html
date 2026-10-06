@@ -21,48 +21,62 @@
 </head>
 <body>
   <div id="navHolder"></div>
-  <div class="page-head">
+  <div class="course-hero">
     <div class="container">
-      <p class="crumbs"><a id="homeCrumb" href="index.html">CPD Hub</a> / Course</p>
+      <p class="crumbs"><a id="homeCrumb" href="index.html">CPD Hub</a> / <span id="crumbCat">Course</span></p>
+      <div class="ch-tags" id="cTags"></div>
       <h1 id="cTitle">Loading...</h1>
-      <p id="cSummary"></p>
+      <p class="ch-summary" id="cSummary"></p>
+      <div class="ch-chips" id="cChips"></div>
     </div>
   </div>
 
-  <div class="container" style="padding:2.5rem 0">
-    <div class="detail-grid" id="detail" style="display:none">
-      <div>
-        <div class="content-card">
-          <h2>Aims</h2>
-          <p id="cAims"></p>
-          <h3>Objectives</h3>
-          <p style="margin-bottom:0.25rem">By the end of this course you will be able to:</p>
-          <ul id="cObjectives"></ul>
+  <div class="container">
+    <div class="cd-grid" id="detail" style="display:none">
+      <div class="cd-main">
+        <div class="cd-section">
+          <h2>What you'll learn</h2>
+          <div id="cObjectives"></div>
         </div>
-        <div class="content-card" id="outcomesCard">
-          <h2>GDC development outcomes</h2>
-          <div id="cOutcomes"></div>
+        <div class="cd-section">
+          <h2>Course content</h2>
+          <div id="cLessons"></div>
         </div>
-        <div class="content-card">
-          <h2>What's in the course</h2>
-          <ul id="cLessons"></ul>
+        <div class="cd-section">
+          <h2>About this course</h2>
+          <div class="cd-card">
+            <p id="cAims"></p>
+            <div id="outcomesBlock" style="margin-top:1rem">
+              <p style="font-weight:700;color:var(--ink);margin-bottom:0.25rem">GDC development outcomes</p>
+              <div id="cOutcomes"></div>
+            </div>
+            <p style="font-size:0.8rem;color:var(--ink-light);margin-top:1rem">Content last reviewed <span id="sUpdated"></span>.</p>
+          </div>
         </div>
-      </div>
-      <div>
-        <div class="side-card">
-          <h3 style="color:var(--white);margin-bottom:1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;opacity:0.7">Course at a glance</h3>
-          <div class="side-row"><span>Course type</span><span id="sType"></span></div>
-          <div class="side-row"><span id="sHoursLabel">Verifiable CPD</span><span id="sHours"></span></div>
-          <div class="side-row"><span>Lessons</span><span id="sLessons"></span></div>
-          <div class="side-row"><span>Assessment</span><span id="sQuiz"></span></div>
-          <div class="side-row" id="sOutcomesRow"><span>GDC outcomes</span><span id="sOutcomes"></span></div>
-          <div class="side-row" style="border-bottom:none"><span>Fee</span><span id="sPrice"></span></div>
-          <div id="action" style="margin-top:1.25rem"></div>
-          <p style="font-size:0.78rem;color:rgba(255,255,255,0.55);margin-top:1rem;line-height:1.6"><span id="sAudience"></span> Content last reviewed <span id="sUpdated"></span>.</p>
+        <div class="cd-section" id="noteBlock" style="display:none">
+          <div class="callout callout-warn" style="margin:0"><div class="callout-label">Please note</div><p id="cNote"></p></div>
         </div>
       </div>
+      <aside>
+        <div class="price-card">
+          <div class="pc-visual" id="cVisual"></div>
+          <div class="pc-body">
+            <div class="pc-price" id="sPrice"></div>
+            <div class="pc-sub" id="sHours"></div>
+            <div id="action"></div>
+            <div class="pc-includes">
+              <div><span>✓</span><span>Learn online at your own pace</span></div>
+              <div><span>✓</span><span id="incLessons"></span></div>
+              <div><span>✓</span><span>Interactive activities and a quiz</span></div>
+              <div><span>✓</span><span id="incCert"></span></div>
+              <div><span>✓</span><span>Saved to your CPD Hub account</span></div>
+            </div>
+            <p style="font-size:0.78rem;color:var(--ink-light);margin-top:1rem;line-height:1.55" id="sAudience"></p>
+          </div>
+        </div>
+      </aside>
     </div>
-    <div id="notFound" class="empty-state" style="display:none"><div class="es-icon">🔍</div><h3>Course not found</h3><p><a href="index.html" id="backLink" style="color:var(--teal);font-weight:700">Back to all courses</a></p></div>
+    <div id="notFound" class="empty-state" style="display:none;margin:2.5rem 0"><div class="es-icon">🔍</div><h3>Course not found</h3><p><a href="index.html" id="backLink" style="color:var(--teal);font-weight:700">Back to all courses</a></p></div>
   </div>
 
   <div id="footHolder"></div>
@@ -83,51 +97,57 @@
       document.getElementById('notFound').style.display = 'block';
       throw new Error('not found');
     }
+    const t = cpdType(course);
     document.title = course.title + ' - Dental Nurse Training CPD Hub';
+    document.getElementById('crumbCat').textContent = course.category || 'Course';
+    document.getElementById('cTags').innerHTML = (course.category ? '<span class="ch-tag">' + esc(course.category) + '</span>' : '')
+      + '<span class="ch-tag">' + esc({ verifiable: 'Verifiable CPD', both: 'GDC verifiable CPD', general: 'CPD' }[t]) + '</span>'
+      + (course.status === 'coming-soon' ? '<span class="ch-tag">Coming soon</span>' : '');
     document.getElementById('cTitle').textContent = course.title;
     document.getElementById('cSummary').textContent = course.summary || '';
+    document.getElementById('cChips').innerHTML = courseChips(course);
+    document.getElementById('cObjectives').innerHTML = objectivesGrid(course);
+    document.getElementById('cLessons').innerHTML = lessonList(course);
     document.getElementById('cAims').textContent = course.aims || '';
-    document.getElementById('cObjectives').innerHTML = (course.objectives || []).map(o => '<li>' + esc(o) + '</li>').join('');
-    document.getElementById('cOutcomes').innerHTML = (course.outcomes || []).map(o => '<div class="outcome-item"><span class="outcome-letter">' + esc(o) + '</span><span>' + esc(GDC_OUTCOMES[o] || '') + '</span></div>').join('');
-    document.getElementById('cLessons').innerHTML = (course.lessonTitles || []).map(t => '<li>' + esc(t) + '</li>').join('')
-      + '<li>End of course quiz (pass mark ' + esc(course.passMark || 80) + '%)</li><li>Reflection on your learning</li><li>Course feedback</li><li>' + ({ verifiable: 'Downloadable verifiable CPD certificate', both: 'Downloadable CPD certificate (a verifiable CPD certificate if you add your GDC number)', general: 'Downloadable CPD certificate (not GDC verifiable)' }[cpdType(course)]) + '</li>';
-    const t = cpdType(course);
-    document.getElementById('sType').textContent = { verifiable: 'Verifiable CPD', both: 'CPD, GDC verifiable', general: 'CPD' }[t];
-    document.getElementById('sHoursLabel').textContent = t === 'verifiable' ? 'Verifiable CPD' : 'CPD hours';
-    document.getElementById('sAudience').textContent = { verifiable: 'For GDC-registered dental professionals.', both: 'Open to everyone. Verifiable CPD for dental professionals who add their GDC number.', general: 'Open to everyone. Not GDC verifiable CPD.' }[t];
-    if (!usesGdc(course)) { document.getElementById('outcomesCard').style.display = 'none'; document.getElementById('sOutcomesRow').style.display = 'none'; }
-    document.getElementById('sHours').textContent = course.hours + ' hour' + (Number(course.hours) === 1 ? '' : 's');
-    document.getElementById('sLessons').textContent = (course.lessonTitles || []).length;
-    document.getElementById('sQuiz').textContent = (course.questionCount || 0) + ' question quiz';
-    document.getElementById('sOutcomes').textContent = (course.outcomes || []).join(', ');
-    document.getElementById('sPrice').textContent = course.status === 'coming-soon' ? 'TBC' : course.price;
+    if (usesGdc(course)) document.getElementById('cOutcomes').innerHTML = outcomesBadges(course);
+    else document.getElementById('outcomesBlock').style.display = 'none';
+    if (course.certNote) { document.getElementById('cNote').textContent = course.certNote; document.getElementById('noteBlock').style.display = ''; }
     document.getElementById('sUpdated').textContent = fmtDate(course.updated) || 'recently';
+    document.getElementById('cVisual').innerHTML = courseVisual(course);
+    document.getElementById('sPrice').textContent = course.status === 'coming-soon' ? 'Coming soon' : course.price;
+    document.getElementById('sHours').textContent = hoursText(course);
+    const n = (course.lessonTitles || []).length;
+    document.getElementById('incLessons').textContent = n + ' short lesson' + (n === 1 ? '' : 's');
+    document.getElementById('incCert').textContent = { verifiable: 'Verifiable CPD certificate', both: 'Verifiable CPD certificate (with your GDC number)', general: 'CPD certificate' }[t];
+    document.getElementById('sAudience').textContent = audienceText(course);
     document.getElementById('detail').style.display = '';
 
     const action = document.getElementById('action');
-    const btn = (href, label, cls) => '<a href="' + href + '" class="btn ' + (cls || 'btn-white') + '" style="width:100%">' + label + '</a>';
+    const btn = (href, label) => '<a href="' + href + '" class="btn btn-primary btn-lg" style="width:100%">' + label + '</a>';
+    const small = (html) => '<p style="text-align:center;margin-top:0.7rem;font-size:0.84rem;color:var(--ink-light)">' + html + '</p>';
+    const linkStyle = 'color:var(--teal);font-weight:700;text-decoration:underline';
 
     if (course.status === 'coming-soon') {
-      action.innerHTML = '<div style="background:rgba(255,255,255,0.12);border-radius:var(--radius);padding:0.85rem;text-align:center;font-weight:700">Coming soon</div>';
+      action.innerHTML = '<div class="pc-note">This course is coming soon. Create a free account and you will be ready to start as soon as it launches.</div>';
     } else if (!user) {
       const next = encodeURIComponent('course.html?c=' + slug);
       action.innerHTML = btn(D.link('register.html?next=' + next), 'Create account to buy')
-        + '<p style="text-align:center;margin-top:0.75rem;font-size:0.85rem;color:rgba(255,255,255,0.7)">Already registered? <a href="' + D.link('login.html?next=' + next) + '" style="color:var(--white);font-weight:700;text-decoration:underline">Log in</a></p>';
+        + small('Already registered? <a href="' + D.link('login.html?next=' + next) + '" style="' + linkStyle + '">Log in</a>');
     } else {
       const access = await D.getAccess(user.uid);
       const orders = await D.getOrders(user.uid);
       const order = orders.find(o => o.slug === slug);
       if (access[slug]) {
-        action.innerHTML = btn(D.link('learn.html?c=' + slug), 'Go to course →');
+        action.innerHTML = btn(D.link('learn.html?c=' + slug), 'Go to course →') + small('You have access to this course.');
       } else if (order && order.status === 'pending') {
-        action.innerHTML = '<div style="background:rgba(255,255,255,0.12);border-radius:var(--radius);padding:0.85rem;font-size:0.88rem;line-height:1.6">⏳ <strong>Payment being checked.</strong> Your course will be unlocked within 1 working day. We will email you when it is ready.</div>'
-          + '<p style="margin-top:0.75rem;font-size:0.8rem;color:rgba(255,255,255,0.65)">Not finished paying? <a href="#" id="payAgain" style="color:var(--white);text-decoration:underline">Go to payment</a></p>';
+        action.innerHTML = '<div class="pc-note">⏳ <strong>Payment being checked.</strong> Your course will be unlocked within 1 working day. We will email you when it is ready.</div>'
+          + small('Not finished paying? <a href="#" id="payAgain" style="' + linkStyle + '">Go to payment</a>');
         document.getElementById('payAgain').onclick = (e) => { e.preventDefault(); buy(); };
       } else {
-        action.innerHTML = '<button class="btn btn-white" style="width:100%" id="buyBtn">Buy course - ' + esc(course.price) + '</button><p style="text-align:center;margin-top:0.6rem;font-size:0.78rem;color:rgba(255,255,255,0.6)">🔒 Secure payment by Stripe</p>';
+        action.innerHTML = '<button class="btn btn-primary btn-lg" style="width:100%" id="buyBtn">Buy course</button>' + small('🔒 Secure payment by Stripe');
         document.getElementById('buyBtn').onclick = buy;
       }
-      if (!access[slug] && user.isAdmin) action.insertAdjacentHTML('beforeend', '<p style="text-align:center;margin-top:0.75rem;font-size:0.82rem"><a href="' + D.link('learn.html?c=' + slug) + '" style="color:var(--white);text-decoration:underline">Open as admin (nothing is saved)</a></p>');
+      if (!access[slug] && user.isAdmin) action.insertAdjacentHTML('beforeend', small('<a href="' + D.link('learn.html?c=' + slug) + '" style="' + linkStyle + '">Open as admin (nothing is saved)</a>'));
     }
 
     async function buy() {
