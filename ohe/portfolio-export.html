@@ -117,7 +117,25 @@
 
   const params    = new URLSearchParams(window.location.search);
   const targetUid = params.get('uid');  // set for admin view; absent = own portfolio
+  const isPreview = params.get('preview') === '1';
 
+  if (isPreview) {
+    // Deferred until after the rest of this script has run, since render()
+    // references MODULE_TITLES, a const declared further down the file.
+    setTimeout(() => {
+      render({
+        name: 'Jordan Sample', email: 'preview@example.com', gdc: '123456', workplace: 'Sample Dental Practice',
+        enrolledAt: { toDate: () => new Date() },
+        moduleProgress: { 1:2, 2:2, 3:2, 4:2, 5:2, 6:2 },
+        writtenPassed: true, practicalPassed: true, reflectionPassed: true,
+        reflectionStartSubmitted: true,
+        reflectionStartText: 'This is a sample starting reflection shown in preview mode.',
+        pcasEntries: [], focusTopic: '', exhibitionTopic: '', exhibitionTargetGroup: '', exhibitionReport: '',
+        cpdLog: [], pdp: { strengths: '', areas: '', goals: '', timescale: '' },
+      }, 'preview-uid');
+      document.getElementById('backBtn').href = 'dashboard.html?preview=1';
+    }, 0);
+  } else {
   onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = 'login.html'; return; }
 
@@ -146,6 +164,7 @@
       document.getElementById('loading').innerHTML = '<p>Error loading portfolio.</p>';
     }
   });
+  }
 
   function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');

@@ -93,14 +93,25 @@
         name: 'Jordan Sample', email: 'preview@example.com', gdc: '123456', unlocked: true,
         declarationSigned: true,
         enrolledAt: { toDate: () => new Date() },
-        moduleProgress: { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 },
+        // Every module marked passed, and the three gates ahead of the practical
+        // portfolio pre-satisfied, so every sidebar section is reachable straight
+        // away rather than needing to be unlocked in order. The three assessments
+        // are marked passed (not submitted) so their banners show "passed" while
+        // the forms underneath stay fully editable for exploring.
+        moduleProgress: { 1:2, 2:2, 3:2, 4:2, 5:2, 6:2 },
+        writtenPassed: true,
+        practicalPassed: true,
+        reflectionPassed: true,
+        supervisorsSubmitted: true,
+        reflectionStartSubmitted: true,
+        reflectionStartText: 'This is a sample starting reflection shown in preview mode - write your own here once logged in with a real account.',
         pcasEntries: [], cpdLog: [], pdp: { strengths: '', areas: '', goals: '', timescale: '' },
-        supervisors: [],
+        supervisors: [{ name: 'Dr. Sample Dentist', gdc: '111222', email: 'sample.supervisor@example.com', approved: true }],
       };
       document.getElementById('navName').textContent = 'Jordan';
       document.body.insertAdjacentHTML('afterbegin',
         '<div style="background:#F59E0B;color:#1a1a1a;text-align:center;padding:0.55rem 1rem;font-weight:700;font-size:0.85rem;position:sticky;top:0;z-index:9999">' +
-        '⚠ PREVIEW MODE — sample account, not a real login. Anything you fill in or save here is local to this browser tab only and will not persist after you reload.</div>');
+        '⚠ PREVIEW MODE — sample account, not a real login. Everything is unlocked for browsing. Anything you fill in or save here is local to this browser tab only and will not persist after you reload.</div>');
       renderSidebar();
       showSection('home');
     }
@@ -1797,8 +1808,8 @@ setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
         + '<div style="font-size:4rem;margin-bottom:1rem">🏆</div>'
         + '<h2 style="color:var(--teal-dark);margin-bottom:0.75rem">Congratulations, ' + (learner.name||'').split(' ')[0] + '!</h2>'
         + '<p style="margin-bottom:1.75rem;max-width:480px;margin-left:auto;margin-right:auto">You have successfully completed all components of the <strong>Dental Nurse Training Oral Health Education Course</strong>. Your certificate is ready to view and print.</p>'
-        + '<a href="certificate.html" target="_blank" class="btn btn-primary btn-lg" style="margin-bottom:0.75rem">🎓 View &amp; Print Certificate</a>'
-        + '<br/><a href="portfolio-export.html" target="_blank" class="btn btn-outline btn-lg" style="margin-bottom:1.25rem">📄 Download Portfolio</a>'
+        + '<a href="certificate.html' + (isPreview?'?preview=1':'') + '" target="_blank" class="btn btn-primary btn-lg" style="margin-bottom:0.75rem">🎓 View &amp; Print Certificate</a>'
+        + '<br/><a href="portfolio-export.html' + (isPreview?'?preview=1':'') + '" target="_blank" class="btn btn-outline btn-lg" style="margin-bottom:1.25rem">📄 Download Portfolio</a>'
         + '<p style="font-size:0.85rem;color:var(--ink-light);margin-top:0.5rem">Your certificate will be available to download and print. Please allow up to 3 working days for your assessor to countersign.</p>'
         + '</div>'
         + '<div class="content-card" style="margin-top:1.25rem;text-align:center;padding:2rem 2rem">'
