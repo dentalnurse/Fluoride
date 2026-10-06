@@ -80,12 +80,13 @@ function typeLabel(c) { return { verifiable: 'Verifiable CPD', both: 'CPD (verif
 
 // ── Course page building blocks (used by course.html and learn.html) ──
 function courseChips(c) {
-  const n = (c.lessonTitles || []).length, q = c.questionCount || 0, h = Number(c.hours) || 0;
+  const n = (c.lessonTitles || []).length, h = Number(c.hours) || 0, lq = c.lessonQuizCount || 0;
+  const q = c.quizPerAttempt > 0 ? Math.min(c.quizPerAttempt, c.questionCount || 0) : (c.questionCount || 0);
   return [
     '⏱ ' + h + ' hour' + (h === 1 ? '' : 's') + (cpdType(c) === 'general' ? ' CPD' : ' verifiable CPD'),
     '📚 ' + n + ' lesson' + (n === 1 ? '' : 's'),
     '🧩 Interactive activities',
-    '✅ ' + q + '-question quiz',
+    lq ? '✅ ' + lq + ' module quiz' + (lq === 1 ? '' : 'zes') + ' + ' + q + '-question final assessment' : '✅ ' + q + '-question quiz',
     '🏅 ' + (cpdType(c) === 'general' ? 'CPD certificate' : 'Verifiable CPD certificate'),
   ].map(t => '<span class="ch-chip">' + esc(t) + '</span>').join('');
 }
@@ -94,8 +95,8 @@ function objectivesGrid(c) {
 }
 function lessonList(c, opts) {
   opts = opts || {};
-  const lessons = (c.lessonTitles || []).map((t, i) => '<div class="ll-item"><span class="ll-num">' + (i + 1) + '</span><span class="ll-title">' + esc(t) + '</span></div>').join('');
-  const finish = [['✅', 'End of course quiz', 'Pass mark ' + (c.passMark || 80) + '%. Retake as often as you need.'],
+  const lessons = (c.lessonTitles || []).map((t, i) => '<div class="ll-item"><span class="ll-num">' + (i + 1) + '</span><span class="ll-title">' + esc(t) + (c.lessonQuizFlags && c.lessonQuizFlags[i] ? '<small>Includes a module quiz</small>' : '') + '</span></div>').join('');
+  const finish = [['✅', c.lessonQuizCount ? 'Final assessment' : 'End of course quiz', 'Pass mark ' + (c.passMark || 80) + '%. Retake as often as you need.'],
                   ['🪞', 'Reflection', 'A few short questions on what you learned.'],
                   ['💬', 'Feedback', 'Tell us what you thought.'],
                   ['🏅', 'Your certificate', cpdType(c) === 'both' ? 'A verifiable CPD certificate if you add your GDC number, or a CPD certificate.' : cpdType(c) === 'general' ? 'A CPD certificate to download and keep.' : 'A verifiable CPD certificate for your CPD record.']]

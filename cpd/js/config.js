@@ -4,18 +4,17 @@
 const HUB_OPEN = false;
 
 // ── Firebase Configuration ───────────────────────────────────────────────
-// PLACEHOLDER VALUES. The CPD hub needs its OWN Firebase project (separate
-// from the Fluoride and OHE courses) so CPD accounts and records are kept
-// apart. Create a new Firebase project, then replace these values from:
-// Firebase Console → Project Settings → Your Apps → Web App
-// Until these are filled in, the hub only works in preview mode (?preview=1).
+// The CPD Hub's own Firebase project (dnt-cpd), kept separate from the
+// Fluoride and OHE courses so CPD accounts and records are kept apart.
+// From: Firebase Console → Project Settings → Your Apps → Web App
+// Preview mode (?preview=1) still works and never touches this project.
 const FIREBASE_CONFIG = {
-  apiKey:            "REPLACE_WITH_CPD_FIREBASE_API_KEY",
-  authDomain:        "REPLACE_WITH_CPD_PROJECT.firebaseapp.com",
-  projectId:         "REPLACE_WITH_CPD_PROJECT",
-  storageBucket:     "REPLACE_WITH_CPD_PROJECT.firebasestorage.app",
-  messagingSenderId: "REPLACE_WITH_CPD_SENDER_ID",
-  appId:             "REPLACE_WITH_CPD_APP_ID"
+  apiKey:            "AIzaSyBXSSgUTBiZsZeQTECXhAMthEhKaaq-LP4",
+  authDomain:        "dnt-cpd.firebaseapp.com",
+  projectId:         "dnt-cpd",
+  storageBucket:     "dnt-cpd.firebasestorage.app",
+  messagingSenderId: "574879584437",
+  appId:             "1:574879584437:web:701f28452291399fa7eefc"
 };
 
 // ── EmailJS Configuration ────────────────────────────────────────────────

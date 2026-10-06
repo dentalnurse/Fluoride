@@ -9,6 +9,11 @@
 //   rows      a repeating list of sub-fields (cards, statements, options...)
 
 const BLOCK_TYPES = {
+  pagebreak: {
+    label: 'Page break', icon: '📄', interactive: false,
+    fields: [],
+    help: 'Starts a new page. Learners click "Next page" to carry on, which keeps long lessons easy to read.',
+  },
   text: {
     label: 'Text', icon: '📝', interactive: false,
     fields: [{ key: 'text', label: 'Text', type: 'md' }],
@@ -138,6 +143,9 @@ function renderBlock(b, onAttempt) {
   wrap.className = 'block';
 
   switch (b.type) {
+    case 'pagebreak':
+      break;
+
     case 'text':
       wrap.innerHTML = '<div class="md">' + md(b.text) + '</div>';
       break;

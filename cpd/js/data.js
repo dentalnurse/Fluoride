@@ -3,7 +3,7 @@
 // Two back ends with the same functions:
 //   - Firebase (live): used once cpd/js/config.js has real Firebase values.
 //   - Preview: add ?preview=1 to any page. Everything is stored in this
-//     browser only (localStorage), with a sample learner who is also an
+//     browser only (IndexedDB), with a sample learner who is also an
 //     admin, so the whole hub can be tried before Firebase is set up.
 //
 // Database layout (Firebase):
@@ -45,6 +45,9 @@ export function deriveMeta(meta, content) {
   return { ...meta,
     lessonTitles: lessons.map(l => l.title),
     questionCount: ((content && content.quiz && content.quiz.questions) || []).length,
+    quizPerAttempt: Number((content && content.quiz && content.quiz.perAttempt) || 0),
+    lessonQuizFlags: lessons.map(l => !!(l.quiz && (l.quiz.questions || []).length)),
+    lessonQuizCount: lessons.filter(l => l.quiz && (l.quiz.questions || []).length).length,
     passMark: Number((content && content.quiz && content.quiz.passMark) || 80) };
 }
 
@@ -144,86 +147,118 @@ const fb = {
 // ═════════════════════════════════════════════════════════════════════════
 const PKEY = 'cpd_preview_db_v1';
 const PUSER = { uid: 'preview-uid', email: 'preview@example.com', name: 'Jordan Sample', gdc: '123456', workplace: 'Sample Dental Practice', isAdmin: true };
-function pload() {
-  let d = null;
-  try { d = JSON.parse(localStorage.getItem(PKEY)); } catch (e) {}
-  if (!d) {
-    d = { courses: {}, content: {}, learners: { [PUSER.uid]: { name: PUSER.name, email: PUSER.email, gdc: PUSER.gdc, workplace: PUSER.workplace, createdAt: now() } },
-          access: {}, progress: {}, orders: {}, admins: {}, media: {}, loggedOut: false };
-    if (typeof CPD_DEMO_COURSE !== 'undefined') {
-      const { meta, content } = CPD_DEMO_COURSE;
-      d.courses[meta.slug] = { ...deriveMeta(meta, content), updatedAt: now() };
-      d.content[meta.slug] = content;
-      d.access[PUSER.uid] = { [meta.slug]: { grantedAt: now(), grantedBy: 'preview', note: 'Demo' } };
-    }
+// Preview data is kept in the browser's IndexedDB, which can hold hundreds of
+// MB (the older localStorage version was limited to about 5MB).
+const IDB_NAME = 'cpd_preview', IDB_STORE = 'kv';
+let idbConn = null;
+function idb() {
+  if (idbConn) return idbConn;
+  idbConn = new Promise((res, rej) => {
+    const r = indexedDB.open(IDB_NAME, 1);
+    r.onupgradeneeded = () => r.result.createObjectStore(IDB_STORE);
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+  return idbConn;
+}
+async function idbReq(mode, fn) {
+  const db = await idb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(IDB_STORE, mode), req = fn(tx.objectStore(IDB_STORE));
+    tx.oncomplete = () => res(req.result);
+    tx.onerror = tx.onabort = () => rej(tx.error || req.error);
+  });
+}
+function seed() {
+  const d = { courses: {}, content: {}, learners: { [PUSER.uid]: { name: PUSER.name, email: PUSER.email, gdc: PUSER.gdc, workplace: PUSER.workplace, createdAt: now() } },
+        access: {}, progress: {}, orders: {}, admins: {}, media: {}, loggedOut: false };
+  if (typeof CPD_DEMO_COURSE !== 'undefined') {
+    const { meta, content } = CPD_DEMO_COURSE;
+    d.courses[meta.slug] = { ...deriveMeta(meta, content), updatedAt: now() };
+    d.content[meta.slug] = content;
+    d.access[PUSER.uid] = { [meta.slug]: { grantedAt: now(), grantedBy: 'preview', note: 'Demo' } };
   }
   return d;
 }
-function psave(d) { try { localStorage.setItem(PKEY, JSON.stringify(d)); } catch (e) { toast('Preview storage is full - try a smaller file.', 'error'); throw e; } }
+// Read fresh each time, so two open tabs don't overwrite each other's changes.
+async function pload() {
+  let d = null;
+  try { d = await idbReq('readonly', st => st.get(PKEY)); } catch (e) { console.warn(e); }
+  if (!d) {
+    // Move across any preview data saved by the older localStorage version
+    try { d = JSON.parse(localStorage.getItem(PKEY)); } catch (e) {}
+    if (d) { await psave(d); try { localStorage.removeItem(PKEY); } catch (e) {} }
+  }
+  return d || seed();
+}
+async function psave(d) {
+  try { await idbReq('readwrite', st => st.put(d, PKEY)); }
+  catch (e) { toast('Could not save preview data: ' + (e && e.message || e), 'error'); throw e; }
+}
 const clone = (x) => x == null ? x : JSON.parse(JSON.stringify(x));
 
 const pv = {
   async getSessionUser() {
-    const d = pload();
+    const d = (await pload());
     if (d.loggedOut) return null;
     const l = d.learners[PUSER.uid] || {};
     return { ...PUSER, name: l.name || PUSER.name, gdc: l.gdc != null ? l.gdc : PUSER.gdc, workplace: l.workplace != null ? l.workplace : PUSER.workplace };
   },
-  async login() { const d = pload(); d.loggedOut = false; psave(d); },
-  async register() { const d = pload(); d.loggedOut = false; psave(d); },
+  async login() { const d = (await pload()); d.loggedOut = false; await psave(d); },
+  async register() { const d = (await pload()); d.loggedOut = false; await psave(d); },
   async resetPassword() {},
-  async logout() { const d = pload(); d.loggedOut = true; psave(d); },
-  async updateProfile(uid, data) { const d = pload(); d.learners[uid] = { ...d.learners[uid], ...data }; psave(d); },
+  async logout() { const d = (await pload()); d.loggedOut = true; await psave(d); },
+  async updateProfile(uid, data) { const d = (await pload()); d.learners[uid] = { ...d.learners[uid], ...data }; await psave(d); },
 
-  async listCourses(includeAll) { return Object.values(pload().courses).filter(c => includeAll || ['live', 'coming-soon'].includes(c.status)).map(clone); },
-  async getCourse(slug) { return clone(pload().courses[slug] || null); },
-  async getCourseContent(slug) { return clone(pload().content[slug] || null); },
-  async saveCourse(meta, content) { const d = pload(); d.courses[meta.slug] = { ...deriveMeta(meta, content), updatedAt: now() }; d.content[meta.slug] = content; psave(d); },
-  async deleteCourse(slug) { const d = pload(); delete d.courses[slug]; delete d.content[slug]; psave(d); },
+  async listCourses(includeAll) { return Object.values((await pload()).courses).filter(c => includeAll || ['live', 'coming-soon'].includes(c.status)).map(clone); },
+  async getCourse(slug) { return clone((await pload()).courses[slug] || null); },
+  async getCourseContent(slug) { return clone((await pload()).content[slug] || null); },
+  async saveCourse(meta, content) { const d = (await pload()); d.courses[meta.slug] = { ...deriveMeta(meta, content), updatedAt: now() }; d.content[meta.slug] = content; await psave(d); },
+  async deleteCourse(slug) { const d = (await pload()); delete d.courses[slug]; delete d.content[slug]; await psave(d); },
 
-  async getAccess(uid) { return clone(pload().access[uid] || {}); },
+  async getAccess(uid) { return clone((await pload()).access[uid] || {}); },
   async grantAccess(uid, slug, by, note) {
-    const d = pload(); d.access[uid] = d.access[uid] || {}; d.access[uid][slug] = { grantedAt: now(), grantedBy: by, note: note || '' };
+    const d = (await pload()); d.access[uid] = d.access[uid] || {}; d.access[uid][slug] = { grantedAt: now(), grantedBy: by, note: note || '' };
     const o = d.orders[uid + '/' + slug]; if (o) Object.assign(o, { status: 'unlocked', unlockedAt: now(), unlockedBy: by });
-    psave(d);
+    await psave(d);
   },
-  async revokeAccess(uid, slug) { const d = pload(); if (d.access[uid]) delete d.access[uid][slug]; psave(d); },
+  async revokeAccess(uid, slug) { const d = (await pload()); if (d.access[uid]) delete d.access[uid][slug]; await psave(d); },
 
-  async createOrder(user, course) { const d = pload(); d.orders[user.uid + '/' + course.slug] = { uid: user.uid, name: user.name, email: user.email, gdc: user.gdc, slug: course.slug, title: course.title, price: course.price, status: 'pending', createdAt: now() }; psave(d); },
-  async getOrders(uid) { return Object.values(pload().orders).filter(o => o.uid === uid).map(clone); },
-  async listAllOrders() { return Object.values(pload().orders).map(clone); },
-  async deleteOrder(uid, slug) { const d = pload(); delete d.orders[uid + '/' + slug]; psave(d); },
+  async createOrder(user, course) { const d = (await pload()); d.orders[user.uid + '/' + course.slug] = { uid: user.uid, name: user.name, email: user.email, gdc: user.gdc, slug: course.slug, title: course.title, price: course.price, status: 'pending', createdAt: now() }; await psave(d); },
+  async getOrders(uid) { return Object.values((await pload()).orders).filter(o => o.uid === uid).map(clone); },
+  async listAllOrders() { return Object.values((await pload()).orders).map(clone); },
+  async deleteOrder(uid, slug) { const d = (await pload()); delete d.orders[uid + '/' + slug]; await psave(d); },
 
-  async getProgress(uid, slug) { return clone(pload().progress[uid + '/' + slug] || null); },
-  async listMyProgress(uid) { return Object.values(pload().progress).filter(p => p.uid === uid).map(clone); },
-  async saveProgress(uid, slug, data) { const d = pload(); const k = uid + '/' + slug; d.progress[k] = { ...(d.progress[k] || {}), ...clone(data), uid, slug, lastActivity: now() }; psave(d); },
-  async resetProgress(uid, slug) { const d = pload(); delete d.progress[uid + '/' + slug]; psave(d); },
+  async getProgress(uid, slug) { return clone((await pload()).progress[uid + '/' + slug] || null); },
+  async listMyProgress(uid) { return Object.values((await pload()).progress).filter(p => p.uid === uid).map(clone); },
+  async saveProgress(uid, slug, data) { const d = (await pload()); const k = uid + '/' + slug; d.progress[k] = { ...(d.progress[k] || {}), ...clone(data), uid, slug, lastActivity: now() }; await psave(d); },
+  async resetProgress(uid, slug) { const d = (await pload()); delete d.progress[uid + '/' + slug]; await psave(d); },
 
-  async listLearners() { return Object.entries(pload().learners).map(([uid, l]) => ({ uid, ...l })); },
-  async listAllAccess() { return clone(pload().access); },
-  async listAllProgress() { return Object.values(pload().progress).map(clone); },
+  async listLearners() { return Object.entries((await pload()).learners).map(([uid, l]) => ({ uid, ...l })); },
+  async listAllAccess() { return clone((await pload()).access); },
+  async listAllProgress() { return Object.values((await pload()).progress).map(clone); },
 
-  async listAdmins() { return Object.entries(pload().admins).map(([email, a]) => ({ email, ...a })); },
-  async addAdmin(email, by) { const d = pload(); d.admins[lc(email)] = { addedBy: by, addedAt: now() }; psave(d); },
-  async removeAdmin(email) { const d = pload(); delete d.admins[lc(email)]; psave(d); },
+  async listAdmins() { return Object.entries((await pload()).admins).map(([email, a]) => ({ email, ...a })); },
+  async addAdmin(email, by) { const d = (await pload()); d.admins[lc(email)] = { addedBy: by, addedAt: now() }; await psave(d); },
+  async removeAdmin(email) { const d = (await pload()); delete d.admins[lc(email)]; await psave(d); },
 
-  async listMedia() { return Object.entries(pload().media).map(([id, m]) => ({ id, ...m })); },
+  async listMedia() { return Object.entries((await pload()).media).map(([id, m]) => ({ id, ...m })); },
   uploadMedia(file, by, onProgress) {
     // Preview keeps files inside the browser, so only small ones fit.
     return new Promise((resolve, reject) => {
-      if (file.size > 1.5 * 1024 * 1024) { reject(new Error('In preview mode files must be under 1.5MB. The live hub allows images up to ' + MAX_IMAGE_MB + 'MB and videos up to ' + MAX_VIDEO_MB + 'MB.')); return; }
+      if (file.size > 25 * 1024 * 1024) { reject(new Error('In preview mode files must be under 25MB. The live hub allows images up to ' + MAX_IMAGE_MB + 'MB and videos up to ' + MAX_VIDEO_MB + 'MB.')); return; }
       const r = new FileReader();
-      r.onload = () => {
+      r.onload = async () => {
         try {
-          const d = pload(); const id = Date.now().toString(36);
+          const d = (await pload()); const id = Date.now().toString(36);
           const item = { name: file.name, url: r.result, path: '', type: file.type.startsWith('video') ? 'video' : 'image', size: file.size, uploadedAt: now(), uploadedBy: by };
-          d.media[id] = item; psave(d); onProgress && onProgress(1); resolve({ id, ...item });
+          d.media[id] = item; await psave(d); onProgress && onProgress(1); resolve({ id, ...item });
         } catch (e) { reject(e); }
       };
       r.onerror = reject; r.readAsDataURL(file);
     });
   },
-  async deleteMedia(item) { const d = pload(); delete d.media[item.id]; psave(d); },
+  async deleteMedia(item) { const d = (await pload()); delete d.media[item.id]; await psave(d); },
 };
 
 const api = PREVIEW ? pv : fb;
@@ -238,7 +273,7 @@ export const {
   listMedia, uploadMedia, deleteMedia,
 } = api;
 
-export function resetPreview() { localStorage.removeItem(PKEY); }
+export async function resetPreview() { try { localStorage.removeItem(PKEY); } catch (e) {} try { await idbReq('readwrite', st => st.delete(PKEY)); } catch (e) {} }
 
 // Best-effort email to the course team (EmailJS). Never blocks the learner.
 export function notify(subject, message, learner) {
@@ -278,7 +313,7 @@ export async function mountChrome({ active, prefix = '' } = {}) {
   const lo = document.getElementById('navLogout');
   if (lo) lo.onclick = async () => { await logout(); location.href = link(prefix + 'index.html'); };
   const rs = document.getElementById('pvReset');
-  if (rs) rs.onclick = (e) => { e.preventDefault(); if (confirm('Clear all preview data in this browser and start again?')) { resetPreview(); location.reload(); } };
+  if (rs) rs.onclick = (e) => { e.preventDefault(); if (confirm('Clear all preview data in this browser and start again?')) { resetPreview().then(() => location.reload()); } };
   return user;
 }
 
