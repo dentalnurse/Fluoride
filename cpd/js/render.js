@@ -25,6 +25,7 @@ const BLOCK_TYPES = {
     label: 'Picture', icon: '🖼️', interactive: false,
     fields: [
       { key: 'url', label: 'Picture', type: 'media', accept: 'image' },
+      { key: 'size', label: 'Size', type: 'select', options: [['full', 'Full width'], ['large', 'Large'], ['medium', 'Medium'], ['small', 'Small']] },
       { key: 'alt', label: 'Description for screen readers', type: 'text' },
       { key: 'caption', label: 'Caption (optional)', type: 'text' },
     ],
@@ -148,7 +149,7 @@ function renderBlock(b, onAttempt) {
 
     case 'image':
       if (!b.url) break;
-      wrap.innerHTML = '<figure class="media-fig"><img src="' + esc(b.url) + '" alt="' + esc(b.alt || '') + '" loading="lazy"/>'
+      wrap.innerHTML = '<figure class="media-fig size-' + esc(b.size || 'full') + '"><img src="' + esc(b.url) + '" alt="' + esc(b.alt || '') + '" loading="lazy"/>'
         + (b.caption ? '<figcaption>' + esc(b.caption) + '</figcaption>' : '') + '</figure>';
       break;
 
