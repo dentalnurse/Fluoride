@@ -128,12 +128,20 @@
     // ── Overview ─────────────────────────────────────────────────────────
     function showIntro() {
       const started = prog.lessonsDone.length || prog.quiz;
-      main.innerHTML = '<div class="dash-header"><h1>' + esc(course.icon || '') + ' ' + esc(course.title) + '</h1><p>' + esc(hoursText(course)) + (usesGdc(course) ? ' · GDC development outcome' + ((course.outcomes || []).length === 1 ? '' : 's') + ' ' + esc((course.outcomes || []).join(', ')) : '') + '</p></div>'
-        + '<div class="content-card"><h2>About this course</h2><h3>Aims</h3><p>' + esc(course.aims || '') + '</p><h3>Objectives</h3><p>By the end of this course you will be able to:</p><ul>' + (course.objectives || []).map(o => '<li>' + esc(o) + '</li>').join('') + '</ul>'
-        + (usesGdc(course) ? '<h3>GDC development outcomes</h3>' + (course.outcomes || []).map(o => '<div class="outcome-item"><span class="outcome-letter">' + esc(o) + '</span><span>' + esc(GDC_OUTCOMES[o] || '') + '</span></div>').join('') : '')
-        + (course.certNote ? '<div class="callout callout-warn"><div class="callout-label">Please note</div><p>' + esc(course.certNote) + '</p></div>' : '') + '</div>'
-        + '<div class="content-card"><h2>How to complete this course</h2><ol><li>Work through each lesson and try the activities.</li><li>Pass the end of course quiz (pass mark ' + esc(quiz.passMark || 80) + '%). You can retake it as many times as you need.</li><li>Write a short reflection on what you learned and how you will use it.</li><li>Fill in the feedback form.</li><li>' + (verifiableFor(course, user) ? 'Download your verifiable CPD certificate and add it to your CPD record.' : 'Download your CPD certificate.' + (cpdType(course) === 'both' ? ' Dental professionals: add your GDC number in My CPD to get a verifiable CPD certificate.' : '')) + '</li></ol>'
-        + '<button class="btn btn-primary btn-lg" id="startBtn" style="margin-top:0.5rem">' + (prog.completedAt ? 'View my certificate' : started ? 'Continue course →' : 'Start course →') + '</button></div>';
+      const c = { ...course, lessonTitles: lessons.map(l => l.title), questionCount: (quiz.questions || []).length, passMark: quiz.passMark || 80 };
+      const pct = Math.round(D.stepsDone(content, prog) / D.courseSteps(content) * 100);
+      const label = prog.completedAt ? 'View my certificate' : started ? 'Continue course →' : 'Start course →';
+      main.innerHTML = '<div class="ov-hero"><div class="ov-icon">' + courseVisual(c) + '</div><div style="flex:1;min-width:0">'
+          + '<div class="ch-tags"><span class="ch-tag">' + esc(course.category || 'Course') + '</span><span class="ch-tag">' + esc({ verifiable: 'Verifiable CPD', both: 'GDC verifiable CPD', general: 'CPD' }[cpdType(c)]) + '</span></div>'
+          + '<h1>' + esc(course.title) + '</h1><div class="ch-chips">' + courseChips(c) + '</div>'
+          + (started && !prog.completedAt ? '<div style="margin-top:1rem;max-width:420px"><div class="progress-bar-wrap" style="background:rgba(255,255,255,0.2)"><div class="progress-bar-fill" style="width:' + pct + '%;background:var(--white)"></div></div><div style="color:rgba(255,255,255,0.8);font-size:0.8rem">' + pct + '% complete</div></div>' : '')
+          + '<button class="btn btn-white btn-lg" id="startBtn" style="margin-top:1.1rem">' + label + '</button></div></div>'
+        + (course.certNote ? '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Please note</div><p>' + esc(course.certNote) + '</p></div>' : '')
+        + '<div class="cd-section"><h2 style="font-size:1.25rem;margin-bottom:0.8rem">What you\'ll learn</h2>' + objectivesGrid(c) + '</div>'
+        + '<div class="cd-section"><h2 style="font-size:1.25rem;margin-bottom:0.8rem">Course content</h2>' + lessonList(c) + '</div>'
+        + '<div class="cd-section"><h2 style="font-size:1.25rem;margin-bottom:0.8rem">About this course</h2><div class="cd-card"><p>' + esc(course.aims || '') + '</p>'
+          + (usesGdc(c) ? '<p style="font-weight:700;color:var(--ink);margin:1rem 0 0.25rem">GDC development outcomes</p>' + outcomesBadges(c) : '')
+          + '<p style="font-size:0.84rem;color:var(--ink-light);margin-top:1rem">' + esc(audienceText(c)) + '</p></div></div>';
       document.getElementById('startBtn').onclick = () => go(firstOpenStep() === 'intro' ? (steps[1] ? steps[1][0] : 'quiz') : firstOpenStep());
     }
 

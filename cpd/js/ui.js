@@ -69,14 +69,50 @@ function usesGdc(c) { return cpdType(c) !== 'general'; }
 function verifiableFor(c, learner) { const t = cpdType(c); return t === 'verifiable' || (t === 'both' && !!(learner && learner.gdc)); }
 function hoursText(c) {
   const h = Number(c && c.hours) || 0, hrs = h + ' hour' + (h === 1 ? '' : 's');
-  return { verifiable: hrs + ' verifiable CPD', both: hrs + ' CPD (GDC verifiable for dental professionals)', general: hrs + ' CPD' }[cpdType(c)];
+  return { verifiable: hrs + ' verifiable CPD', both: hrs + ' verifiable CPD (with your GDC number)', general: hrs + ' CPD' }[cpdType(c)];
 }
 function typePill(c) {
   return { verifiable: '<span class="pill pill-teal">Verifiable CPD</span>',
-           both: '<span class="pill pill-teal">CPD · GDC verifiable</span>',
+           both: '<span class="pill pill-teal">GDC verifiable CPD</span>',
            general: '<span class="pill pill-orange">CPD</span>' }[cpdType(c)];
 }
 function typeLabel(c) { return { verifiable: 'Verifiable CPD', both: 'CPD (verifiable for dental professionals)', general: 'CPD (not GDC verifiable)' }[cpdType(c)]; }
+
+// ── Course page building blocks (used by course.html and learn.html) ──
+function courseChips(c) {
+  const n = (c.lessonTitles || []).length, q = c.questionCount || 0, h = Number(c.hours) || 0;
+  return [
+    '⏱ ' + h + ' hour' + (h === 1 ? '' : 's') + (cpdType(c) === 'general' ? ' CPD' : ' verifiable CPD'),
+    '📚 ' + n + ' lesson' + (n === 1 ? '' : 's'),
+    '🧩 Interactive activities',
+    '✅ ' + q + '-question quiz',
+    '🏅 ' + (cpdType(c) === 'general' ? 'CPD certificate' : 'Verifiable CPD certificate'),
+  ].map(t => '<span class="ch-chip">' + esc(t) + '</span>').join('');
+}
+function objectivesGrid(c) {
+  return '<div class="learn-grid">' + (c.objectives || []).map(o => '<div class="learn-item"><span class="li-tick">✓</span><span>' + esc(o) + '</span></div>').join('') + '</div>';
+}
+function lessonList(c, opts) {
+  opts = opts || {};
+  const lessons = (c.lessonTitles || []).map((t, i) => '<div class="ll-item"><span class="ll-num">' + (i + 1) + '</span><span class="ll-title">' + esc(t) + '</span></div>').join('');
+  const finish = [['✅', 'End of course quiz', 'Pass mark ' + (c.passMark || 80) + '%. Retake as often as you need.'],
+                  ['🪞', 'Reflection', 'A few short questions on what you learned.'],
+                  ['💬', 'Feedback', 'Tell us what you thought.'],
+                  ['🏅', 'Your certificate', cpdType(c) === 'both' ? 'A verifiable CPD certificate if you add your GDC number, or a CPD certificate.' : cpdType(c) === 'general' ? 'A CPD certificate to download and keep.' : 'A verifiable CPD certificate for your CPD record.']]
+    .map(([i, t, d]) => '<div class="ll-item finish"><span class="ll-num">' + i + '</span><span class="ll-title">' + esc(t) + '<small>' + esc(d) + '</small></span></div>').join('');
+  return '<div class="lesson-list">' + lessons + finish + '</div>';
+}
+function outcomesBadges(c) {
+  return (c.outcomes || []).map(o => '<div class="outcome-item"><span class="outcome-letter">' + esc(o) + '</span><span>' + esc(GDC_OUTCOMES[o] || '') + '</span></div>').join('');
+}
+function audienceText(c) {
+  return { verifiable: 'For GDC-registered dental professionals. Counts towards your verifiable CPD hours.',
+           both: 'GDC verifiable CPD for dental professionals: just add your GDC number to your account. Also open to anyone else, who will receive a CPD certificate.',
+           general: 'Open to everyone. You get a CPD certificate, but this course is not GDC verifiable CPD.' }[cpdType(c)];
+}
+function courseVisual(c) {
+  return c.thumbnail ? '<img src="' + esc(c.thumbnail) + '" alt=""/>' : '<span class="cv-icon">' + esc(c.icon || '📘') + '</span>';
+}
 
 function shuffle(arr) {
   const a = arr.slice();

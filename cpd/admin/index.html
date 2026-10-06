@@ -226,18 +226,45 @@
         if (!data.meta || !data.content || !data.meta.title) throw new Error('This does not look like a course file.');
         const meta = { ...blankMeta(), ...data.meta, status: 'draft' };
         meta.slug = slugify(meta.slug || meta.title);
-        if (S.bySlug[meta.slug]) {
-          if (!confirm('A course called "' + meta.slug + '" already exists. Import as a copy with a new link name? (Cancel to stop.)')) return;
-          meta.slug = meta.slug + '-' + Date.now().toString(36).slice(-4);
+        let replacing = false;
+        const existing = S.bySlug[meta.slug];
+        if (existing) {
+          const choice = await askImportChoice(existing);
+          if (choice === 'cancel') return;
+          if (choice === 'replace') {
+            // Keep what was set up on the hub: status, price, Stripe link and pictures
+            replacing = true;
+            meta.status = existing.status;
+            meta.price = existing.price || meta.price;
+            meta.stripeLink = existing.stripeLink || meta.stripeLink;
+            meta.thumbnail = existing.thumbnail || meta.thumbnail;
+            meta.category = meta.category || existing.category;
+          } else {
+            meta.slug = meta.slug + '-' + Date.now().toString(36).slice(-4);
+          }
         }
         const content = { lessons: [], quiz: { passMark: 80, questions: [] }, reflection: DEFAULT_REFLECTION.slice(), ...data.content };
         content.lessons.forEach(l => { l.id = l.id || newId(); l.blocks = l.blocks || []; });
         if (tab !== 'courses') await show('courses');
-        startEditor(meta, content, true);
+        ['lessonTitles', 'questionCount', 'passMark', 'updatedAt'].forEach(k => delete meta[k]);
+        startEditor(meta, content, !replacing);
         edDirty = true;
-        toast('Course imported as a draft. Check it, then click Save.', 'success');
+        toast(replacing ? 'Course file loaded over "' + existing.title + '". Check it, then click Save to replace it.' : 'Course imported as a draft. Check it, then click Save.', 'success');
       } catch (err) { alert('Could not import: ' + err.message); }
     };
+
+    function askImportChoice(existing) {
+      return new Promise(resolve => {
+        const m = modal('This course already exists', '<p style="margin-bottom:1rem">"' + esc(existing.title) + '" is already on the hub. What would you like to do?</p>'
+          + '<div class="admin-actions" style="flex-direction:column;align-items:stretch">'
+          + '<button class="btn btn-primary" data-c="replace">Replace the existing course</button>'
+          + '<p style="font-size:0.8rem;color:var(--ink-light);margin:0 0 0.6rem">Updates the lessons, quiz and details. Keeps its status, price, Stripe link, pictures you added, and everyone\'s access and progress. (A lesson that has been removed from the course drops out of learners\' progress.)</p>'
+          + '<button class="btn btn-outline" data-c="copy">Import as a separate copy</button>'
+          + '<button class="btn btn-sm" style="background:none;color:var(--ink-light)" data-c="cancel">Cancel</button></div>');
+        m.el.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { m.close(); resolve(b.dataset.c); });
+        document.querySelector('.modal-close').onclick = () => { m.close(); resolve('cancel'); };
+      });
+    }
 
     // ══ Course editor ════════════════════════════════════════════════════
     const DEFAULT_REFLECTION = [
