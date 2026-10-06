@@ -270,7 +270,7 @@
         </tr>
         <tr>
           <td>Learning Content</td>
-          <td>Principles of oral health education and preventive dentistry; diet, nutrition and caries prevention; oral hygiene techniques and periodontal health; communication, behaviour change and special groups; professional, legal and GDC responsibilities in oral health education. Assessment via MCQs, written tasks, a practical portfolio (6 supervised patients across 9 sessions, including an in-depth write-up on a focus topic, and an exhibition), a CPD log and personal development plan, and two reflective accounts.</td>
+          <td>Principles of oral health education and preventive dentistry; diet, nutrition and caries prevention; oral hygiene techniques and periodontal health; communication, behaviour change and special groups; professional, legal and GDC responsibilities in oral health education; structuring and delivering an oral health education session. Assessment via MCQs, written tasks, a practical portfolio (6 supervised patients across 9 sessions, including an in-depth write-up on a focus topic, and an exhibition), a CPD log and personal development plan, and two reflective accounts.</td>
         </tr>
         <tr>
           <td>Aims</td>
@@ -329,7 +329,17 @@
 
     const params    = new URLSearchParams(window.location.search);
     const targetUid = params.get('uid'); // set for admin view; absent = own certificate
+    const isPreview = params.get('preview') === '1';
 
+    if (isPreview) {
+      const dateStr = new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('certName').textContent     = 'Jordan Sample';
+      document.getElementById('certNameBack').textContent = 'Jordan Sample';
+      document.getElementById('certGDC').textContent      = 'GDC Registration Number: 123456';
+      document.getElementById('certDate').textContent     = dateStr;
+      document.getElementById('certDateBack').textContent = dateStr;
+      document.getElementById('certNumber').textContent   = 'Certificate No: DNT/OHE/PREVIEW/0000';
+    } else {
     onAuthStateChanged(auth, async (user) => {
       if (!user) { window.location.href = 'login.html'; return; }
       const isAdmin = ADMIN_EMAILS.includes(user.email);
@@ -398,6 +408,7 @@
         setTimeout(() => window.print(), 600);
       }
     });
+    }
   </script>
   <script>
     function printCert() { window.print(); }
