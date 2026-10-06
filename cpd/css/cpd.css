@@ -1,5 +1,6 @@
 /* ── CPD hub extras (builds on ../css/style.css) ─────────────────────────── */
 
+.building-strip { background:#FFF3CD; border-bottom:2px solid #FBBF24; color:#92400E; font-size:0.9rem; text-align:center; padding:0.65rem 1rem; }
 .preview-strip { background:#FFF3CD; border-bottom:1px solid #FBBF24; color:#92400E; font-size:0.82rem; text-align:center; padding:0.5rem 1rem; }
 .setup-strip { background:#FEF0EE; border-bottom:1px solid #F5B7B1; color:#922B21; font-size:0.82rem; text-align:center; padding:0.5rem 1rem; }
 .setup-strip a, .preview-strip a { color:inherit; font-weight:700; text-decoration:underline; }
@@ -168,5 +169,5 @@
   .admin-header { padding:1rem; flex-wrap:wrap; gap:0.5rem; }
 }
 @media print {
-  .nav, .site-footer, .preview-strip, .setup-strip { display:none !important; }
+  .nav, .site-footer, .building-strip, .preview-strip, .setup-strip { display:none !important; }
 }

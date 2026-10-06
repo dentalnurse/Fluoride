@@ -251,9 +251,11 @@ export function notify(subject, message, learner) {
 // Shared page chrome: nav bar, preview/setup strips, footer.
 export async function mountChrome({ active, prefix = '' } = {}) {
   const user = await getSessionUser().catch(() => null);
-  const strip = PREVIEW
+  const notOpen = (typeof HUB_OPEN !== 'undefined' && !HUB_OPEN)
+    ? '<div class="building-strip">🚧 <strong>Preview:</strong> the DNT CPD Hub is still being built and is not open yet.</div>' : '';
+  const strip = notOpen + (PREVIEW
     ? '<div class="preview-strip">⚠ <strong>Preview mode</strong> - sample data saved in this browser only. Nothing here is real or visible to learners. <a href="#" id="pvReset">Reset preview</a></div>'
-    : (!CONFIGURED ? '<div class="setup-strip">The CPD hub is not connected to Firebase yet, so logins will not work. <a href="' + prefix + 'index.html?preview=1">Open preview mode</a></div>' : '');
+    : (!CONFIGURED ? '<div class="setup-strip">The CPD hub is not connected to Firebase yet, so logins will not work. <a href="' + prefix + 'index.html?preview=1">Open preview mode</a></div>' : ''));
   const right = user
     ? '<a href="' + link(prefix + 'index.html') + '" class="btn btn-outline btn-sm">Courses</a>'
       + '<a href="' + link(prefix + 'dashboard.html') + '" class="btn btn-primary btn-sm">My CPD</a>'

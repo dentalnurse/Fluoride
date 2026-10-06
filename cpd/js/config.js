@@ -1,3 +1,8 @@
+// ── Launch switch ────────────────────────────────────────────────────────
+// While false, every CPD page shows a "Preview - not open yet" banner.
+// Change to true when the hub is ready for learners.
+const HUB_OPEN = false;
+
 // ── Firebase Configuration ───────────────────────────────────────────────
 // PLACEHOLDER VALUES. The CPD hub needs its OWN Firebase project (separate
 // from the Fluoride and OHE courses) so CPD accounts and records are kept
