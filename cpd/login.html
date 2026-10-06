@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/gate.js"></script>
+  <script src="js/gate.js?v=20261006c"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
@@ -16,8 +16,8 @@
   <title>Log in - Dental Nurse Training CPD Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../css/style.css"/>
-  <link rel="stylesheet" href="css/cpd.css"/>
+  <link rel="stylesheet" href="../css/style.css?v=20261006c"/>
+  <link rel="stylesheet" href="css/cpd.css?v=20261006c"/>
 </head>
 <body>
   <div id="navHolder"></div>
@@ -39,11 +39,11 @@
     </div>
   </div>
   <div id="footHolder"></div>
-  <script src="js/config.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/demo-course.js"></script>
+  <script src="js/config.js?v=20261006c"></script>
+  <script src="js/ui.js?v=20261006c"></script>
+  <script src="js/demo-course.js?v=20261006c"></script>
   <script type="module">
-    import * as D from './js/data.js';
+    import * as D from './js/data.js?v=20261006c';
     const user = await D.mountChrome();
     const rawNext = qs('next') || '';
     const next = /^[\w./?=&%-]+$/.test(rawNext) && !rawNext.includes('//') ? rawNext : 'dashboard.html';
@@ -54,7 +54,7 @@
     async function doLogin() {
       const email = document.getElementById('email').value.trim(), pass = document.getElementById('pass').value;
       err('');
-      if (!D.PREVIEW && !D.CONFIGURED) { err('The CPD Hub is not open yet.'); return; }
+      if (!D.PREVIEW && !D.CONFIGURED) { err('This page is out of date. Please refresh it (on a Mac hold Cmd + Shift and press R) and try again.'); return; }
       if (!email || !pass) { err('Please enter your email and password.'); return; }
       try {
         await D.login(email, pass);
