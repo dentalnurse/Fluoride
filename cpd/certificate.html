@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/gate.js"></script>
+  <script src="js/gate.js?v=20261006c"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -59,13 +59,13 @@
   <div class="screen-bar"><a href="dashboard.html" id="backLink">← Back to My CPD</a><button class="print-btn" onclick="window.print()">🖨 Print / save as PDF</button></div>
   <div id="out"><div class="msg">Loading certificate...</div></div>
 
-  <script src="js/config.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/demo-course.js"></script>
+  <script src="js/config.js?v=20261006c"></script>
+  <script src="js/ui.js?v=20261006c"></script>
+  <script src="js/demo-course.js?v=20261006c"></script>
   <script type="module">
-    import * as D from './js/data.js';
+    import * as D from './js/data.js?v=20261006c';
     document.getElementById('backLink').href = D.link('dashboard.html');
-    if (!HUB_OPEN) document.querySelector('.screen-bar').insertAdjacentHTML('afterend', '<div style="background:#FFF3CD;color:#92400E;text-align:center;padding:0.6rem 1rem;font-size:0.9rem">🚧 <strong>Preview:</strong> the CPD Hub is not open yet. This is a sample certificate.</div>');
+    if (D.PREVIEW) document.querySelector('.screen-bar').insertAdjacentHTML('afterend', '<div style="background:#FFF3CD;color:#92400E;text-align:center;padding:0.6rem 1rem;font-size:0.9rem"><strong>Preview mode:</strong> this is a sample certificate.</div>');
     const out = document.getElementById('out');
     const fail = (m) => { out.innerHTML = '<div class="msg"><p>' + esc(m) + '</p></div>'; };
 

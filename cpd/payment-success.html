@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/gate.js"></script>
+  <script src="js/gate.js?v=20261006c"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
@@ -16,8 +16,8 @@
   <title>Payment received - Dental Nurse Training CPD Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../css/style.css"/>
-  <link rel="stylesheet" href="css/cpd.css"/>
+  <link rel="stylesheet" href="../css/style.css?v=20261006c"/>
+  <link rel="stylesheet" href="css/cpd.css?v=20261006c"/>
 </head>
 <body>
   <!-- Set each course's Stripe Payment Link to redirect here after payment:
@@ -33,13 +33,13 @@
     </div>
   </div>
   <div id="footHolder"></div>
-  <script src="js/config.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/demo-course.js"></script>
+  <script src="js/config.js?v=20261006c"></script>
+  <script src="js/ui.js?v=20261006c"></script>
+  <script src="js/demo-course.js?v=20261006c"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
   <script type="module">
-    import * as D from './js/data.js';
+    import * as D from './js/data.js?v=20261006c';
     const user = await D.mountChrome();
     document.getElementById('dashLink').href = D.link('dashboard.html');
     const mail = document.getElementById('mail'); mail.textContent = NOTIFY_EMAIL; mail.href = 'mailto:' + NOTIFY_EMAIL;

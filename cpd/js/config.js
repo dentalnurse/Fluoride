@@ -1,5 +1,5 @@
 // ── Launch switch ────────────────────────────────────────────────────────
-// While false, every CPD page shows a "Preview - not open yet" banner.
+// While false, every CPD page shows a "Soft launch: hidden from the public" banner.
 // Change to true when the hub is ready for learners.
 const HUB_OPEN = false;
 
