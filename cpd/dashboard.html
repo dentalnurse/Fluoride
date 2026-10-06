@@ -71,9 +71,9 @@
     const completed = progress.filter(p => p.completedAt);
     const typeOf = p => byslug[p.slug] || { cpdType: p.cpdType };
     const hrs = p => Number(p.hours || (byslug[p.slug] || {}).hours || 0);
-    document.getElementById('stHours').textContent = completed.filter(p => isVerifiable(typeOf(p))).reduce((t, p) => t + hrs(p), 0);
-    const skillHrs = completed.filter(p => !isVerifiable(typeOf(p))).reduce((t, p) => t + hrs(p), 0);
-    if (skillHrs) document.getElementById('stSkills').textContent = '+ ' + skillHrs + ' hours of skills courses';
+    document.getElementById('stHours').textContent = completed.filter(p => verifiableFor(typeOf(p), user)).reduce((t, p) => t + hrs(p), 0);
+    const otherHrs = completed.filter(p => !verifiableFor(typeOf(p), user)).reduce((t, p) => t + hrs(p), 0);
+    if (otherHrs) document.getElementById('stSkills').textContent = '+ ' + otherHrs + ' hours of other CPD';
     document.getElementById('stDone').textContent = completed.length;
     document.getElementById('stActive').textContent = owned.filter(s => !(prog[s] && prog[s].completedAt)).length;
 

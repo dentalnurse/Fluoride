@@ -90,12 +90,12 @@
     document.getElementById('cObjectives').innerHTML = (course.objectives || []).map(o => '<li>' + esc(o) + '</li>').join('');
     document.getElementById('cOutcomes').innerHTML = (course.outcomes || []).map(o => '<div class="outcome-item"><span class="outcome-letter">' + esc(o) + '</span><span>' + esc(GDC_OUTCOMES[o] || '') + '</span></div>').join('');
     document.getElementById('cLessons').innerHTML = (course.lessonTitles || []).map(t => '<li>' + esc(t) + '</li>').join('')
-      + '<li>End of course quiz (pass mark ' + esc(course.passMark || 80) + '%)</li><li>Reflection on your learning</li><li>Course feedback</li><li>' + (isVerifiable(course) ? 'Downloadable verifiable CPD certificate' : 'Downloadable certificate of completion (not verifiable CPD)') + '</li>';
-    const ver = isVerifiable(course);
-    document.getElementById('sType').textContent = ver ? 'Verifiable CPD' : 'Skills course';
-    document.getElementById('sHoursLabel').textContent = ver ? 'Verifiable CPD' : 'Learning time';
-    document.getElementById('sAudience').textContent = ver ? 'For GDC-registered dental professionals.' : 'Open to everyone. This is not verifiable CPD.';
-    if (!ver) { document.getElementById('outcomesCard').style.display = 'none'; document.getElementById('sOutcomesRow').style.display = 'none'; }
+      + '<li>End of course quiz (pass mark ' + esc(course.passMark || 80) + '%)</li><li>Reflection on your learning</li><li>Course feedback</li><li>' + ({ verifiable: 'Downloadable verifiable CPD certificate', both: 'Downloadable CPD certificate (a verifiable CPD certificate if you add your GDC number)', general: 'Downloadable CPD certificate (not GDC verifiable)' }[cpdType(course)]) + '</li>';
+    const t = cpdType(course);
+    document.getElementById('sType').textContent = { verifiable: 'Verifiable CPD', both: 'CPD, GDC verifiable', general: 'CPD' }[t];
+    document.getElementById('sHoursLabel').textContent = t === 'verifiable' ? 'Verifiable CPD' : 'CPD hours';
+    document.getElementById('sAudience').textContent = { verifiable: 'For GDC-registered dental professionals.', both: 'Open to everyone. Verifiable CPD for dental professionals who add their GDC number.', general: 'Open to everyone. Not GDC verifiable CPD.' }[t];
+    if (!usesGdc(course)) { document.getElementById('outcomesCard').style.display = 'none'; document.getElementById('sOutcomesRow').style.display = 'none'; }
     document.getElementById('sHours').textContent = course.hours + ' hour' + (Number(course.hours) === 1 ? '' : 's');
     document.getElementById('sLessons').textContent = (course.lessonTitles || []).length;
     document.getElementById('sQuiz').textContent = (course.questionCount || 0) + ' question quiz';
@@ -131,7 +131,7 @@
     }
 
     async function buy() {
-      if (isVerifiable(course) && !user.gdc && !confirm('Verifiable CPD certificates show your GDC number, and you have not added one yet. You can add it any time in My CPD → My details.\n\nContinue to buy anyway?')) return;
+      if (cpdType(course) === 'verifiable' && !user.gdc && !confirm('Verifiable CPD certificates show your GDC number, and you have not added one yet. You can add it any time in My CPD → My details.\n\nContinue to buy anyway?')) return;
       if (!D.PREVIEW && !course.stripeLink) { toast('Payment for this course is not set up yet. Please contact us.', 'error'); return; }
       try { await D.createOrder(user, course); } catch (e) { console.error(e); toast('Something went wrong. Please try again.', 'error'); return; }
       if (D.PREVIEW) {
