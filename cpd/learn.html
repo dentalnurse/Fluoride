@@ -89,7 +89,7 @@
       return { quiz: prog.quiz && prog.quiz.passed, reflection: !!prog.reflection, feedback: !!prog.feedback, done: !!prog.completedAt, intro: false }[step];
     }
     const steps = [['intro', '🏠', 'Course overview'], ...lessons.map((l, i) => ['lesson:' + l.id, String(i + 1), l.title]),
-      ['quiz', '✅', 'Quiz'], ['reflection', '🪞', 'Reflection'], ['feedback', '💬', 'Feedback'], ['done', '🏅', 'Certificate']];
+      ['quiz', '✅', lessons.some(l => l.quiz && (l.quiz.questions || []).length) ? 'Final assessment' : 'Quiz'], ['reflection', '🪞', 'Reflection'], ['feedback', '💬', 'Feedback'], ['done', '🏅', 'Certificate']];
 
     let current = 'intro';
     function drawSidebar() {
@@ -128,7 +128,8 @@
     // ── Overview ─────────────────────────────────────────────────────────
     function showIntro() {
       const started = prog.lessonsDone.length || prog.quiz;
-      const c = { ...course, lessonTitles: lessons.map(l => l.title), questionCount: (quiz.questions || []).length, passMark: quiz.passMark || 80 };
+      const c = { ...course, lessonTitles: lessons.map(l => l.title), questionCount: (quiz.questions || []).length, passMark: quiz.passMark || 80, quizPerAttempt: Number(quiz.perAttempt) || 0,
+        lessonQuizFlags: lessons.map(l => !!lessonQuiz(l)), lessonQuizCount: lessons.filter(lessonQuiz).length };
       const pct = Math.round(D.stepsDone(content, prog) / D.courseSteps(content) * 100);
       const label = prog.completedAt ? 'View my certificate' : started ? 'Continue course →' : 'Start course →';
       main.innerHTML = '<div class="ov-hero"><div class="ov-icon">' + courseVisual(c) + '</div><div style="flex:1;min-width:0">'
@@ -146,52 +147,120 @@
     }
 
     // ── Lessons ──────────────────────────────────────────────────────────
-    function showLesson(i) {
+    // A lesson's quiz counts only if it has questions.
+    const lessonQuiz = l => (l.quiz && (l.quiz.questions || []).length) ? l.quiz : null;
+    const hasLessonQuizzes = lessons.some(lessonQuiz);
+
+    // Split a lesson's blocks into pages at each "page break" block.
+    function lessonPages(l) {
+      const pages = [[]];
+      (l.blocks || []).forEach(b => { if (b.type === 'pagebreak') { if (pages[pages.length - 1].length) pages.push([]); } else pages[pages.length - 1].push(b); });
+      return pages;
+    }
+
+    function showLesson(i, page) {
       const l = lessons[i];
-      main.innerHTML = '<div class="dash-header"><span class="mc-mod">Lesson ' + (i + 1) + ' of ' + lessons.length + '</span><h1>' + esc(l.title) + '</h1></div><div class="content-card" id="lessonBody"></div>'
-        + '<div class="lesson-nav"><button class="btn btn-outline" id="prevBtn">← Back</button><div style="text-align:right"><button class="btn btn-primary" id="doneBtn"></button><div id="todo" style="font-size:0.8rem;color:var(--ink-light);margin-top:0.4rem"></div></div></div>';
+      const pages = lessonPages(l);
+      page = Math.max(0, Math.min(page || 0, pages.length - 1));
+      const last = page === pages.length - 1;
+      const lq = lessonQuiz(l);
+      const done = lessonDone(l.id);
+      main.innerHTML = '<div class="dash-header"><span class="mc-mod">Lesson ' + (i + 1) + ' of ' + lessons.length + '</span><h1>' + esc(l.title) + '</h1>'
+          + (pages.length > 1 ? '<div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.6rem;max-width:420px"><div class="progress-bar-wrap" style="flex:1;margin:0"><div class="progress-bar-fill" style="width:' + Math.round((page + 1) / pages.length * 100) + '%"></div></div><span style="font-size:0.8rem;color:var(--ink-light);white-space:nowrap">Page ' + (page + 1) + ' of ' + pages.length + '</span></div>' : '')
+        + '</div><div class="content-card" id="lessonBody"></div>'
+        + '<div class="lesson-nav"><button class="btn btn-outline" id="prevBtn">← Back</button><div style="text-align:right"><button class="btn btn-primary" id="doneBtn"></button>'
+        + (last && lq && done ? '<div style="margin-top:0.5rem"><a href="#" id="retakeLq" class="submission-link">Retake the module quiz</a></div>' : '')
+        + '<div id="todo" style="font-size:0.8rem;color:var(--ink-light);margin-top:0.4rem"></div></div></div>';
       const body = document.getElementById('lessonBody');
-      const blocks = l.blocks || [];
+      const blocks = pages[page];
       let needed = blocks.filter(b => BLOCK_TYPES[b.type] && BLOCK_TYPES[b.type].interactive).length;
-      const already = lessonDone(l.id) || adminView;
       const btn = document.getElementById('doneBtn');
       const update = () => {
-        const ready = already || needed <= 0;
+        const ready = done || adminView || needed <= 0;
         btn.disabled = !ready;
-        btn.textContent = lessonDone(l.id) ? 'Next →' : 'Complete lesson and continue →';
+        btn.textContent = !last ? 'Next page →' : done ? 'Next →' : lq ? 'Take the module quiz →' : 'Complete lesson and continue →';
         document.getElementById('todo').textContent = ready ? '' : 'Try the ' + needed + ' remaining activit' + (needed === 1 ? 'y' : 'ies') + ' on this page to continue.';
       };
       blocks.forEach(b => body.appendChild(renderBlock(b, () => { needed--; update(); })));
       if (!blocks.length) body.innerHTML = '<p style="color:var(--ink-light)">This lesson has no content yet.</p>';
       update();
-      document.getElementById('prevBtn').onclick = () => go(i === 0 ? 'intro' : 'lesson:' + lessons[i - 1].id);
+      window.scrollTo(0, 0);
+      document.getElementById('prevBtn').onclick = () => {
+        if (page > 0) return showLesson(i, page - 1);
+        if (i === 0) return go('intro');
+        go('lesson:' + lessons[i - 1].id);
+      };
+      const rq = document.getElementById('retakeLq');
+      if (rq) rq.onclick = (e) => { e.preventDefault(); showLessonQuiz(i); };
       btn.onclick = async () => {
-        if (!lessonDone(l.id)) { try { await save({ lessonsDone: [...prog.lessonsDone, l.id] }); } catch (e) { return; } }
+        if (!last) return showLesson(i, page + 1);
+        if (!done && lq) return showLessonQuiz(i);
+        if (!done) { try { await save({ lessonsDone: [...prog.lessonsDone, l.id] }); } catch (e) { return; } }
         go(nextStep());
       };
     }
 
-    // ── Quiz ─────────────────────────────────────────────────────────────
+    function showLessonQuiz(i) {
+      const l = lessons[i], lq = lessonQuiz(l);
+      const done = lessonDone(l.id);
+      runQuiz({
+        heading: 'Module quiz: ' + l.title, quiz: lq,
+        record: async (score, passed) => {
+          const all = { ...(prog.lessonQuiz || {}) };
+          const prev = all[l.id] || {};
+          all[l.id] = { best: Math.max(prev.best || 0, score), last: score, attempts: (prev.attempts || 0) + 1, passed: prev.passed || passed };
+          const data = { lessonQuiz: all };
+          if (passed && !done) data.lessonsDone = [...prog.lessonsDone, l.id];
+          await save(data);
+        },
+        nextLabel: i < lessons.length - 1 ? 'Continue to the next lesson →' : (hasLessonQuizzes ? 'Continue to the final assessment →' : 'Continue →'),
+        onNext: () => go(nextStep()),
+        onRetry: () => showLessonQuiz(i),
+        onBack: () => showLesson(i, lessonPages(l).length - 1),
+      });
+    }
+
+    // ── Final quiz ───────────────────────────────────────────────────────
     function showQuiz() {
-      const pass = Number(quiz.passMark || 80);
-      const qs_ = quiz.questions || [];
+      const title = hasLessonQuizzes ? 'Final assessment' : 'End of course quiz';
       if (prog.quiz && prog.quiz.passed && !main.dataset.retake) {
-        main.innerHTML = '<div class="content-card quiz-result"><div class="quiz-score quiz-pass">' + prog.quiz.best + '%</div><div class="quiz-score-sub">You passed the quiz.</div><button class="btn btn-primary" id="nx">Continue →</button></div>';
+        main.innerHTML = '<div class="content-card quiz-result"><div class="quiz-score quiz-pass">' + prog.quiz.best + '%</div><div class="quiz-score-sub">You passed the ' + title.toLowerCase() + '.</div><button class="btn btn-primary" id="nx">Continue →</button></div>';
         document.getElementById('nx').onclick = () => go('reflection');
         return;
       }
-      if (!qs_.length) { main.innerHTML = '<div class="content-card"><p>This course has no quiz questions yet.</p></div>'; return; }
-      // Shuffle questions, and options within each question.
-      const paper = shuffle(qs_.map((q, qi) => qi)).map(qi => {
-        const q = qs_[qi];
-        const order = shuffle(q.options.map((o, oi) => oi));
+      runQuiz({
+        heading: title, quiz,
+        record: async (score, passed) => {
+          const prev = prog.quiz || {};
+          await save({ quiz: { best: Math.max(prev.best || 0, score), last: score, attempts: (prev.attempts || 0) + 1, passed: prev.passed || passed, passedAt: prev.passedAt || (passed ? new Date().toISOString() : null) } });
+        },
+        nextLabel: 'Continue to reflection →',
+        onNext: () => go('reflection'),
+        onRetry: () => { main.dataset.retake = '1'; showQuiz(); delete main.dataset.retake; },
+      });
+    }
+
+    // Shared quiz: shuffles questions and options, and if "questions per
+    // attempt" is set, asks a random selection from the bank each time.
+    function runQuiz(o) {
+      const pass = Number(o.quiz.passMark || 80);
+      const bank = o.quiz.questions || [];
+      const per = Number(o.quiz.perAttempt) > 0 ? Math.min(Number(o.quiz.perAttempt), bank.length) : bank.length;
+      if (!bank.length) { main.innerHTML = '<div class="content-card"><p>There are no quiz questions yet.</p></div>'; return; }
+      const paper = shuffle(bank.map((q, qi) => qi)).slice(0, per).map(qi => {
+        const q = bank[qi];
+        const order = shuffle(q.options.map((x, oi) => oi));
         return { q, order, correct: order.indexOf(Number(q.answer) - 1) };
       });
       const answers = {};
-      main.innerHTML = '<div class="dash-header"><h1>End of course quiz</h1><p>' + paper.length + ' questions · pass mark ' + pass + '%. Answer every question, then submit.</p></div>'
+      main.innerHTML = '<div class="dash-header"><h1>' + esc(o.heading) + '</h1><p>' + paper.length + ' questions' + (per < bank.length ? ' chosen at random' : '') + ' · pass mark ' + pass + '%. Answer every question, then submit.</p>'
+          + (o.onBack ? '<p style="margin-top:0.4rem"><a href="#" id="qBack" class="submission-link">← Back to the lesson</a></p>' : '') + '</div>'
         + paper.map((p, i) => '<div class="content-card quiz-wrap" style="max-width:none"><div class="quiz-progress"><span>Question ' + (i + 1) + ' of ' + paper.length + '</span></div><div class="quiz-q">' + esc(p.q.q) + '</div><div class="quiz-options" data-q="' + i + '">'
           + p.order.map((oi, k) => '<div class="quiz-option" data-k="' + k + '"><span class="quiz-option-key">' + 'ABCDEFGH'[k] + '</span><span>' + esc(p.q.options[oi]) + '</span></div>').join('') + '</div><div class="fb"></div></div>').join('')
         + '<div id="quizErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div><button class="btn btn-primary btn-lg" id="submitQuiz">Submit answers</button>';
+      window.scrollTo(0, 0);
+      const qb = document.getElementById('qBack');
+      if (qb) qb.onclick = (e) => { e.preventDefault(); o.onBack(); };
       main.querySelectorAll('.quiz-options').forEach(box => box.querySelectorAll('.quiz-option').forEach(opt => opt.onclick = () => {
         if (box.dataset.locked) return;
         box.querySelectorAll('.quiz-option').forEach(x => x.classList.remove('selected'));
@@ -207,19 +276,16 @@
           box.nextElementSibling.innerHTML = '<div class="act-feedback ' + (ok ? 'good' : 'bad') + '"><strong>' + (ok ? 'Correct.' : 'Incorrect.') + '</strong>' + (p.q.explain ? ' ' + esc(p.q.explain) : '') + '</div>';
         });
         const score = Math.round(right / paper.length * 100), passed = score >= pass;
-        const prev = prog.quiz || {};
-        try {
-          await save({ quiz: { best: Math.max(prev.best || 0, score), last: score, attempts: (prev.attempts || 0) + 1, passed: prev.passed || passed, passedAt: prev.passedAt || (passed ? new Date().toISOString() : null) } });
-        } catch (e) { return; }
+        try { await o.record(score, passed); } catch (e) { return; }
         drawSidebar();
         document.getElementById('submitQuiz').remove();
         const res = document.createElement('div');
         res.className = 'content-card quiz-result';
-        res.innerHTML = '<div class="quiz-score ' + (passed ? 'quiz-pass' : 'quiz-fail') + '">' + score + '%</div><div class="quiz-score-sub">' + right + ' of ' + paper.length + ' correct. ' + (passed ? 'Well done, you passed!' : 'The pass mark is ' + pass + '%. Look over the answers above, then try again.') + '</div>'
-          + (passed ? '<button class="btn btn-primary" id="nx">Continue to reflection →</button>' : '<button class="btn btn-primary" id="retry">Try again</button>');
+        res.innerHTML = '<div class="quiz-score ' + (passed ? 'quiz-pass' : 'quiz-fail') + '">' + score + '%</div><div class="quiz-score-sub">' + right + ' of ' + paper.length + ' correct. ' + (passed ? 'Well done, you passed!' : 'The pass mark is ' + pass + '%. Look over the answers below, then try again' + (per < bank.length ? ' with a new set of questions' : '') + '.') + '</div>'
+          + (passed ? '<button class="btn btn-primary" id="nx">' + esc(o.nextLabel) + '</button>' : '<button class="btn btn-primary" id="retry">Try again</button>');
         main.prepend(res); window.scrollTo(0, 0);
-        if (passed) document.getElementById('nx').onclick = () => go('reflection');
-        else document.getElementById('retry').onclick = () => { main.dataset.retake = '1'; showQuiz(); delete main.dataset.retake; };
+        if (passed) document.getElementById('nx').onclick = o.onNext;
+        else document.getElementById('retry').onclick = o.onRetry;
       };
     }
 

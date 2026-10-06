@@ -296,6 +296,7 @@
     ];
     const QUIZ_FIELDS = [
       { key: 'passMark', label: 'Pass mark (%)', type: 'number', min: 1 },
+      { key: 'perAttempt', label: 'Questions per attempt (leave blank to ask every question)', type: 'number', min: 1, help: 'If set, each attempt asks this many questions chosen at random from the list below.' },
       { key: 'questions', label: 'Questions', type: 'rows', item: 'Question', fields: [
         { key: 'q', label: 'Question', type: 'text' },
         { key: 'options', label: 'Answer options (one per line)', type: 'lines' },
@@ -391,6 +392,7 @@
           const box = document.createElement('div'); box.className = 'ed-block';
           box.innerHTML = '<div class="ed-block-head"><strong>' + t.icon + ' ' + esc(t.label) + '</strong><span class="admin-actions"><button class="mini-btn" data-a="up"' + (bi === 0 ? ' disabled' : '') + '>▲</button><button class="mini-btn" data-a="down"' + (bi === lesson.blocks.length - 1 ? ' disabled' : '') + '>▼</button><button class="mini-btn" data-a="copy" title="Duplicate">⧉</button><button class="mini-btn" data-a="del" title="Delete" style="color:var(--warn)">✕</button></span></div><div class="ed-block-body"></div>';
           renderFields(box.querySelector('.ed-block-body'), b, t.fields);
+          if (t.help) box.querySelector('.ed-block-body').innerHTML = '<div class="ed-help" style="margin:0">' + esc(t.help) + '</div>';
           box.querySelectorAll('[data-a]').forEach(btn => btn.onclick = () => {
             const a = btn.dataset.a, B = lesson.blocks;
             if (a === 'up') [B[bi - 1], B[bi]] = [B[bi], B[bi - 1]];
@@ -403,6 +405,11 @@
         });
       };
       drawBlocks();
+      const lq = document.createElement('div');
+      lq.innerHTML = '<details class="reveal-item" style="margin-top:1.5rem"' + (lesson.quiz && (lesson.quiz.questions || []).length ? ' open' : '') + '><summary>Module quiz for this lesson (optional)</summary><div style="padding:0 1rem 1rem"><p class="ed-help" style="margin-bottom:0.75rem">If you add questions here, learners must pass this quiz to finish the lesson and unlock the next one. Leave it empty for no module quiz.</p><div id="lqFields"></div></div></details>';
+      document.getElementById('addBlocks').after(lq);
+      lesson.quiz = lesson.quiz || { passMark: 75, perAttempt: '', questions: [] };
+      renderFields(lq.querySelector('#lqFields'), lesson.quiz, QUIZ_FIELDS);
       const add = document.getElementById('addBlocks');
       Object.entries(BLOCK_TYPES).forEach(([type, t]) => {
         const b = document.createElement('button'); b.className = 'chip'; b.textContent = t.icon + ' ' + t.label;
@@ -509,6 +516,10 @@
         if (b.type === 'check' && !(b.answer >= 1 && b.answer <= (b.options || []).length)) errs.push(where + 'the correct option number does not match the options.');
         if (b.type === 'scenario' && !(b.options || []).some(o => o.best)) errs.push(where + 'tick which choice is best.');
         if (b.type === 'sort') (b.items || []).forEach((it, k) => { if (!(it.cat >= 1 && it.cat <= (b.categories || []).length)) errs.push(where + 'item ' + (k + 1) + ' has a group number that does not exist.'); });
+      }));
+      c.lessons.forEach((l, li) => ((l.quiz && l.quiz.questions) || []).forEach((q, i) => {
+        if ((q.options || []).length < 2) errs.push('Lesson ' + (li + 1) + ' module quiz, question ' + (i + 1) + ' needs at least 2 options.');
+        else if (!(q.answer >= 1 && q.answer <= q.options.length)) errs.push('Lesson ' + (li + 1) + ' module quiz, question ' + (i + 1) + ': the correct option number does not match the options.');
       }));
       c.quiz.questions.forEach((q, i) => {
         if ((q.options || []).length < 2) errs.push('Quiz question ' + (i + 1) + ' needs at least 2 options.');

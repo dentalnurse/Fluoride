@@ -117,7 +117,7 @@
     document.getElementById('sPrice').textContent = course.status === 'coming-soon' ? 'Coming soon' : course.price;
     document.getElementById('sHours').textContent = hoursText(course);
     const n = (course.lessonTitles || []).length;
-    document.getElementById('incLessons').textContent = n + ' short lesson' + (n === 1 ? '' : 's');
+    document.getElementById('incLessons').textContent = n + ' lesson' + (n === 1 ? '' : 's');
     document.getElementById('incCert').textContent = { verifiable: 'Verifiable CPD certificate', both: 'Verifiable CPD certificate (with your GDC number)', general: 'CPD certificate' }[t];
     document.getElementById('sAudience').textContent = audienceText(course);
     document.getElementById('detail').style.display = '';

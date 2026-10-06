@@ -45,6 +45,9 @@ export function deriveMeta(meta, content) {
   return { ...meta,
     lessonTitles: lessons.map(l => l.title),
     questionCount: ((content && content.quiz && content.quiz.questions) || []).length,
+    quizPerAttempt: Number((content && content.quiz && content.quiz.perAttempt) || 0),
+    lessonQuizFlags: lessons.map(l => !!(l.quiz && (l.quiz.questions || []).length)),
+    lessonQuizCount: lessons.filter(l => l.quiz && (l.quiz.questions || []).length).length,
     passMark: Number((content && content.quiz && content.quiz.passMark) || 80) };
 }
 
