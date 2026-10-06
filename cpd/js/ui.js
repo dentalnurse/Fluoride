@@ -57,6 +57,27 @@ function footerHtml(prefix) {
     ' Dental Nurse Training Ltd · CPD Hub · <a href="' + prefix + 'privacy-policy.html">Privacy Policy</a> &middot; <a href="' + prefix + 'terms.html">Terms</a></p></div></footer>';
 }
 
+// Course types:
+//   "verifiable" - GDC verifiable CPD, for dental professionals
+//   "both"       - CPD for everyone, and GDC verifiable for anyone who has a GDC number
+//   "general"    - CPD for everyone, not GDC verifiable ("skills" is an older name for this)
+// Courses with no type count as "verifiable".
+function cpdType(c) { const t = (c && c.cpdType) || 'verifiable'; return t === 'skills' ? 'general' : t; }
+// Does the course carry GDC development outcomes?
+function usesGdc(c) { return cpdType(c) !== 'general'; }
+// Is it verifiable CPD for this particular learner?
+function verifiableFor(c, learner) { const t = cpdType(c); return t === 'verifiable' || (t === 'both' && !!(learner && learner.gdc)); }
+function hoursText(c) {
+  const h = Number(c && c.hours) || 0, hrs = h + ' hour' + (h === 1 ? '' : 's');
+  return { verifiable: hrs + ' verifiable CPD', both: hrs + ' CPD (GDC verifiable for dental professionals)', general: hrs + ' CPD' }[cpdType(c)];
+}
+function typePill(c) {
+  return { verifiable: '<span class="pill pill-teal">Verifiable CPD</span>',
+           both: '<span class="pill pill-teal">CPD · GDC verifiable</span>',
+           general: '<span class="pill pill-orange">CPD</span>' }[cpdType(c)];
+}
+function typeLabel(c) { return { verifiable: 'Verifiable CPD', both: 'CPD (verifiable for dental professionals)', general: 'CPD (not GDC verifiable)' }[cpdType(c)]; }
+
 function shuffle(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }

@@ -59,7 +59,7 @@
     const quiz = content.quiz || { passMark: 80, questions: [] };
     let prog = (hasAccess ? await D.getProgress(user.uid, slug) : null) || { lessonsDone: [] };
     prog.lessonsDone = prog.lessonsDone || [];
-    document.title = course.title + ' - DNT CPD Hub';
+    document.title = course.title + ' - CPD Hub';
 
     if (adminView) document.getElementById('adminNote').innerHTML = '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Admin view</div><p>You are viewing this course as an admin. Everything is unlocked and nothing you do here is saved.</p></div>';
 
@@ -67,7 +67,7 @@
       Object.assign(prog, data);
       if (adminView) return;
       prog.percent = Math.round(D.stepsDone(content, prog) / D.courseSteps(content) * 100);
-      try { await D.saveProgress(user.uid, slug, { ...data, percent: prog.percent, title: course.title, hours: course.hours }); }
+      try { await D.saveProgress(user.uid, slug, { ...data, percent: prog.percent, title: course.title, hours: course.hours, cpdType: course.cpdType || 'verifiable' }); }
       catch (e) { console.error(e); toast('Could not save your progress. Please check your connection.', 'error'); throw e; }
     }
 
@@ -128,10 +128,11 @@
     // ── Overview ─────────────────────────────────────────────────────────
     function showIntro() {
       const started = prog.lessonsDone.length || prog.quiz;
-      main.innerHTML = '<div class="dash-header"><h1>' + esc(course.icon || '') + ' ' + esc(course.title) + '</h1><p>' + esc(course.hours) + ' hour' + (Number(course.hours) === 1 ? '' : 's') + ' verifiable CPD · GDC development outcome' + ((course.outcomes || []).length === 1 ? '' : 's') + ' ' + esc((course.outcomes || []).join(', ')) + '</p></div>'
+      main.innerHTML = '<div class="dash-header"><h1>' + esc(course.icon || '') + ' ' + esc(course.title) + '</h1><p>' + esc(hoursText(course)) + (usesGdc(course) ? ' · GDC development outcome' + ((course.outcomes || []).length === 1 ? '' : 's') + ' ' + esc((course.outcomes || []).join(', ')) : '') + '</p></div>'
         + '<div class="content-card"><h2>About this course</h2><h3>Aims</h3><p>' + esc(course.aims || '') + '</p><h3>Objectives</h3><p>By the end of this course you will be able to:</p><ul>' + (course.objectives || []).map(o => '<li>' + esc(o) + '</li>').join('') + '</ul>'
-        + '<h3>GDC development outcomes</h3>' + (course.outcomes || []).map(o => '<div class="outcome-item"><span class="outcome-letter">' + esc(o) + '</span><span>' + esc(GDC_OUTCOMES[o] || '') + '</span></div>').join('') + '</div>'
-        + '<div class="content-card"><h2>How to complete this course</h2><ol><li>Work through each lesson and try the activities.</li><li>Pass the end of course quiz (pass mark ' + esc(quiz.passMark || 80) + '%). You can retake it as many times as you need.</li><li>Write a short reflection on what you learned and how you will use it.</li><li>Fill in the feedback form.</li><li>Download your verifiable CPD certificate and add it to your CPD record.</li></ol>'
+        + (usesGdc(course) ? '<h3>GDC development outcomes</h3>' + (course.outcomes || []).map(o => '<div class="outcome-item"><span class="outcome-letter">' + esc(o) + '</span><span>' + esc(GDC_OUTCOMES[o] || '') + '</span></div>').join('') : '')
+        + (course.certNote ? '<div class="callout callout-warn"><div class="callout-label">Please note</div><p>' + esc(course.certNote) + '</p></div>' : '') + '</div>'
+        + '<div class="content-card"><h2>How to complete this course</h2><ol><li>Work through each lesson and try the activities.</li><li>Pass the end of course quiz (pass mark ' + esc(quiz.passMark || 80) + '%). You can retake it as many times as you need.</li><li>Write a short reflection on what you learned and how you will use it.</li><li>Fill in the feedback form.</li><li>' + (verifiableFor(course, user) ? 'Download your verifiable CPD certificate and add it to your CPD record.' : 'Download your CPD certificate.' + (cpdType(course) === 'both' ? ' Dental professionals: add your GDC number in My CPD to get a verifiable CPD certificate.' : '')) + '</li></ol>'
         + '<button class="btn btn-primary btn-lg" id="startBtn" style="margin-top:0.5rem">' + (prog.completedAt ? 'View my certificate' : started ? 'Continue course →' : 'Start course →') + '</button></div>';
       document.getElementById('startBtn').onclick = () => go(firstOpenStep() === 'intro' ? (steps[1] ? steps[1][0] : 'quiz') : firstOpenStep());
     }
@@ -218,7 +219,7 @@
     function showReflection() {
       const questions = (content.reflection && content.reflection.length) ? content.reflection : ['What did you learn from this course?', 'How will you apply it in your practice?'];
       const saved = (prog.reflection && prog.reflection.answers) || [];
-      main.innerHTML = '<div class="dash-header"><h1>Reflection</h1><p>Reflecting on your learning is part of the GDC enhanced CPD scheme. Your answers are saved with your CPD record and shown on the back of your certificate.</p></div>'
+      main.innerHTML = '<div class="dash-header"><h1>Reflection</h1><p>' + (usesGdc(course) ? 'Reflecting on your learning is a key part of CPD, including the GDC enhanced CPD scheme. ' : 'Reflecting on your learning is a key part of CPD and helps you put it into practice. ') + 'Your answers are saved and shown on the back of your certificate.</p></div>'
         + '<div class="content-card">' + questions.map((q, i) => '<div class="form-group"><label>' + esc(q) + '</label><textarea data-i="' + i + '" class="short">' + esc(saved[i] || '') + '</textarea></div>').join('')
         + '<div id="refErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div><button class="btn btn-primary" id="saveRef">' + (prog.reflection ? 'Update reflection' : 'Save and continue →') + '</button></div>';
       document.getElementById('saveRef').onclick = async () => {
@@ -259,7 +260,7 @@
           data.certNo = 'DNT-CPD-' + String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '-' + Math.random().toString(36).slice(2, 7).toUpperCase();
         }
         try { await save(data); } catch (e) { return; }
-        if (first && !adminView) D.notify('CPD course completed - ' + course.title, user.name + ' (' + user.email + ', GDC ' + user.gdc + ') has completed "' + course.title + '". Certificate number ' + data.certNo + '.', user);
+        if (first && !adminView) D.notify('CPD course completed - ' + course.title, user.name + ' (' + user.email + ', GDC ' + (user.gdc || 'not given') + ') has completed "' + course.title + '". Certificate number ' + data.certNo + '.', user);
         go('done');
       };
     }
@@ -267,8 +268,10 @@
     // ── Done ─────────────────────────────────────────────────────────────
     function showDone() {
       main.innerHTML = '<div class="content-card" style="text-align:center;padding:3rem 2rem"><div style="font-size:3.5rem;margin-bottom:0.75rem">🎉</div><h2 style="border:none;padding:0;margin-bottom:0.5rem">Course complete!</h2>'
-        + '<p>Well done ' + esc(user.name.split(' ')[0]) + '. You have earned <strong>' + esc(course.hours) + ' hour' + (Number(course.hours) === 1 ? '' : 's') + '</strong> of verifiable CPD.</p>'
-        + '<p style="font-size:0.9rem">Keep a copy of your certificate for your CPD record, and remember to log the hours against your personal development plan (PDP) for your GDC annual statement.</p>'
+        + (verifiableFor(course, user)
+          ? '<p>Well done ' + esc(user.name.split(' ')[0]) + '. You have earned <strong>' + esc(course.hours) + ' hour' + (Number(course.hours) === 1 ? '' : 's') + '</strong> of verifiable CPD.</p>'
+            + '<p style="font-size:0.9rem">Keep a copy of your certificate for your CPD record, and remember to log the hours against your personal development plan (PDP) for your GDC annual statement.</p>'
+          : '<p>Well done ' + esc(user.name.split(' ')[0]) + '. You have earned <strong>' + esc(course.hours) + ' hour' + (Number(course.hours) === 1 ? '' : 's') + '</strong> of CPD.</p><p style="font-size:0.9rem">Your CPD certificate is ready to view, print or save.' + (cpdType(course) === 'both' ? ' If you are a dental professional, add your GDC number in My CPD → My details and your certificate will become a verifiable CPD certificate.' : '') + '</p>')
         + '<a class="btn btn-primary btn-lg" target="_blank" href="' + D.link('certificate.html?c=' + encodeURIComponent(slug)) + '" style="margin-top:0.75rem">🏅 View and print certificate</a><br/>'
         + '<a class="btn btn-outline" href="' + D.link('dashboard.html') + '" style="margin-top:0.75rem">Back to My CPD</a></div>';
       if (adminView) main.querySelector('.btn-primary').outerHTML = '<p style="color:var(--ink-light);font-size:0.85rem">(Certificates are only created for learners.)</p>';

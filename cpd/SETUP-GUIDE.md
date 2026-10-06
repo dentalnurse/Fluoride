@@ -1,4 +1,4 @@
-# DNT CPD Hub: setup and how-to
+# CPD Hub: setup and how-to
 
 The CPD Hub lives in the `cpd/` folder of this site:
 https://fluoride.dentalnurse.training/cpd/
@@ -52,6 +52,12 @@ After logging in you will see an **Admin** button.
 1. Admin → **Courses → New course**.
 2. Fill in **Course details** (title, hours, price, aims, objectives, GDC
    development outcomes). Leave the status as **Draft** while you work.
+   Choose the **Course type**:
+   - *Verifiable CPD*: for GDC-registered dental professionals.
+   - *CPD for everyone, GDC verifiable for dental professionals*: anyone can
+     take it; learners with a GDC number get a verifiable CPD certificate,
+     everyone else gets a CPD certificate.
+   - *CPD for everyone, not GDC verifiable*: no GDC outcomes needed.
 3. Click each lesson on the left to add text, key point boxes, pictures,
    videos and activities. Use **＋ Add lesson** for more lessons.
 4. Add **Quiz** questions and check the **Reflection questions**.

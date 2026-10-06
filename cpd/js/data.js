@@ -163,7 +163,12 @@ function psave(d) { try { localStorage.setItem(PKEY, JSON.stringify(d)); } catch
 const clone = (x) => x == null ? x : JSON.parse(JSON.stringify(x));
 
 const pv = {
-  async getSessionUser() { return pload().loggedOut ? null : { ...PUSER }; },
+  async getSessionUser() {
+    const d = pload();
+    if (d.loggedOut) return null;
+    const l = d.learners[PUSER.uid] || {};
+    return { ...PUSER, name: l.name || PUSER.name, gdc: l.gdc != null ? l.gdc : PUSER.gdc, workplace: l.workplace != null ? l.workplace : PUSER.workplace };
+  },
   async login() { const d = pload(); d.loggedOut = false; psave(d); },
   async register() { const d = pload(); d.loggedOut = false; psave(d); },
   async resetPassword() {},
@@ -252,7 +257,7 @@ export function notify(subject, message, learner) {
 export async function mountChrome({ active, prefix = '' } = {}) {
   const user = await getSessionUser().catch(() => null);
   const notOpen = (typeof HUB_OPEN !== 'undefined' && !HUB_OPEN)
-    ? '<div class="building-strip">🚧 <strong>Preview:</strong> the DNT CPD Hub is still being built and is not open yet.</div>' : '';
+    ? '<div class="building-strip">🚧 <strong>Preview:</strong> the CPD Hub is still being built and is not open yet.</div>' : '';
   const strip = notOpen + (PREVIEW
     ? '<div class="preview-strip">⚠ <strong>Preview mode</strong> - sample data saved in this browser only. Nothing here is real or visible to learners. <a href="#" id="pvReset">Reset preview</a></div>'
     : (!CONFIGURED ? '<div class="setup-strip">The CPD hub is not connected to Firebase yet, so logins will not work. <a href="' + prefix + 'index.html?preview=1">Open preview mode</a></div>' : ''));
@@ -264,7 +269,7 @@ export async function mountChrome({ active, prefix = '' } = {}) {
     : '<a href="' + link(prefix + 'login.html') + '" class="btn btn-outline btn-sm">Log in</a>'
       + '<a href="' + link(prefix + 'register.html') + '" class="btn btn-primary btn-sm">Create account</a>';
   const nav = strip + '<nav class="nav"><div class="nav-inner">'
-    + '<a href="' + link(prefix + 'index.html') + '" class="nav-logo"><img src="' + LOGO_URL + '" alt="Dental Nurse Training" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'"/><span class="nav-logo-text" style="display:none">DNT CPD Hub</span></a>'
+    + '<a href="' + link(prefix + 'index.html') + '" class="nav-logo"><img src="' + LOGO_URL + '" alt="Dental Nurse Training" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'"/><span class="nav-logo-text" style="display:none">CPD Hub</span></a>'
     + '<div class="nav-right" style="gap:0.5rem;flex-wrap:wrap;justify-content:flex-end">' + right + '</div></div></nav>';
   const holder = document.getElementById('navHolder');
   if (holder) holder.innerHTML = nav;

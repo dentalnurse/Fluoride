@@ -29,13 +29,13 @@
       </div>
       <div class="form-group"><label for="name">Full name (as it should appear on certificates) *</label><input type="text" id="name" autocomplete="name"/></div>
       <div class="form-group"><label for="email">Email address *</label><input type="email" id="email" autocomplete="email"/></div>
-      <div class="form-group"><label for="gdc">GDC registration number *</label><input type="text" id="gdc" placeholder="e.g. 123456" inputmode="numeric"/></div>
+      <div class="form-group"><label for="gdc">GDC registration number (if you are a dental professional)</label><input type="text" id="gdc" placeholder="e.g. 123456" inputmode="numeric"/><div style="font-size:0.78rem;color:var(--ink-light);margin-top:0.3rem">Needed for verifiable CPD certificates. Leave blank if you don't have one.</div></div>
       <div class="form-group"><label for="workplace">Place of work</label><input type="text" id="workplace" placeholder="Optional"/></div>
       <div class="form-group"><label for="pass">Create a password *</label><input type="password" id="pass" placeholder="At least 8 characters" autocomplete="new-password"/></div>
       <div class="form-group"><label for="pass2">Confirm password *</label><input type="password" id="pass2" autocomplete="new-password"/></div>
       <label style="display:flex;gap:0.6rem;align-items:flex-start;font-size:0.85rem;color:var(--ink-mid);margin-bottom:1rem">
         <input type="checkbox" id="agree" style="margin-top:0.25rem"/>
-        <span>I confirm I am a GDC-registered dental nurse (or student dental nurse) and agree to the <a href="../terms.html" target="_blank" style="color:var(--teal);font-weight:600">terms</a> and <a href="../privacy-policy.html" target="_blank" style="color:var(--teal);font-weight:600">privacy policy</a>.</span>
+        <span>I agree to the <a href="../terms.html" target="_blank" style="color:var(--teal);font-weight:600">terms</a> and <a href="../privacy-policy.html" target="_blank" style="color:var(--teal);font-weight:600">privacy policy</a>.</span>
       </label>
       <div id="err" class="form-error" style="display:none;margin-bottom:0.75rem"></div>
       <button class="btn btn-primary form-submit" id="regBtn">Create account</button>
@@ -61,7 +61,7 @@
       const pass = document.getElementById('pass').value, pass2 = document.getElementById('pass2').value;
       err('');
       if (!D.PREVIEW && !D.CONFIGURED) { err('The CPD Hub is not open yet.'); return; }
-      if (!name || !email || !gdc) { err('Please complete all fields marked with *'); return; }
+      if (!name || !email) { err('Please complete all fields marked with *'); return; }
       if (pass.length < 8) { err('Your password must be at least 8 characters.'); return; }
       if (pass !== pass2) { err('The passwords do not match.'); return; }
       if (!document.getElementById('agree').checked) { err('Please tick the box to confirm.'); return; }
