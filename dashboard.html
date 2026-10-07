@@ -546,7 +546,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       }
     };
 
-    function renderPractical(el) {
+    async function renderPractical(el) {
       const amendmentRequested = !!learner.practicalAmendmentRequested;
       const submitted  = learner.practicalSubmitted && !amendmentRequested;
       const passed     = learner.practicalPassed;
@@ -575,6 +575,31 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
             uniqueSups.push({ name: e.supervisorName, gdc: e.supervisorGdc, email: e.supervisorEmail || '' });
           }
         }
+        // Check each supervisor's actual sign-off record, rather than always
+        // showing "Pending confirmation" regardless of what's really happened
+        const signedStatus = {};
+        await Promise.all(uniqueSups.map(async (s) => {
+          const token = (learner.logbookSignoffTokens || {})[s.gdc] || '';
+          if (!token) return;
+          try {
+            const snap = await getDoc(doc(db, 'logbookSignoffs', token));
+            signedStatus[s.gdc] = !!(snap.exists() && snap.data().signedAt);
+          } catch (e) { /* leave as pending if we can't check */ }
+        }));
+
+        // Once every supervisor has confirmed, move straight to "submitted for
+        // review" rather than leaving the learner stuck on "waiting" until an
+        // assessor happens to open the admin panel (which is what previously
+        // triggered this transition).
+        const allConfirmed = uniqueSups.length > 0 && uniqueSups.every(s => signedStatus[s.gdc]);
+        if (allConfirmed) {
+          try {
+            await setDoc(doc(db, 'learners', uid), { practicalSubmitted: true, practicalSubmittedAt: serverTimestamp() }, { merge: true });
+            learner.practicalSubmitted = true;
+          } catch (e) { console.error(e); }
+          return renderPractical(el);
+        }
+
         html += `<div class="submission-status status-submitted" style="background:#FFF8E7;color:#92400E;border-color:rgba(245,158,11,0.3)"><span>⏳</span> Logbook sent for supervisor sign-off. Waiting for your supervisors to confirm their entries.</div>`;
         if (uniqueSups.length) {
           html += `<div class="content-card" style="margin-bottom:1.25rem">
@@ -582,11 +607,13 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
             <div style="display:flex;flex-direction:column;gap:0.6rem">
               ${uniqueSups.map(s => {
                 const token = (learner.logbookSignoffTokens || {})[s.gdc] || '';
+                const signed = !!signedStatus[s.gdc];
                 return `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 1rem;background:var(--off-white);border-radius:var(--radius);border:1px solid var(--border);font-size:0.88rem;flex-wrap:wrap;gap:0.5rem">
                   <div><strong>${esc(s.name)}</strong><span style="color:var(--ink-light);margin-left:0.5rem">GDC: ${esc(s.gdc)}</span>${s.email ? `<span style="color:var(--ink-light);margin-left:0.5rem;font-size:0.8rem">${esc(s.email)}</span>` : ''}</div>
                   <div style="display:flex;gap:0.5rem;align-items:center">
-                    <span style="background:#FFF3CD;color:#92400E;font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px">Pending confirmation</span>
-                    ${token ? `<button class="btn btn-outline btn-sm" style="font-size:0.75rem;padding:0.2rem 0.6rem" onclick="resendSignoffEmail('${token}','${esc(s.email)}','${esc(s.name)}')">↩ Resend email</button>` : ''}
+                    ${signed
+                      ? `<span style="background:#D1FAE5;color:#065F46;font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px">✓ Confirmed</span>`
+                      : `<span style="background:#FFF3CD;color:#92400E;font-size:0.78rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:9999px">Pending confirmation</span>${token ? `<button class="btn btn-outline btn-sm" style="font-size:0.75rem;padding:0.2rem 0.6rem" onclick="resendSignoffEmail('${token}','${esc(s.email)}','${esc(s.name)}')">↩ Resend email</button>` : ''}`}
                   </div>
                 </div>`;
               }).join('')}
