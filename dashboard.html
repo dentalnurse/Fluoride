@@ -93,7 +93,7 @@
         date: today, patientId: 'SAMPLE-' + i, patientType: '7-11',
         rxName: 'Dr Sample Dentist', rxGdc: '123456', rxDate: today, product: 'Duraphat 22,600ppm',
         safetyChecks: { asthma: true, allergy: true, ulcer: true },
-        consent: { type: 'self', guardianName: '', guardianRel: '' },
+        consent: { type: 'self', guardianRel: '' },
         postOpGiven: { rinse: true, food: true, brush: true },
         supervisorName: 'Sam Supervisor', supervisorGdc: '654321', supervisorEmail: 'sam.supervisor@example.com',
         notes: 'Sample logbook entry for preview purposes.'
@@ -655,7 +655,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
           const safeOk = e.safetyChecks && e.safetyChecks.asthma && e.safetyChecks.allergy && e.safetyChecks.ulcer;
           const poOk   = e.postOpGiven && e.postOpGiven.rinse && e.postOpGiven.food && e.postOpGiven.brush;
           const consentLabel = e.consent
-            ? (e.consent.type === 'guardian' ? `Guardian (${e.consent.guardianName||''})` : 'Patient (self)')
+            ? (e.consent.type === 'guardian' ? `Guardian (${e.consent.guardianRel||''})` : 'Patient (self)')
             : '-';
           return `
           <div style="border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.75rem;background:var(--off-white)">
@@ -823,8 +823,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
             <p style="font-size:0.82rem;color:var(--ink-light);margin:0 0 0.65rem">Consent given by:</p>
             <label style="display:inline-flex;align-items:center;gap:0.5rem;margin-right:1.5rem;font-size:0.88rem;cursor:pointer"><input type="radio" name="le-consent" value="self" id="le-consentSelf" onchange="toggleGuardian()"/> Patient (self)</label>
             <label style="display:inline-flex;align-items:center;gap:0.5rem;font-size:0.88rem;cursor:pointer"><input type="radio" name="le-consent" value="guardian" id="le-consentGuardian" onchange="toggleGuardian()"/> Parent / Legal guardian</label>
-            <div id="le-guardianFields" style="display:none;margin-top:0.75rem;display:none;grid-template-columns:1fr 1fr;gap:0.6rem">
-              <div class="form-group" style="margin:0"><label>Guardian full name *</label><input type="text" id="le-guardianName" placeholder="e.g. Sarah Smith"/></div>
+            <div id="le-guardianFields" style="display:none;margin-top:0.75rem">
               <div class="form-group" style="margin:0"><label>Relationship to patient *</label><input type="text" id="le-guardianRel" placeholder="e.g. Mother"/></div>
             </div>
           </div>
@@ -914,7 +913,6 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
       const ckAllergy        = document.getElementById('le-ckAllergy').checked;
       const ckUlcer          = document.getElementById('le-ckUlcer').checked;
       const consentType      = document.querySelector('input[name="le-consent"]:checked')?.value || '';
-      const guardianName     = document.getElementById('le-guardianName')?.value.trim() || '';
       const guardianRel      = document.getElementById('le-guardianRel')?.value.trim() || '';
       const poRinse          = document.getElementById('le-poRinse').checked;
       const poFood           = document.getElementById('le-poFood').checked;
@@ -953,8 +951,8 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         errEl.textContent = 'Please indicate who gave consent.';
         errEl.style.display = 'block'; return;
       }
-      if (consentType === 'guardian' && (!guardianName || !guardianRel)) {
-        errEl.textContent = 'Please enter the guardian name and relationship.';
+      if (consentType === 'guardian' && !guardianRel) {
+        errEl.textContent = 'Please enter the relationship to the patient.';
         errEl.style.display = 'block'; return;
       }
       if (!poRinse || !poFood || !poBrush) {
@@ -967,7 +965,7 @@ return '<div class="content-card" style="cursor:' + (unlocked?'pointer':'default
         date, patientId, patientType,
         rxName, rxGdc, rxDate, product,
         safetyChecks: { asthma: ckAsthma, allergy: ckAllergy, ulcer: ckUlcer },
-        consent: { type: consentType, guardianName: guardianName || '', guardianRel: guardianRel || '' },
+        consent: { type: consentType, guardianRel: guardianRel || '' },
         postOpGiven: { rinse: poRinse, food: poFood, brush: poBrush },
         supervisorName, supervisorGdc, supervisorEmail, notes
       };
