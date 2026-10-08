@@ -944,7 +944,10 @@
             <strong>${rows.length} learner${rows.length !== 1 ? 's' : ''} total</strong>
             <span style="font-size:0.82rem;color:var(--ink-light);margin-left:1rem">${rows.filter(r=>r.certNumber!=='-').length} certificates issued · ${rows.filter(r=>r.status==='In progress').length} in progress · ${rows.filter(r=>r.status==='Awaiting approval').length} awaiting approval</span>
           </div>
-          <button class="btn btn-outline btn-sm" onclick="exportAuditCSV()">⬇ Export CSV</button>
+          <div style="display:flex;gap:0.5rem">
+            <button class="btn btn-outline btn-sm" onclick="exportAuditCSV()">⬇ Export CSV</button>
+            <button class="btn btn-outline btn-sm" onclick="cleanupGuardianNames(this)">🧹 Remove old guardian names</button>
+          </div>
         </div>
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;min-width:1200px">
@@ -1033,6 +1036,49 @@
       a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
       a.download = 'DNT_FluorideVarnish_AuditLog_' + new Date().toISOString().slice(0,10) + '.csv';
       a.click();
+    };
+
+    // One-off cleanup for logbook entries saved before the guardian full
+    // name field was removed - strips the stored name, keeps the
+    // relationship (e.g. "Mother"). Safe to run repeatedly: it's a no-op
+    // once there's nothing left to clean.
+    window.cleanupGuardianNames = async (btn) => {
+      const toClean = [];
+      for (const l of learners) {
+        const entries = l.logbookEntries || [];
+        let count = 0;
+        const cleaned = entries.map(e => {
+          if (e.consent && e.consent.guardianName) {
+            count++;
+            const { guardianName, ...restConsent } = e.consent;
+            return { ...e, consent: restConsent };
+          }
+          return e;
+        });
+        if (count) toClean.push({ learner: l, cleaned, count });
+      }
+
+      if (!toClean.length) { alert('No old guardian names found - nothing to clean up.'); return; }
+
+      const totalEntries = toClean.reduce((n, t) => n + t.count, 0);
+      const names = toClean.map(t => t.learner.name || t.learner.email || t.learner.id).join(', ');
+      if (!confirm('Remove the stored guardian full name from ' + totalEntries + ' logbook entr' + (totalEntries === 1 ? 'y' : 'ies') + ' across ' + toClean.length + ' learner' + (toClean.length === 1 ? '' : 's') + ' (' + names + ')?\n\nThe relationship field (e.g. "Mother") is kept - only the name itself is removed. This cannot be undone.')) return;
+
+      const originalLabel = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = 'Cleaning up...'; }
+      try {
+        for (const { learner: l, cleaned } of toClean) {
+          await updateDoc(doc(db, 'learners', l.id), { logbookEntries: cleaned });
+          l.logbookEntries = cleaned;
+        }
+        showToast('Removed guardian names from ' + totalEntries + ' entr' + (totalEntries === 1 ? 'y' : 'ies') + ' ✅', 'success');
+        renderTab(currentTab);
+      } catch (e) {
+        console.error(e);
+        showToast('Could not finish cleanup - check console for details.', 'error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
+      }
     };
 
     // ── Training register export (Word) ────────────────────────────────────
