@@ -111,7 +111,7 @@
         const safeOk = e.safetyChecks && e.safetyChecks.asthma && e.safetyChecks.allergy && e.safetyChecks.ulcer;
         const poOk   = e.postOpGiven && e.postOpGiven.rinse && e.postOpGiven.food && e.postOpGiven.brush;
         const consentLabel = e.consent
-          ? (e.consent.type === 'guardian' ? `Guardian${e.consent.guardianName ? ': ' + e.consent.guardianName : ''}` : 'Patient (self)')
+          ? (e.consent.type === 'guardian' ? `Guardian${e.consent.guardianRel ? ' (' + e.consent.guardianRel + ')' : ''}` : 'Patient (self)')
           : '-';
         return `<tr>
           <td>${i + 1}</td>
