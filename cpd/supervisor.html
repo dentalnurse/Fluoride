@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    // Supervisors arrive from an emailed link and don't have the soft-launch
+    // access code, so a valid-looking invite link lets them in.
+    (function () { if (/[?&]invite=[0-9a-f]{20,}/.test(location.search)) { try { localStorage.setItem('cpd_gate_unlocked', '1'); } catch (e) {} } })();
+  </script>
+  <script src="js/gate.js?v=20261028a"></script>
+  <meta name="robots" content="noindex, nofollow"/>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0L9NXXFBFR');
+  </script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Supervisor - Dental Nurse Training CPD Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css?v=20261028a"/>
+  <link rel="stylesheet" href="css/cpd.css?v=20261028a"/>
+</head>
+<body>
+<body>
+  <div id="navHolder"></div>
+  <div class="page-head">
+    <div class="container">
+      <p class="crumbs">CPD Hub / Supervisors</p>
+      <h1 id="pTitle">Supervisor area</h1>
+      <p id="pSub">For dentists supervising a dental nurse on a DNT course.</p>
+    </div>
+  </div>
+  <div class="container" style="padding:2rem 0;max-width:860px">
+    <div id="app"><p style="color:var(--ink-light)">Loading...</p></div>
+  </div>
+  <div id="footHolder"></div>
+  <script src="js/config.js?v=20261028a"></script>
+  <script src="js/ui.js?v=20261028a"></script>
+  <script src="js/demo-course.js?v=20261028a"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
+  <script type="module">
+    import * as D from './js/data.js?v=20261028a';
+    let user = await D.mountChrome();
+    const app = document.getElementById('app');
+    const invite = qs('invite');
+    const msg = (icon, title, text) => { app.innerHTML = '<div class="empty-state"><div class="es-icon">' + icon + '</div><h3>' + esc(title) + '</h3><p style="max-width:520px;margin:0.5rem auto 0">' + text + '</p></div>'; };
+    const contact = '<a href="mailto:' + esc(NOTIFY_EMAIL) + '" style="color:var(--teal);font-weight:700">' + esc(NOTIFY_EMAIL) + '</a>';
+    const courses = {};
+    const courseOf = async slug => (courses[slug] = courses[slug] || await D.getCourse(slug) || {});
+    const practicalOf = c => (c.practical && c.practical.enabled) ? c.practical : {};
+
+    if (invite) await showInvite(); else await showDashboard();
+
+    // ── Signing the supervisor agreement ──────────────────────────────────
+    async function showInvite() {
+      const sv = await D.getSupervision(invite);
+      if (!sv) return msg('⚠️', 'Agreement not found', 'This link is not valid, or the invitation was cancelled. Please ask the dental nurse to send it again, or contact ' + contact + '.');
+      if (sv.status !== 'invited') {
+        if (user && user.uid === sv.supervisorUid) return showDashboard();
+        return msg('✅', 'Agreement already signed', 'This supervisor agreement has already been signed. If this was you, <a href="' + D.link('login.html?next=supervisor.html') + '" style="color:var(--teal);font-weight:700">log in</a> to see your supervisor area.');
+      }
+      const course = await courseOf(sv.slug), P = practicalOf(course), SUP = sv.supervisorTitle || P.supervisorTitle || 'supervisor';
+      document.getElementById('pTitle').textContent = 'Supervisor agreement';
+      document.getElementById('pSub').textContent = (course.title || sv.courseTitle) + ' · Dental Nurse Training';
+      if (user && !D.PREVIEW && user.uid === sv.learnerUid) return msg('🚫', 'This agreement is for your ' + SUP, 'You are logged in as ' + esc(user.email) + ', the learner who sent this invitation. Your ' + esc(SUP) + ' must open this link and sign it with their own login. Please log out, or send them the link.');
+      const statements = P.agreement && P.agreement.length ? P.agreement : ['I am a GDC registered ' + SUP + ' and I am happy to supervise this dental nurse.'];
+      app.innerHTML = '<div class="callout" style="margin-top:0"><div class="callout-label">You have been asked to supervise</div><p><strong>' + esc(sv.learnerName) + '</strong> has asked you to be their supervising ' + esc(SUP) + ' for the course <strong>' + esc(course.title || sv.courseTitle) + '</strong>. Details they gave for you: ' + esc(sv.supName) + ' · GDC ' + esc(sv.supGdc) + ' · ' + esc(sv.supPractice || '') + '.</p></div>'
+        + (course.summary ? '<div class="content-card"><h2>About the course</h2><p>' + esc(course.summary) + '</p>' + (P.cases ? '<p>The dental nurse completes ' + esc(P.cases) + ' supervised cases in your workplace' + (P.observedCases ? ', the first ' + esc(P.observedCases) + ' directly observed by you' : '') + '. You sign off each case online, then sign a final competence declaration.</p>' : '') + '</div>' : '')
+        + '<div class="content-card"><h2>Your details</h2>'
+        + '<div class="ed-grid"><div class="form-group"><label>Full name *</label><input type="text" id="aName" value="' + esc(user ? user.name : sv.supName) + '"/></div>'
+        + '<div class="form-group"><label>GDC registration number *</label><input type="text" id="aGdc" value="' + esc(sv.supGdc) + '"/></div></div>'
+        + '<div class="form-group"><label>Practice name *</label><input type="text" id="aPractice" value="' + esc(sv.supPractice || '') + '"/></div>'
+        + '<div class="form-group"><label>Practice address *</label><textarea id="aAddress" class="short"></textarea></div>'
+        + (user ? '<p style="font-size:0.88rem">Signing in as <strong>' + esc(user.email) + '</strong>. <a href="#" id="aLogout" class="submission-link">Not you?</a></p>'
+          : '<h3>Your CPD Hub login</h3><p style="font-size:0.88rem">Set a password so that only you can sign off this nurse\'s work. Already have a CPD Hub login? <a href="' + D.link('login.html?next=' + encodeURIComponent('supervisor.html?invite=' + invite)) + '" class="submission-link">Log in first</a>.</p>'
+            + '<div class="form-group"><label>Email *</label><input type="email" id="aEmail" value="' + esc(sv.supEmail) + '"/></div>'
+            + '<div class="ed-grid"><div class="form-group"><label>Create a password *</label><input type="password" id="aPass" placeholder="At least 8 characters" autocomplete="new-password"/></div>'
+            + '<div class="form-group"><label>Confirm password *</label><input type="password" id="aPass2" autocomplete="new-password"/></div></div>')
+        + '</div>'
+        + '<div class="content-card"><h2>The agreement</h2><p>Please tick each statement to confirm.</p>'
+        + statements.map(t => '<label style="display:flex;gap:0.6rem;align-items:flex-start;margin-bottom:0.7rem;font-size:0.92rem;color:var(--ink-mid)"><input type="checkbox" class="aStmt" style="margin-top:0.25rem;flex-shrink:0"/><span>' + esc(t) + '</span></label>').join('')
+        + '<div class="form-group" style="margin-top:1rem"><label>Type your full name as your signature *</label><input type="text" id="aSig"/></div>'
+        + '<div id="aErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div><button class="btn btn-primary btn-lg" id="aSign">Sign the agreement</button></div>';
+      const lo = document.getElementById('aLogout'); if (lo) lo.onclick = async (e) => { e.preventDefault(); await D.logout(); location.reload(); };
+      document.getElementById('aSign').onclick = async () => {
+        const v = id => (document.getElementById(id) || {}).value?.trim() || '';
+        const err = m => { const e = document.getElementById('aErr'); e.textContent = m; e.style.display = 'block'; };
+        const name = v('aName'), gdc = v('aGdc'), practice = v('aPractice'), address = v('aAddress'), sig = v('aSig');
+        if (!name || !gdc || !practice || !address) return err('Please fill in all your details.');
+        if ([...document.querySelectorAll('.aStmt')].some(b => !b.checked)) return err('Please tick every statement in the agreement.');
+        if (!sig || sig.toLowerCase().replace(/\s+/g, ' ') !== name.toLowerCase().replace(/\s+/g, ' ')) return err('Please type your full name exactly as above to sign.');
+        const btn = document.getElementById('aSign'); btn.disabled = true; btn.textContent = 'Signing...';
+        try {
+          if (!user) {
+            const email = v('aEmail'), pass = document.getElementById('aPass').value, pass2 = document.getElementById('aPass2').value;
+            if (!email || pass.length < 8) { btn.disabled = false; btn.textContent = 'Sign the agreement'; return err('Enter your email and a password of at least 8 characters.'); }
+            if (pass !== pass2) { btn.disabled = false; btn.textContent = 'Sign the agreement'; return err('The passwords do not match.'); }
+            try { await D.register({ name, email, gdc, workplace: practice, password: pass }); }
+            catch (e) {
+              btn.disabled = false; btn.textContent = 'Sign the agreement';
+              if (e.code === 'auth/email-already-in-use') return err('There is already a CPD Hub login for this email. Please use "Log in first" above, then come back to this link.');
+              return err('Could not create your login. Please try again.');
+            }
+            user = await D.getSessionUser();
+          }
+          if (!D.PREVIEW && user.uid === sv.learnerUid) throw new Error('learner');
+          await D.saveSupervisorProfile(user.uid, { name, email: user.email, gdc, practice, address, title: SUP });
+          await D.signSupervision(invite, user.uid, { name, gdc, practice, address, statements, signature: sig, signedAt: new Date().toISOString() });
+          D.notify('Supervisor agreement signed - please approve', name + ' (GDC ' + gdc + ', ' + practice + ') has signed the supervisor agreement for ' + sv.learnerName + ' on "' + (course.title || sv.courseTitle) + '". Please check their GDC registration and approve them in the CPD Hub admin under Supervisors.', { name: sv.learnerName, email: sv.learnerEmail, gdc: sv.learnerGdc });
+          msg('✅', 'Thank you, the agreement is signed', 'We will check your GDC registration and confirm your approval, usually within 1 working day. When ' + esc(sv.learnerName) + ' submits a case, you will get an email. Log in to your <a href="' + D.link('supervisor.html') + '" style="color:var(--teal);font-weight:700">supervisor area</a> to sign it off.');
+        } catch (e) { console.error(e); btn.disabled = false; btn.textContent = 'Sign the agreement'; err(e.message === 'learner' ? 'You cannot sign your own supervisor agreement.' : 'Could not sign. Please try again or contact ' + NOTIFY_EMAIL + '.'); }
+      };
+    }
+
+    // ── Supervisor dashboard ──────────────────────────────────────────────
+    async function showDashboard() {
+      if (!user) return msg('🔒', 'Please log in', 'Log in with the email and password you set when you signed the supervisor agreement.<br/><br/><a class="btn btn-primary" href="' + D.link('login.html?next=supervisor.html') + '">Log in</a>');
+      const svs = (await D.listSupervisionsForSupervisor(user.uid)).sort((a, b) => (b.signedAt || '').localeCompare(a.signedAt || ''));
+      if (!svs.length) return msg('🤝', 'No dental nurses yet', 'When a dental nurse asks you to supervise them, open the link in their email to sign the agreement.');
+      const allCases = await D.listCasesForSupervisor(user.uid);
+      for (const sv of svs) await courseOf(sv.slug);
+      document.getElementById('pTitle').textContent = 'Your supervisor area';
+      document.getElementById('pSub').textContent = 'Signed in as ' + user.email;
+      const toSign = allCases.filter(c => c.status === 'submitted' && svs.some(s => s.id === c.supervisionId && s.status === 'approved'));
+      let html = '<div class="content-card"><h2>Waiting for your sign-off ' + (toSign.length ? '<span class="pill pill-orange">' + toSign.length + '</span>' : '') + '</h2>'
+        + (toSign.length ? '<div class="lesson-list">' + toSign.map(c => '<div class="ll-item" style="cursor:pointer" data-case="' + esc(c.id) + '"><span class="ll-num">📒</span><span class="ll-title" style="flex:1">' + esc(c.learnerName) + '<small>' + esc(c.courseTitle || '') + ' · ' + esc((c.fields && c.fields.procedure) || '') + (c.observedRequired ? ' · directly observed case' : '') + '</small></span><span class="btn btn-primary btn-sm">Review</span></div>').join('') + '</div>' : '<p style="color:var(--ink-light)">Nothing to sign off right now.</p>')
+        + '</div>';
+      html += '<div class="content-card"><h2>Dental nurses you supervise</h2>' + svs.map(sv => {
+          const c = courses[sv.slug] || {}, P = practicalOf(c), N = Number(P.cases || 0);
+          const mine = allCases.filter(x => x.supervisionId === sv.id);
+          const sat = mine.filter(x => x.status === 'signed' && x.signoff && x.signoff.outcome === 'satisfactory').length;
+          const status = { signed: '<span class="pill pill-orange">Waiting for DNT to approve you</span>', approved: '<span class="pill pill-green">Approved</span>', rejected: '<span class="pill pill-red">Not approved</span>' }[sv.status] || '';
+          const needDecl = sv.status === 'approved' && N && sat >= N && !sv.finalDeclaration;
+          return '<div class="ed-block"><div class="ed-block-head"><strong>' + esc(sv.learnerName) + '</strong>' + status + '</div><div class="ed-block-body" style="font-size:0.9rem"><p style="font-size:0.9rem">' + esc(c.title || sv.courseTitle) + (N ? ' · ' + sat + ' of ' + N + ' cases signed off as satisfactory' : '') + '</p>'
+            + (sv.finalDeclaration ? '<p style="font-size:0.9rem">✓ Final competence declaration signed ' + fmtDate(sv.finalDeclaration.signedAt) + '</p>' : '')
+            + (needDecl ? '<button class="btn btn-primary btn-sm" data-decl="' + esc(sv.id) + '">Sign final competence declaration</button>' : '')
+            + (mine.filter(x => x.status === 'signed').length ? '<details class="reveal-item" style="margin-top:0.6rem"><summary>Cases you have signed</summary><div class="md">' + mine.filter(x => x.status === 'signed').map(x => '<p><a href="#" class="submission-link" data-case="' + esc(x.id) + '">' + esc((x.fields && x.fields.procedure) || 'Case') + '</a>: ' + (x.signoff.outcome === 'satisfactory' ? 'Satisfactory' : 'Needs development') + ', ' + fmtDate(x.signoff.signedAt) + '</p>').join('') + '</div></details>' : '')
+            + '</div></div>';
+        }).join('') + '</div>';
+      app.innerHTML = html;
+      app.querySelectorAll('[data-case]').forEach(el => el.onclick = (e) => { e.preventDefault(); showCase(allCases.find(c => c.id === el.dataset.case), svs); });
+      app.querySelectorAll('[data-decl]').forEach(b => b.onclick = () => showDeclaration(svs.find(s => s.id === b.dataset.decl)));
+    }
+
+    function showCase(c, svs) {
+      const sv = svs.find(s => s.id === c.supervisionId) || {};
+      const course = courses[c.slug] || {}, P = practicalOf(course), SUP = P.supervisorTitle || 'supervisor';
+      const fields = P.caseFields || [], prompts = P.reflectionPrompts || [];
+      const signed = c.status === 'signed';
+      let html = '<p style="margin-bottom:0.75rem"><a href="#" id="back" class="submission-link">← Back</a></p>'
+        + '<div class="content-card"><h2>' + esc(c.learnerName) + ': logbook case</h2>'
+        + (c.observedRequired ? '<div class="callout" style="margin-top:0"><div class="callout-label">Directly observed case</div><p>You must have watched the whole of this removal for it to be satisfactory.</p></div>' : '')
+        + '<table class="admin-table" style="margin-bottom:1rem"><tbody>' + fields.map(f => '<tr><td class="td-name" style="width:45%">' + esc(f.label) + '</td><td>' + esc((c.fields || {})[f.key] || '') + '</td></tr>').join('') + '</tbody></table>'
+        + '<h3>Reflection</h3>' + prompts.map((q, i) => '<p><strong>' + esc(q) + '</strong><br/>' + esc((c.reflection || {})[i] || '') + '</p>').join('') + '</div>';
+      if (signed) {
+        html += '<div class="callout"><div class="callout-label">You signed this case</div><p>' + (c.signoff.outcome === 'satisfactory' ? 'Satisfactory' : 'Needs development') + ' · ' + fmtDate(c.signoff.signedAt) + (c.signoff.comment ? '<br/>"' + esc(c.signoff.comment) + '"' : '') + '</p></div>';
+      } else {
+        html += '<div class="content-card"><h2>Your sign-off</h2>'
+          + '<div class="form-group"><label>Did you observe the whole removal? *</label><select id="sObs"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>'
+          + '<div class="form-group"><label>Outcome *</label><select id="sOut"><option value="">Select...</option><option value="satisfactory">Satisfactory</option><option value="needs-development">Needs development</option></select></div>'
+          + '<div class="form-group"><label>Comment (optional)</label><textarea id="sCom" class="short"></textarea></div>'
+          + '<label style="display:flex;gap:0.6rem;align-items:flex-start;margin-bottom:0.9rem;font-size:0.92rem;color:var(--ink-mid)"><input type="checkbox" id="sStmt" style="margin-top:0.25rem;flex-shrink:0"/><span>' + esc(P.signoffStatement || 'I confirm this entry is accurate.') + '</span></label>'
+          + '<div class="form-group"><label>Type your full name to sign *</label><input type="text" id="sSig"/></div>'
+          + '<div id="sErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div><button class="btn btn-primary" id="sSign">Sign off this case</button></div>';
+      }
+      app.innerHTML = html; window.scrollTo(0, 0);
+      document.getElementById('back').onclick = (e) => { e.preventDefault(); showDashboard(); };
+      const b = document.getElementById('sSign');
+      if (b) b.onclick = async () => {
+        const v = id => document.getElementById(id).value.trim();
+        const err = m => { const e = document.getElementById('sErr'); e.textContent = m; e.style.display = 'block'; };
+        const observed = v('sObs'), outcome = v('sOut'), sig = v('sSig');
+        if (!observed || !outcome) return err('Please answer both questions.');
+        if (outcome === 'satisfactory' && c.observedRequired && observed !== 'Yes') return err('This case had to be directly observed, so it can only be marked satisfactory if you watched the whole removal.');
+        if (!document.getElementById('sStmt').checked) return err('Please tick the statement to confirm.');
+        if (!sig) return err('Please type your name to sign.');
+        b.disabled = true;
+        try {
+          await D.signCase(c.id, { outcome, observed, comment: v('sCom'), statement: P.signoffStatement || '', name: sig, gdc: (sv.agreement && sv.agreement.gdc) || sv.supGdc || '', signedAt: new Date().toISOString() });
+          toast('Case signed off', 'success'); showDashboard();
+        } catch (e) { console.error(e); b.disabled = false; err('Could not sign off. Please try again.'); }
+      };
+    }
+
+    function showDeclaration(sv) {
+      const P = practicalOf(courses[sv.slug] || {});
+      app.innerHTML = '<p style="margin-bottom:0.75rem"><a href="#" id="back" class="submission-link">← Back</a></p><div class="content-card"><h2>Final competence declaration</h2><p>For <strong>' + esc(sv.learnerName) + '</strong>, ' + esc((courses[sv.slug] || {}).title || sv.courseTitle) + '.</p>'
+        + '<label style="display:flex;gap:0.6rem;align-items:flex-start;margin:1rem 0;font-size:0.95rem;color:var(--ink)"><input type="checkbox" id="dStmt" style="margin-top:0.3rem;flex-shrink:0"/><span>' + esc(P.finalDeclaration || 'In my professional judgement this dental nurse is competent.') + '</span></label>'
+        + '<div class="form-group"><label>Type your full name to sign *</label><input type="text" id="dSig"/></div><div id="dErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div><button class="btn btn-primary" id="dSign">Sign declaration</button></div>';
+      document.getElementById('back').onclick = (e) => { e.preventDefault(); showDashboard(); };
+      document.getElementById('dSign').onclick = async () => {
+        const sig = document.getElementById('dSig').value.trim();
+        const err = m => { const e = document.getElementById('dErr'); e.textContent = m; e.style.display = 'block'; };
+        if (!document.getElementById('dStmt').checked) return err('Please tick the statement to confirm.');
+        if (!sig) return err('Please type your name to sign.');
+        try {
+          await D.signFinalDeclaration(sv.id, { statement: P.finalDeclaration || '', name: sig, gdc: (sv.agreement && sv.agreement.gdc) || sv.supGdc || '', signedAt: new Date().toISOString() });
+          D.notify('Final competence declaration signed', sig + ' has signed the final competence declaration for ' + sv.learnerName + ' on "' + sv.courseTitle + '".', { name: sv.learnerName, email: sv.learnerEmail, gdc: sv.learnerGdc });
+          toast('Declaration signed', 'success'); showDashboard();
+        } catch (e) { console.error(e); err('Could not sign. Please try again.'); }
+      };
+    }
+  </script>
+</body>
+</html>

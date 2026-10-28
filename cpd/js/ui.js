@@ -86,6 +86,9 @@ function courseChips(c) {
     '⏱ ' + h + ' hour' + (h === 1 ? '' : 's') + (cpdType(c) === 'general' ? ' CPD' : ' verifiable CPD'),
     '📚 ' + n + ' lesson' + (n === 1 ? '' : 's'),
     '🧩 Interactive activities',
+    ...(c.practical && c.practical.enabled ? ['🦷 ' + c.practical.cases + ' supervised cases'] : []),
+    ...(c.practical && c.practical.enabled && c.practical.caseStudy && c.practical.caseStudy.enabled ? ['📝 Case study'] : []),
+    ...(Number(c.completionMonths) > 0 ? ['📅 ' + c.completionMonths + ' months to complete'] : []),
     lq ? '✅ ' + lq + ' module quiz' + (lq === 1 ? '' : 'zes') + ' + ' + q + '-question final assessment' : '✅ ' + q + '-question quiz',
     '🏅 ' + (cpdType(c) === 'general' ? 'CPD certificate' : 'Verifiable CPD certificate'),
   ].map(t => '<span class="ch-chip">' + esc(t) + '</span>').join('');
@@ -96,8 +99,12 @@ function objectivesGrid(c) {
 function lessonList(c, opts) {
   opts = opts || {};
   const lessons = (c.lessonTitles || []).map((t, i) => '<div class="ll-item"><span class="ll-num">' + (i + 1) + '</span><span class="ll-title">' + esc(t) + (c.lessonQuizFlags && c.lessonQuizFlags[i] ? '<small>Includes a module quiz</small>' : '') + '</span></div>').join('');
+  const P = c.practical && c.practical.enabled ? c.practical : null, sup = (P && P.supervisorTitle) || 'supervisor';
   const finish = [['✅', c.lessonQuizCount ? 'Final assessment' : 'End of course quiz', 'Pass mark ' + (c.passMark || 80) + '%. Retake as often as you need.'],
-                  ['🪞', 'Reflection', 'A few short questions on what you learned.'],
+                  ...(P ? [['🤝', 'Your ' + sup, 'Your ' + sup + ' signs an online supervisor agreement, which we approve.'],
+                           ['📒', 'Supervised logbook', P.cases + ' cases in your workplace, each signed off by your ' + sup + (P.observedCases ? '. The first ' + P.observedCases + ' are directly observed.' : '.')]] : []),
+                  ...(P && P.caseStudy && P.caseStudy.enabled ? [['📝', 'Case study', 'Write up one of your cases' + (P.caseStudy.minWords ? ' (' + P.caseStudy.minWords + (P.caseStudy.maxWords ? ' to ' + P.caseStudy.maxWords : '+') + ' words)' : '') + '. Marked by DNT.']] : []),
+                  ...(c.hasReflection === false ? [] : [['🪞', 'Reflection', 'A few short questions on what you learned.']]),
                   ['💬', 'Feedback', 'Tell us what you thought.'],
                   ['🏅', 'Your certificate', cpdType(c) === 'both' ? 'A verifiable CPD certificate if you add your GDC number, or a CPD certificate.' : cpdType(c) === 'general' ? 'A CPD certificate to download and keep.' : 'A verifiable CPD certificate for your CPD record.']]
     .map(([i, t, d]) => '<div class="ll-item finish"><span class="ll-num">' + i + '</span><span class="ll-title">' + esc(t) + '<small>' + esc(d) + '</small></span></div>').join('');

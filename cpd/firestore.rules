@@ -64,6 +64,66 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ── Supervised practice ─────────────────────────────────────────────
+    // A supervisor (e.g. a dentist) has a CPD Hub login and a profile here.
+    match /supervisors/{uid} {
+      allow read: if isMe(uid) || isAdmin();
+      allow create, update: if isMe(uid) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // One supervision per learner, course and supervisor. Its id is a long
+    // random code emailed to the supervisor, so only people with the link
+    // can open it. Learner invites -> supervisor signs (with their own
+    // login) -> an admin approves. Only an approved supervisor can sign off
+    // cases or the final declaration.
+    function supervisionOf(id) { return get(/databases/$(database)/documents/supervisions/$(id)).data; }
+    function approvedSupervisorFor(sid, learnerUid) {
+      let s = supervisionOf(sid);
+      return s.status == 'approved' && s.supervisorUid == request.auth.uid && s.learnerUid == learnerUid;
+    }
+    match /supervisions/{id} {
+      // Anyone with the emailed link can open it, so the dentist can read the
+      // agreement before logging in. The id is unguessable and lists are blocked.
+      allow get: if true;
+      allow list: if isAdmin() || (signedIn() && (resource.data.learnerUid == request.auth.uid || resource.data.get('supervisorUid', '') == request.auth.uid));
+      allow create: if signedIn() && request.resource.data.learnerUid == request.auth.uid
+        && request.resource.data.status == 'invited' && !('supervisorUid' in request.resource.data);
+      allow update: if isAdmin()
+        // the supervisor signs the agreement (cannot be the learner's own login)
+        || (signedIn() && resource.data.status == 'invited' && request.resource.data.status == 'signed'
+            && request.resource.data.supervisorUid == request.auth.uid && request.auth.uid != resource.data.learnerUid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'supervisorUid', 'agreement', 'signedAt']))
+        // the approved supervisor signs the final competence declaration
+        || (signedIn() && resource.data.status == 'approved' && resource.data.supervisorUid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['finalDeclaration']));
+      allow delete: if isAdmin() || (signedIn() && resource.data.learnerUid == request.auth.uid && resource.data.status == 'invited');
+    }
+
+    // Logbook cases. Learners write their own until a case is signed; after
+    // that only the approved supervisor (sign-off) or an admin can change it.
+    match /cases/{id} {
+      allow read: if isAdmin() || (signedIn() && (resource.data.learnerUid == request.auth.uid || resource.data.get('supervisorUid', '') == request.auth.uid));
+      allow create: if signedIn() && request.resource.data.learnerUid == request.auth.uid
+        && request.resource.data.status in ['draft', 'submitted'] && !('signoff' in request.resource.data)
+        && hasAccess(request.auth.uid, request.resource.data.slug);
+      allow update: if isAdmin()
+        || (signedIn() && resource.data.learnerUid == request.auth.uid && resource.data.status in ['draft', 'submitted']
+            && request.resource.data.learnerUid == request.auth.uid && request.resource.data.status in ['draft', 'submitted']
+            && !('signoff' in request.resource.data))
+        || (signedIn() && resource.data.status == 'submitted' && resource.data.supervisorUid == request.auth.uid
+            && approvedSupervisorFor(resource.data.supervisionId, resource.data.learnerUid)
+            && request.resource.data.status == 'signed'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'signoff', 'signedAt']));
+      allow delete: if isAdmin() || (signedIn() && resource.data.learnerUid == request.auth.uid && resource.data.status == 'draft');
+    }
+
+    // Case study marks: only admins write; learners can read their own.
+    match /marks/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.learnerUid == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
     // Uploaded pictures/videos: shown inside lessons, so anyone can read.
     match /media/{id} {
       allow read: if true;

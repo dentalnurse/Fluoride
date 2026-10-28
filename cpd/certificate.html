@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/gate.js?v=20261006c"></script>
+  <script src="js/gate.js?v=20261028a"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -59,11 +59,11 @@
   <div class="screen-bar"><a href="dashboard.html" id="backLink">← Back to My CPD</a><button class="print-btn" onclick="window.print()">🖨 Print / save as PDF</button></div>
   <div id="out"><div class="msg">Loading certificate...</div></div>
 
-  <script src="js/config.js?v=20261006c"></script>
-  <script src="js/ui.js?v=20261006c"></script>
-  <script src="js/demo-course.js?v=20261006c"></script>
+  <script src="js/config.js?v=20261028a"></script>
+  <script src="js/ui.js?v=20261028a"></script>
+  <script src="js/demo-course.js?v=20261028a"></script>
   <script type="module">
-    import * as D from './js/data.js?v=20261006c';
+    import * as D from './js/data.js?v=20261028a';
     document.getElementById('backLink').href = D.link('dashboard.html');
     if (D.PREVIEW) document.querySelector('.screen-bar').insertAdjacentHTML('afterend', '<div style="background:#FFF3CD;color:#92400E;text-align:center;padding:0.6rem 1rem;font-size:0.9rem"><strong>Preview mode:</strong> this is a sample certificate.</div>');
     const out = document.getElementById('out');
@@ -83,6 +83,23 @@
     const outcomes = c.outcomes || [];
     const ver = verifiableFor(course || { cpdType: prog.cpdType }, learner);
 
+    // Courses with supervised practice: check the signed records, not just the
+    // learner's own progress, before showing the certificate.
+    const P = course && course.practical && course.practical.enabled ? course.practical : null;
+    let practicalLine = '', supBlock = '';
+    if (P) {
+      const [svs, cs, mark] = await Promise.all([D.listSupervisionsForLearner(uid).catch(() => []), D.listCasesForLearner(uid).catch(() => []), D.getMark(uid, slug)]);
+      const sv = svs.find(x => x.slug === slug && x.status === 'approved' && x.finalDeclaration);
+      const sat = cs.filter(x => x.slug === slug && x.status === 'signed' && x.signoff && x.signoff.outcome === 'satisfactory').length;
+      const csOk = !(P.caseStudy && P.caseStudy.enabled) || (mark && mark.status === 'satisfactory');
+      if (!sv || sat < Number(P.cases || 0) || !csOk) { fail('This certificate is not available yet. Your supervised logbook, final declaration' + (P.caseStudy && P.caseStudy.enabled ? ' and case study' : '') + ' must all be signed off and marked first.'); throw 0; }
+      const supName = (sv.agreement && sv.agreement.name) || sv.supName || '';
+      const supGdc = (sv.agreement && sv.agreement.gdc) || sv.supGdc || '';
+      const supTitle = P.supervisorTitle || 'supervisor';
+      practicalLine = 'has successfully completed the above course, including the knowledge quiz, ' + sat + ' supervised cases signed off by their supervising ' + supTitle + ', a final competence declaration' + (P.caseStudy && P.caseStudy.enabled ? ' and a marked case study' : '') + '.';
+      supBlock = '<div class="cert-gdc" style="margin-top:-0.4rem">Supervising ' + esc(supTitle) + ': <strong>' + esc(supName) + '</strong>' + (supGdc ? ' (GDC ' + esc(supGdc) + ')' : '') + ', competence declared ' + fmtDate(sv.finalDeclaration.signedAt) + '</div>';
+    }
+
     out.innerHTML = '<div class="cert-page">'
       + '<div class="cert-logo"><img src="' + LOGO_URL + '" alt="Dental Nurse Training" onerror="this.style.display=\'none\'"/></div>'
       + '<div class="cert-type">' + (ver ? 'Certificate of verifiable CPD' : 'Certificate of CPD') + '</div>'
@@ -91,7 +108,8 @@
       + '<div class="cert-certifies">This is to certify that</div>'
       + '<div class="cert-name">' + esc(learner.name || '') + '</div>'
       + (ver || learner.gdc ? '<div class="cert-gdc">GDC registration number: ' + esc(learner.gdc || 'not given') + '</div>' : '<div style="height:0.6rem"></div>')
-      + '<div class="cert-certifies">has successfully completed the above online CPD course, including the end of course assessment, reflection and feedback.</div>'
+      + '<div class="cert-certifies">' + (practicalLine ? esc(practicalLine) : 'has successfully completed the above online CPD course, including the end of course assessment, reflection and feedback.') + '</div>'
+      + supBlock
       + '<div style="height:1.25rem"></div>'
       + '<div class="cpd-summary">'
       + '<div class="cpd-col"><div class="cpd-label">' + (ver ? 'Verifiable CPD' : 'CPD hours') + '</div><div class="cpd-value">' + esc(c.hours) + ' hour' + (Number(c.hours) === 1 ? '' : 's') + '</div></div>'

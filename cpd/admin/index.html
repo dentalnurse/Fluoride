@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="../js/gate.js?v=20261006c"></script>
+  <script src="../js/gate.js?v=20261028a"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin - Dental Nurse Training CPD Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../../css/style.css?v=20261006c"/>
-  <link rel="stylesheet" href="../css/cpd.css?v=20261006c"/>
+  <link rel="stylesheet" href="../../css/style.css?v=20261028a"/>
+  <link rel="stylesheet" href="../css/cpd.css?v=20261028a"/>
 </head>
 <body>
   <div id="navHolder"></div>
@@ -39,6 +39,8 @@
         <div class="admin-tab" data-tab="payments">💳 Payments <span id="payBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab" data-tab="learners">👥 Learners</div>
         <div class="admin-tab" data-tab="courses">📚 Courses</div>
+        <div class="admin-tab" data-tab="supervisors">🤝 Supervisors <span id="supBadge" class="admin-tab-badge" style="display:none"></span></div>
+        <div class="admin-tab" data-tab="marking">📝 Case studies <span id="markBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab" data-tab="completions">🏅 Completions</div>
         <div class="admin-tab" data-tab="feedback">💬 Feedback</div>
         <div class="admin-tab" data-tab="media">🖼️ Pictures &amp; videos</div>
@@ -52,12 +54,12 @@
   <input type="file" id="importFile" accept=".json,application/json" style="display:none"/>
   <div id="footHolder"></div>
 
-  <script src="../js/config.js?v=20261006c"></script>
-  <script src="../js/ui.js?v=20261006c"></script>
-  <script src="../js/render.js?v=20261006c"></script>
-  <script src="../js/demo-course.js?v=20261006c"></script>
+  <script src="../js/config.js?v=20261028a"></script>
+  <script src="../js/ui.js?v=20261028a"></script>
+  <script src="../js/render.js?v=20261028a"></script>
+  <script src="../js/demo-course.js?v=20261028a"></script>
   <script type="module">
-    import * as D from '../js/data.js?v=20261006c';
+    import * as D from '../js/data.js?v=20261028a';
     const me = await D.mountChrome({ prefix: '../' });
     document.getElementById('adminLoginLink').href = D.link('../login.html?next=admin/index.html');
     document.getElementById('viewHub').href = D.link('../index.html');
@@ -74,7 +76,13 @@
     async function loadAll() {
       const [courses, learners, access, progress, orders] = await Promise.all([
         D.listCourses(true), D.listLearners(), D.listAllAccess(), D.listAllProgress(), D.listAllOrders()]);
-      S = { courses, learners, access, progress, orders, bySlug: Object.fromEntries(courses.map(c => [c.slug, c])) };
+      const safe = p => p.catch(e => { console.warn(e); return []; });
+      const [supervisions, cases, marks] = await Promise.all([safe(D.listAllSupervisions()), safe(D.listAllCases()), safe(D.listAllMarks())]);
+      S = { courses, learners, access, progress, orders, supervisions, cases, marks, bySlug: Object.fromEntries(courses.map(c => [c.slug, c])) };
+      S.markOf = (uid, slug) => marks.find(m => m.learnerUid === uid && m.slug === slug) || null;
+      S.supPending = supervisions.filter(x => x.status === 'signed');
+      S.toMark = progress.filter(p => p.caseStudy && !(S.markOf(p.uid, p.slug) && S.markOf(p.uid, p.slug).forVersion === p.caseStudy.version));
+      [['supBadge', S.supPending.length], ['markBadge', S.toMark.length]].forEach(([id, n]) => { const b = document.getElementById(id); b.textContent = n; b.style.display = n ? '' : 'none'; });
       const pending = orders.filter(o => o.status === 'pending' && !((access[o.uid] || {})[o.slug]));
       S.pending = pending;
       document.getElementById('statPay').textContent = pending.length;
@@ -96,7 +104,7 @@
       document.querySelectorAll('#tabs .admin-tab').forEach(x => x.classList.toggle('active', x.dataset.tab === t));
       body.innerHTML = '<p style="color:var(--ink-light)">Loading...</p>';
       try { await loadAll(); } catch (e) { console.error(e); body.innerHTML = '<div class="callout callout-warn"><p>Could not load data: ' + esc(e.message) + '</p></div>'; return; }
-      ({ payments: tabPayments, learners: tabLearners, courses: tabCourses, completions: tabCompletions, feedback: tabFeedback, media: tabMedia, admins: tabAdmins })[t]();
+      ({ payments: tabPayments, learners: tabLearners, courses: tabCourses, supervisors: tabSupervisors, marking: tabMarking, completions: tabCompletions, feedback: tabFeedback, media: tabMedia, admins: tabAdmins })[t]();
     }
     document.querySelectorAll('#tabs .admin-tab').forEach(x => x.onclick = () => show(x.dataset.tab));
 
@@ -131,7 +139,7 @@
       body.querySelectorAll('[data-unlock]').forEach(b => b.onclick = async () => {
         const o = S.pending[b.dataset.unlock];
         if (!confirm('Have you checked in Stripe that ' + o.name + ' has paid ' + o.price + ' for "' + o.title + '"?')) return;
-        try { await D.grantAccess(o.uid, o.slug, me.email, 'Paid ' + o.price); toast('Unlocked. Now email the learner.', 'success'); location.href = unlockEmail(learnerOf(o.uid), o.slug); show('payments'); }
+        try { await D.grantAccess(o.uid, o.slug, me.email, 'Paid ' + o.price, (S.bySlug[o.slug] || {}).completionMonths); toast('Unlocked. Now email the learner.', 'success'); location.href = unlockEmail(learnerOf(o.uid), o.slug); show('payments'); }
         catch (e) { toast('Could not unlock: ' + e.message, 'error'); }
       });
       body.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
@@ -160,6 +168,23 @@
       draw();
     }
 
+    function practicalSummary(uid, slug, a) {
+      const c = S.bySlug[slug] || {}, P = c.practical && c.practical.enabled ? c.practical : null;
+      let h = '';
+      if (a.expiresAt) { const past = new Date(a.expiresAt) < new Date(); h += '<p style="font-size:0.85rem">' + (past ? '<strong style="color:var(--warn)">Deadline passed</strong> ' : 'Complete by ') + fmtDate(a.expiresAt) + ' <button class="btn btn-outline btn-sm" data-extend="' + esc(slug) + '" style="margin-left:0.4rem">Extend by 1 month</button></p>'; }
+      if (P) {
+        const sv = S.supervisions.filter(x => x.learnerUid === uid && x.slug === slug).sort((x, y) => (y.createdAt || '').localeCompare(x.createdAt || ''))[0];
+        const cs = S.cases.filter(x => x.learnerUid === uid && x.slug === slug);
+        const sat = cs.filter(x => x.status === 'signed' && x.signoff && x.signoff.outcome === 'satisfactory').length;
+        const mk = S.markOf(uid, slug);
+        h += '<p style="font-size:0.85rem">' + esc(P.supervisorTitle || 'Supervisor') + ': ' + (sv ? esc(sv.supName) + ' (' + esc(sv.status) + ')' : 'not invited yet') + ' · Logbook: ' + sat + ' of ' + P.cases + ' satisfactory'
+          + (cs.length ? ' (' + cs.filter(x => x.status === 'submitted').length + ' awaiting sign-off)' : '') + (sv && sv.finalDeclaration ? ' · ✓ final declaration' : '')
+          + (P.caseStudy && P.caseStudy.enabled ? ' · Case study: ' + (mk ? (mk.status === 'satisfactory' ? 'Satisfactory' : 'Needs development') : 'not marked') : '') + '</p>'
+          + (cs.length ? '<details class="reveal-item"><summary>Logbook cases</summary><div class="md">' + cs.sort((x, y) => (x.createdAt || '').localeCompare(y.createdAt || '')).map((x, i) => '<p><strong>Case ' + (i + 1) + '</strong>: ' + esc((x.fields || {}).procedure || '') + ' · ' + esc(x.status) + (x.signoff ? ' · ' + esc(x.signoff.outcome) + ' by ' + esc(x.signoff.name) + (x.signoff.observed ? ' (observed: ' + esc(x.signoff.observed) + ')' : '') : '') + '</p>').join('') + '</div></details>' : '');
+      }
+      return h;
+    }
+
     function manageLearner(uid) {
       const l = learnerOf(uid);
       const acc = S.access[uid] || {};
@@ -168,6 +193,7 @@
         const rows = Object.entries(acc).map(([s, a]) => {
           const p = S.progress.find(x => x.uid === uid && x.slug === s) || {};
           return '<div class="ed-block"><div class="ed-block-head"><strong>' + esc(titleOf(s)) + '</strong><span class="pill ' + (p.completedAt ? 'pill-green' : 'pill-teal') + '">' + (p.completedAt ? 'Completed ' + fmtDate(p.completedAt) : (p.percent || 0) + '% complete') + '</span></div><div class="ed-block-body" style="font-size:0.85rem">'
+            + practicalSummary(uid, s, a)
             + '<p style="font-size:0.85rem">Unlocked ' + fmtDate(a.grantedAt) + ' by ' + esc(a.grantedBy || '') + (a.note ? ' (' + esc(a.note) + ')' : '') + '. Quiz: ' + (p.quiz ? 'best ' + p.quiz.best + '%, ' + p.quiz.attempts + ' attempt' + (p.quiz.attempts === 1 ? '' : 's') + (p.quiz.passed ? ', passed' : '') : 'not taken') + '.</p>'
             + (p.reflection ? '<details class="reveal-item"><summary>Reflection</summary><div class="md">' + (p.reflection.questions || []).map((q, i) => '<p><strong>' + esc(q) + '</strong><br/>' + esc((p.reflection.answers || [])[i] || '') + '</p>').join('') + '</div></details>' : '')
             + (p.feedback ? '<details class="reveal-item"><summary>Feedback</summary><div class="md"><p>' + Object.entries(p.feedback.ratings || {}).map(([k, v]) => esc(k) + ': ' + v + '/5').join(' · ') + '<br/>Free from bias: ' + esc(p.feedback.bias) + ' · Time taken: ' + esc(p.feedback.time) + '</p>' + (p.feedback.comments ? '<p>"' + esc(p.feedback.comments) + '"</p>' : '') + '</div></details>' : '')
@@ -178,6 +204,12 @@
         m.el.innerHTML = '<p style="font-size:0.88rem">' + esc(l.email) + ' · GDC ' + esc(l.gdc) + (l.workplace ? ' · ' + esc(l.workplace) : '') + ' · joined ' + fmtDate(l.createdAt) + '</p>'
           + '<h3 style="margin:1rem 0 0.6rem">Courses</h3>' + (rows || '<p style="color:var(--ink-light);font-size:0.88rem">No courses yet.</p>')
           + (options ? '<h3 style="margin:1.25rem 0 0.6rem">Give access to a course</h3><div class="ed-grid"><div class="form-group"><select id="gCourse">' + options + '</select></div><div class="form-group"><input type="text" id="gNote" placeholder="Reason, e.g. Paid by bank transfer / Free place"/></div></div><button class="btn btn-success btn-sm" id="gBtn">Give access</button>' : '');
+        m.el.querySelectorAll('[data-extend]').forEach(b => b.onclick = async () => {
+          const s = b.dataset.extend, cur = acc[s].expiresAt ? new Date(acc[s].expiresAt) : new Date();
+          const base = cur < new Date() ? new Date() : cur; base.setMonth(base.getMonth() + 1);
+          if (!confirm('Extend "' + titleOf(s) + '" to ' + fmtDate(base.toISOString()) + '?')) return;
+          await D.setAccessExpiry(uid, s, base.toISOString()); acc[s].expiresAt = base.toISOString(); await loadAll(); draw(); toast('Deadline extended.', 'success');
+        });
         m.el.querySelectorAll('[data-revoke]').forEach(b => b.onclick = async () => {
           if (!confirm('Remove access to "' + titleOf(b.dataset.revoke) + '"? Their progress is kept and comes back if you give access again.')) return;
           await D.revokeAccess(uid, b.dataset.revoke); delete acc[b.dataset.revoke]; await loadAll(); draw();
@@ -189,7 +221,7 @@
         const g = document.getElementById('gBtn');
         if (g) g.onclick = async () => {
           const s = document.getElementById('gCourse').value;
-          await D.grantAccess(uid, s, me.email, document.getElementById('gNote').value.trim());
+          await D.grantAccess(uid, s, me.email, document.getElementById('gNote').value.trim(), (S.bySlug[s] || {}).completionMonths);
           acc[s] = { grantedAt: new Date().toISOString(), grantedBy: me.email, note: document.getElementById('gNote').value.trim() };
           await loadAll(); draw(); toast('Access given.', 'success');
         };
@@ -292,17 +324,50 @@
       { key: 'aims', label: 'Aims *', type: 'md', short: true, help: 'What the course sets out to do. GDC requirement for verifiable CPD.' },
       { key: 'objectives', label: 'Objectives * (one per line, finishing "By the end of this course you will be able to...")', type: 'lines', help: 'GDC requirement for verifiable CPD.' },
       { key: 'certNote', label: 'Important note (optional)', type: 'md', short: true, help: 'Shown on the course overview and printed on the certificate. For example: "This awareness course is not a regulated First Aid at Work qualification."' },
+      { key: 'notice', label: 'Important notice before enrolling (optional)', type: 'md', short: true, help: 'Shown in a red box at the top of the course page, e.g. indemnity or entry requirements.' },
+      { key: 'enrolDeclarations', label: 'Enrolment declarations (one per line, optional)', type: 'lines', help: 'Learners must tick every one before they can buy, e.g. "I confirm I have checked my indemnity cover". Saved with their order.' },
+      { key: 'requireGdc', label: 'Learners must have a GDC number to enrol', type: 'check' },
+      { key: 'completionMonths', label: 'Months to complete (leave blank for no deadline)', type: 'number', min: 1, help: 'The deadline starts when you unlock the course. You can extend it for a learner in Learners.' },
       { key: 'updated', label: 'Content last reviewed', type: 'date' },
     ];
     const QUIZ_FIELDS = [
       { key: 'passMark', label: 'Pass mark (%)', type: 'number', min: 1 },
+      { key: 'timeLimit', label: 'Time limit in minutes (leave blank for no limit)', type: 'number', min: 1 },
+      { key: 'minPerTag', label: 'At least this many questions from each module (optional)', type: 'number', min: 1, help: 'Uses the module number set on each question. Only applies when "Questions per attempt" is set.' },
       { key: 'perAttempt', label: 'Questions per attempt (leave blank to ask every question)', type: 'number', min: 1, help: 'If set, each attempt asks this many questions chosen at random from the list below.' },
       { key: 'questions', label: 'Questions', type: 'rows', item: 'Question', fields: [
         { key: 'q', label: 'Question', type: 'text' },
         { key: 'options', label: 'Answer options (one per line)', type: 'lines' },
         { key: 'answer', label: 'Correct option number (1 = first line)', type: 'number', min: 1 },
         { key: 'explain', label: 'Explanation shown after marking', type: 'text' },
+        { key: 'tag', label: 'Module number (optional, for "at least this many from each module")', type: 'number', min: 1 },
       ] },
+    ];
+    const PRACTICAL_FIELDS = [
+      { key: 'enabled', label: 'This course includes supervised practice', type: 'check' },
+      { key: 'supervisorTitle', label: 'Who supervises (e.g. dentist)', type: 'text' },
+      { key: 'cases', label: 'Number of logbook cases needed', type: 'number', min: 1 },
+      { key: 'observedCases', label: 'How many of the first cases must be directly observed', type: 'number', min: 0 },
+      { key: 'agreement', label: 'Supervisor agreement statements (one per line)', type: 'lines', help: 'The supervisor ticks each one when signing the agreement.' },
+      { key: 'caseFields', label: 'Logbook questions for each case', type: 'rows', item: 'Question', fields: [
+        { key: 'key', label: 'Short code (letters only, e.g. procedure). Use "procedure" and "date" for the case title and date.', type: 'text' },
+        { key: 'label', label: 'Question', type: 'text' },
+        { key: 'type', label: 'Answer type', type: 'select', options: [['text', 'Short text'], ['textarea', 'Long text'], ['number', 'Number'], ['date', 'Date'], ['yesno', 'Yes / No'], ['select', 'Drop-down list']] },
+        { key: 'options', label: 'Drop-down choices (one per line)', type: 'lines' },
+        { key: 'help', label: 'Help text (optional)', type: 'text' },
+      ] },
+      { key: 'reflectionPrompts', label: 'Reflection questions for each case (one per line)', type: 'lines' },
+      { key: 'reflectionWords', label: 'Reflection length guidance (e.g. 100 to 150 words)', type: 'text', help: 'The first number is used as the minimum.' },
+      { key: 'signoffStatement', label: 'Supervisor sign-off statement for each case', type: 'md', short: true },
+      { key: 'finalDeclaration', label: 'Final competence declaration', type: 'md', short: true },
+    ];
+    const CASESTUDY_FIELDS = [
+      { key: 'enabled', label: 'Learners write a case study, marked by you', type: 'check' },
+      { key: 'brief', label: 'Brief', type: 'md', short: true },
+      { key: 'headings', label: 'Headings to cover (one per line)', type: 'lines' },
+      { key: 'minWords', label: 'Minimum words', type: 'number', min: 0 },
+      { key: 'maxWords', label: 'Maximum words', type: 'number', min: 0 },
+      { key: 'criteria', label: 'Marking criteria (one per line, as "Criterion: Satisfactory when...")', type: 'lines' },
     ];
 
     let ed = null, edDirty = false, edSection = 'details';
@@ -346,7 +411,7 @@
       nav.innerHTML = item('details', '📋 Course details') + '<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-light);padding:0.75rem 0.75rem 0.25rem">Lessons</div>'
         + L.map((l, i) => item('lesson:' + l.id, (i + 1) + '. ' + esc(l.title || 'Untitled'), true)).join('')
         + '<button class="ed-sub" id="addLesson" style="color:var(--teal);font-weight:700">＋ Add lesson</button>'
-        + item('quiz', '✅ Quiz (' + ed.content.quiz.questions.length + ')') + item('reflection', '🪞 Reflection questions') + item('help', '❔ Writing tips');
+        + item('quiz', '✅ Quiz (' + ed.content.quiz.questions.length + ')') + item('practical', '🦷 Supervised practice') + item('reflection', '🪞 Reflection questions') + item('help', '❔ Writing tips');
       nav.querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { edSection = b.dataset.sec; drawEditor(); });
       document.getElementById('addLesson').onclick = () => { const l = { id: newId(), title: 'Lesson ' + (L.length + 1), blocks: [] }; L.push(l); edSection = 'lesson:' + l.id; dirty(); drawEditor(); };
 
@@ -361,6 +426,13 @@
       } else if (edSection === 'quiz') {
         panel.innerHTML = '<h3 style="margin-bottom:0.5rem">End of course quiz</h3><p style="font-size:0.88rem;margin-bottom:1rem">Learners must pass this to get their certificate. Questions and answer options are shuffled each attempt. Aim for at least 5 to 10 questions that test each objective.</p>';
         renderFields(panel, ed.content.quiz, QUIZ_FIELDS);
+      } else if (edSection === 'practical') {
+        ed.meta.practical = ed.meta.practical || { enabled: false, supervisorTitle: 'dentist', cases: 5, observedCases: 0, agreement: [], caseFields: [], reflectionPrompts: [], caseStudy: { enabled: false } };
+        ed.meta.practical.caseStudy = ed.meta.practical.caseStudy || { enabled: false };
+        panel.innerHTML = '<h3 style="margin-bottom:0.5rem">Supervised practice</h3><p style="font-size:0.88rem;margin-bottom:1rem">For courses with a workplace logbook signed off by a supervisor, such as suture removal. The learner invites their supervisor, who signs an agreement that you approve in the Supervisors tab.</p>';
+        renderFields(panel, ed.meta.practical, PRACTICAL_FIELDS);
+        const cs = document.createElement('div'); cs.innerHTML = '<h3 style="margin:1.5rem 0 0.5rem">Case study</h3>'; panel.appendChild(cs);
+        renderFields(cs, ed.meta.practical.caseStudy, CASESTUDY_FIELDS);
       } else if (edSection === 'reflection') {
         panel.innerHTML = '<h3 style="margin-bottom:0.5rem">Reflection questions</h3><p style="font-size:0.88rem;margin-bottom:1rem">Learners answer these after passing the quiz. Their answers are printed on the back of the certificate.</p>';
         renderFields(panel, ed.content, [{ key: 'reflection', label: 'Questions (one per line)', type: 'lines' }]);
@@ -521,6 +593,17 @@
         if ((q.options || []).length < 2) errs.push('Lesson ' + (li + 1) + ' module quiz, question ' + (i + 1) + ' needs at least 2 options.');
         else if (!(q.answer >= 1 && q.answer <= q.options.length)) errs.push('Lesson ' + (li + 1) + ' module quiz, question ' + (i + 1) + ': the correct option number does not match the options.');
       }));
+      const P = m.practical;
+      if (P && P.enabled) {
+        if (!(Number(P.cases) >= 1)) errs.push('Supervised practice: set how many logbook cases are needed.');
+        if (Number(P.observedCases) > Number(P.cases)) errs.push('Supervised practice: observed cases cannot be more than the total cases.');
+        if (!(P.agreement || []).length) errs.push('Supervised practice: add the supervisor agreement statements.');
+        if (!(P.caseFields || []).length) errs.push('Supervised practice: add the logbook questions.');
+        const keys = (P.caseFields || []).map(f => f.key);
+        if (keys.some(k => !/^[a-zA-Z]+$/.test(k || ''))) errs.push('Supervised practice: every logbook question needs a short code using letters only.');
+        if (new Set(keys).size !== keys.length) errs.push('Supervised practice: two logbook questions have the same short code.');
+        if (P.caseStudy && P.caseStudy.enabled && Number(P.caseStudy.maxWords) && Number(P.caseStudy.minWords) > Number(P.caseStudy.maxWords)) errs.push('Case study: the minimum words is more than the maximum.');
+      }
       c.quiz.questions.forEach((q, i) => {
         if ((q.options || []).length < 2) errs.push('Quiz question ' + (i + 1) + ' needs at least 2 options.');
         else if (!(q.answer >= 1 && q.answer <= q.options.length)) errs.push('Quiz question ' + (i + 1) + ': the correct option number does not match the options.');
@@ -611,6 +694,74 @@
         m.el.querySelectorAll('.media-tile').forEach(t => { t.classList.add('pickable'); t.onclick = () => { onPick(media[t.dataset.i].url); m.close(); }; });
       };
       draw();
+    }
+
+    // ══ Supervisors ═══════════════════════════════════════════════════════
+    function tabSupervisors() {
+      const order = { signed: 0, invited: 1, approved: 2, rejected: 3 };
+      const list = S.supervisions.slice().sort((a, b) => (order[a.status] - order[b.status]) || (b.signedAt || b.createdAt || '').localeCompare(a.signedAt || a.createdAt || ''));
+      body.innerHTML = '<div class="callout" style="margin-top:0"><div class="callout-label">Approving supervisors</div><p>When a supervisor signs the agreement they appear here. Check their name and GDC number on the <a href="https://olr.gdc-uk.org/searchregister" target="_blank" rel="noopener">GDC register</a> (and that they are registered as a dentist), then approve them. The learner\'s logbook opens once they are approved.</p></div>'
+        + (list.length ? list.map((x, i) => {
+            const a = x.agreement || {};
+            const pill = { signed: '<span class="pill pill-orange">Signed, needs approval</span>', invited: '<span class="pill pill-grey">Invited, not signed yet</span>', approved: '<span class="pill pill-green">Approved</span>', rejected: '<span class="pill pill-red">Not approved</span>' }[x.status] || '';
+            return '<div class="ed-block"><div class="ed-block-head"><strong>' + esc(x.supName) + ' for ' + esc(x.learnerName) + '</strong>' + pill + '</div><div class="ed-block-body" style="font-size:0.88rem">'
+              + '<p style="font-size:0.88rem">' + esc(titleOf(x.slug)) + ' · learner: ' + esc(x.learnerEmail || '') + '</p>'
+              + '<p style="font-size:0.88rem">Details given by the learner: ' + esc(x.supName) + ', GDC ' + esc(x.supGdc) + ', ' + esc(x.supPractice || '') + ', ' + esc(x.supEmail) + '</p>'
+              + (x.status !== 'invited' ? '<p style="font-size:0.88rem"><strong>Signed by:</strong> ' + esc(a.name) + ', GDC <strong>' + esc(a.gdc) + '</strong>, ' + esc(a.practice) + ', ' + esc(a.address) + ' · signature "' + esc(a.signature) + '" on ' + fmtDate(a.signedAt) + '</p>'
+                + (a.gdc && x.supGdc && String(a.gdc).trim() !== String(x.supGdc).trim() ? '<p style="font-size:0.85rem;color:var(--warn)">⚠ The GDC number they signed with is different from the one the learner gave.</p>' : '') : '')
+              + (x.finalDeclaration ? '<p style="font-size:0.88rem">✓ Final declaration signed ' + fmtDate(x.finalDeclaration.signedAt) + '</p>' : '')
+              + (x.rejectReason ? '<p style="font-size:0.88rem">Reason: ' + esc(x.rejectReason) + '</p>' : '')
+              + '<div class="admin-actions" style="margin-top:0.5rem">'
+              + (x.status === 'signed' || x.status === 'rejected' ? '<button class="btn btn-success btn-sm" data-approve="' + i + '">Approve</button>' : '')
+              + (x.status === 'signed' || x.status === 'approved' ? '<button class="btn btn-outline btn-sm" data-reject="' + i + '" style="color:var(--warn);border-color:var(--warn)">' + (x.status === 'approved' ? 'Withdraw approval' : 'Do not approve') + '</button>' : '')
+              + '</div></div></div>';
+          }).join('') : '<p style="color:var(--ink-light)">No supervisors yet.</p>');
+      body.querySelectorAll('[data-approve]').forEach(b => b.onclick = async () => {
+        const x = list[b.dataset.approve];
+        if (!confirm('Have you checked ' + (x.agreement || {}).name + ' (GDC ' + (x.agreement || {}).gdc + ') on the GDC register?')) return;
+        await D.setSupervisionStatus(x.id, 'approved', me.email); toast('Approved. The learner\'s logbook is now open.', 'success');
+        location.href = 'mailto:' + encodeURIComponent(x.learnerEmail || '') + '?subject=' + encodeURIComponent('Your supervisor has been approved') + '&body=' + encodeURIComponent('Hi ' + (x.learnerName || '').split(' ')[0] + ',\n\nGood news: ' + x.supName + ' has been approved as your supervisor for "' + titleOf(x.slug) + '". Your logbook is now open in the CPD Hub.\n\nKind regards,\nDental Nurse Training');
+        show('supervisors');
+      });
+      body.querySelectorAll('[data-reject]').forEach(b => b.onclick = async () => {
+        const x = list[b.dataset.reject];
+        const reason = prompt('Reason (shown to the learner), e.g. "We could not find this GDC number on the register as a dentist."');
+        if (reason === null) return;
+        await D.setSupervisionStatus(x.id, 'rejected', me.email, reason.trim());
+        x.rejectReason = reason; show('supervisors'); toast('Updated. Please email the learner to let them know.');
+      });
+    }
+
+    // ══ Case study marking ════════════════════════════════════════════════
+    function tabMarking() {
+      const subs = S.progress.filter(p => p.caseStudy).map(p => ({ p, mk: S.markOf(p.uid, p.slug) }))
+        .sort((a, b) => (a.mk && a.mk.forVersion === a.p.caseStudy.version ? 1 : 0) - (b.mk && b.mk.forVersion === b.p.caseStudy.version ? 1 : 0) || (a.p.caseStudy.submittedAt || '').localeCompare(b.p.caseStudy.submittedAt || ''));
+      body.innerHTML = subs.length ? '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Learner</th><th>Course</th><th>Submitted</th><th>Status</th><th></th></tr></thead><tbody>'
+        + subs.map(({ p, mk }, i) => { const cur = mk && mk.forVersion === p.caseStudy.version; return '<tr><td class="td-name">' + esc(learnerOf(p.uid).name) + '</td><td>' + esc(titleOf(p.slug)) + '</td><td>' + fmtDate(p.caseStudy.submittedAt) + (p.caseStudy.version > 1 ? ' (resubmission)' : '') + '</td><td>' + (cur ? (mk.status === 'satisfactory' ? '<span class="pill pill-green">Satisfactory</span>' : '<span class="pill pill-red">Needs development</span>') : '<span class="pill pill-orange">To mark</span>') + '</td><td><button class="btn btn-primary btn-sm" data-mark="' + i + '">' + (cur ? 'View' : 'Mark') + '</button></td></tr>'; }).join('')
+        + '</tbody></table></div>' : '<p style="color:var(--ink-light)">No case studies submitted yet.</p>';
+      body.querySelectorAll('[data-mark]').forEach(b => b.onclick = () => markCaseStudy(subs[b.dataset.mark]));
+    }
+    function markCaseStudy({ p, mk }) {
+      const c = S.bySlug[p.slug] || {}, cs = (c.practical && c.practical.caseStudy) || {}, l = learnerOf(p.uid);
+      const cur = mk && mk.forVersion === p.caseStudy.version ? mk : null;
+      const d = new Date(), today = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+      const template = today + '\n\nWell done ' + (l.name || '').split(' ')[0] + '. This is a good piece of work.\n\n1. \n2. \n\nPlease add these amendments and resubmit for marking.';
+      const m = modal('Case study: ' + l.name, '', true);
+      m.el.innerHTML = '<p style="font-size:0.88rem">' + esc(c.title || p.slug) + ' · ' + p.caseStudy.words + ' words · submitted ' + fmtDate(p.caseStudy.submittedAt) + (p.caseStudy.version > 1 ? ' (resubmission ' + p.caseStudy.version + ')' : '') + '</p>'
+        + '<div class="cd-card" style="max-height:340px;overflow:auto;white-space:pre-wrap;font-size:0.9rem;margin-bottom:1rem">' + esc(p.caseStudy.text) + '</div>'
+        + ((cs.criteria || []).length ? '<h3>Marking criteria</h3>' + cs.criteria.map((t, i) => '<label style="display:flex;gap:0.55rem;align-items:flex-start;font-size:0.86rem;margin-bottom:0.45rem"><input type="checkbox" class="crit" data-i="' + i + '"' + (cur && cur.criteria && cur.criteria[i] ? ' checked' : '') + ' style="margin-top:0.2rem"/><span>' + esc(t) + '</span></label>').join('') : '')
+        + '<div class="form-group" style="margin-top:0.75rem"><label>Feedback for the learner</label><textarea id="mkFb" style="min-height:160px">' + esc(cur ? cur.feedback : template) + '</textarea></div>'
+        + '<div class="admin-actions"><button class="btn btn-success btn-sm" id="mkSat">Mark Satisfactory</button><button class="btn btn-outline btn-sm" id="mkNd" style="color:var(--warn);border-color:var(--warn)">Needs development</button></div>';
+      const doMark = async (status) => {
+        const crit = {}; m.el.querySelectorAll('.crit').forEach(x => { crit[x.dataset.i] = x.checked; });
+        if (status === 'satisfactory' && Object.values(crit).some(v => !v) && !confirm('Not every criterion is ticked. The case study should only be Satisfactory when all criteria are met. Mark it Satisfactory anyway?')) return;
+        await D.setMark(p.uid, p.slug, { status, feedback: document.getElementById('mkFb').value.trim(), criteria: crit, forVersion: p.caseStudy.version, markedBy: me.email });
+        m.close(); toast('Marked. Please let the learner know.', 'success');
+        location.href = 'mailto:' + encodeURIComponent(l.email || '') + '?subject=' + encodeURIComponent('Your case study has been marked') + '&body=' + encodeURIComponent('Hi ' + (l.name || '').split(' ')[0] + ',\n\nYour case study for "' + (c.title || p.slug) + '" has been marked. Please log in to the CPD Hub to see your feedback.\n\nKind regards,\nDental Nurse Training');
+        show('marking');
+      };
+      document.getElementById('mkSat').onclick = () => doMark('satisfactory');
+      document.getElementById('mkNd').onclick = () => doMark('needs-development');
     }
 
     // ══ Completions ══════════════════════════════════════════════════════
