@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/gate.js?v=20261006c"></script>
+  <script src="js/gate.js?v=20261028a"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
@@ -16,8 +16,8 @@
   <title>Course - Dental Nurse Training CPD Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../css/style.css?v=20261006c"/>
-  <link rel="stylesheet" href="css/cpd.css?v=20261006c"/>
+  <link rel="stylesheet" href="../css/style.css?v=20261028a"/>
+  <link rel="stylesheet" href="css/cpd.css?v=20261028a"/>
 </head>
 <body>
   <div id="navHolder"></div>
@@ -34,6 +34,9 @@
   <div class="container">
     <div class="cd-grid" id="detail" style="display:none">
       <div class="cd-main">
+        <div class="cd-section" id="importantBlock" style="display:none">
+          <div class="callout callout-warn" style="margin:0"><div class="callout-label">Important</div><div class="md" id="cImportant"></div></div>
+        </div>
         <div class="cd-section">
           <h2>What you'll learn</h2>
           <div id="cObjectives"></div>
@@ -81,11 +84,11 @@
 
   <div id="footHolder"></div>
 
-  <script src="js/config.js?v=20261006c"></script>
-  <script src="js/ui.js?v=20261006c"></script>
-  <script src="js/demo-course.js?v=20261006c"></script>
+  <script src="js/config.js?v=20261028a"></script>
+  <script src="js/ui.js?v=20261028a"></script>
+  <script src="js/demo-course.js?v=20261028a"></script>
   <script type="module">
-    import * as D from './js/data.js?v=20261006c';
+    import * as D from './js/data.js?v=20261028a';
     const user = await D.mountChrome();
     document.getElementById('homeCrumb').href = D.link('index.html');
     document.getElementById('backLink').href = D.link('index.html');
@@ -111,6 +114,7 @@
     document.getElementById('cAims').textContent = course.aims || '';
     if (usesGdc(course)) document.getElementById('cOutcomes').innerHTML = outcomesBadges(course);
     else document.getElementById('outcomesBlock').style.display = 'none';
+    if (course.notice) { document.getElementById('cImportant').innerHTML = md(course.notice); document.getElementById('importantBlock').style.display = ''; }
     if (course.certNote) { document.getElementById('cNote').textContent = course.certNote; document.getElementById('noteBlock').style.display = ''; }
     document.getElementById('sUpdated').textContent = fmtDate(course.updated) || 'recently';
     document.getElementById('cVisual').innerHTML = courseVisual(course);
@@ -144,16 +148,24 @@
           + small('Not finished paying? <a href="#" id="payAgain" style="' + linkStyle + '">Go to payment</a>');
         document.getElementById('payAgain').onclick = (e) => { e.preventDefault(); buy(); };
       } else {
-        action.innerHTML = '<button class="btn btn-primary btn-lg" style="width:100%" id="buyBtn">Buy course</button>' + small('🔒 Secure payment by Stripe');
-        document.getElementById('buyBtn').onclick = buy;
+        const decl = course.enrolDeclarations || [];
+        if (course.requireGdc && !user.gdc) {
+          action.innerHTML = '<div class="pc-note">This course is for GDC registered dental professionals. Please add your GDC registration number in <a href="' + D.link('dashboard.html') + '" style="' + linkStyle + '">My CPD → My details</a>, then come back to enrol.</div>';
+        } else {
+          action.innerHTML = (decl.length ? '<div style="margin-bottom:0.9rem">' + decl.map((d, i) => '<label style="display:flex;gap:0.55rem;align-items:flex-start;font-size:0.84rem;color:var(--ink-mid);margin-bottom:0.55rem;line-height:1.45"><input type="checkbox" class="declBox" style="margin-top:0.2rem;flex-shrink:0"/><span>' + esc(d) + '</span></label>').join('') + '</div>' : '')
+            + '<button class="btn btn-primary btn-lg" style="width:100%" id="buyBtn">Buy course</button>' + small('🔒 Secure payment by Stripe');
+          document.getElementById('buyBtn').onclick = buy;
+        }
       }
       if (!access[slug] && user.isAdmin) action.insertAdjacentHTML('beforeend', small('<a href="' + D.link('learn.html?c=' + slug) + '" style="' + linkStyle + '">Open as admin (nothing is saved)</a>'));
     }
 
     async function buy() {
+      const boxes = [...document.querySelectorAll('.declBox')];
+      if (boxes.some(b => !b.checked)) { toast('Please tick every statement to confirm before you enrol.', 'error'); return; }
       if (cpdType(course) === 'verifiable' && !user.gdc && !confirm('Verifiable CPD certificates show your GDC number, and you have not added one yet. You can add it any time in My CPD → My details.\n\nContinue to buy anyway?')) return;
       if (!D.PREVIEW && !course.stripeLink) { toast('Payment for this course is not set up yet. Please contact us.', 'error'); return; }
-      try { await D.createOrder(user, course); } catch (e) { console.error(e); toast('Something went wrong. Please try again.', 'error'); return; }
+      try { await D.createOrder(user, course, (course.enrolDeclarations || []).length ? { declarations: course.enrolDeclarations, declaredAt: new Date().toISOString() } : {}); } catch (e) { console.error(e); toast('Something went wrong. Please try again.', 'error'); return; }
       if (D.PREVIEW) {
         alert('Preview mode: no payment is taken. An order has been created - open Admin → Payments to check and unlock it, just as you would for a real learner.');
         location.reload(); return;

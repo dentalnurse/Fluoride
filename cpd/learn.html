@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/gate.js?v=20261006c"></script>
+  <script src="js/gate.js?v=20261028a"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
@@ -16,8 +16,8 @@
   <title>Course - Dental Nurse Training CPD Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../css/style.css?v=20261006c"/>
-  <link rel="stylesheet" href="css/cpd.css?v=20261006c"/>
+  <link rel="stylesheet" href="../css/style.css?v=20261028a"/>
+  <link rel="stylesheet" href="css/cpd.css?v=20261028a"/>
   <style>
     .mobile-menu-btn { display:none; margin-bottom:1rem; }
     @media (max-width:960px) { .mobile-menu-btn { display:inline-flex; } }
@@ -35,14 +35,14 @@
     </main>
   </div>
 
-  <script src="js/config.js?v=20261006c"></script>
-  <script src="js/ui.js?v=20261006c"></script>
-  <script src="js/render.js?v=20261006c"></script>
-  <script src="js/demo-course.js?v=20261006c"></script>
+  <script src="js/config.js?v=20261028a"></script>
+  <script src="js/ui.js?v=20261028a"></script>
+  <script src="js/render.js?v=20261028a"></script>
+  <script src="js/demo-course.js?v=20261028a"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
   <script type="module">
-    import * as D from './js/data.js?v=20261006c';
+    import * as D from './js/data.js?v=20261028a';
     const user = await D.mountChrome();
     const slug = qs('c');
     const main = document.getElementById('main');
@@ -61,12 +61,36 @@
     prog.lessonsDone = prog.lessonsDone || [];
     document.title = course.title + ' - CPD Hub';
 
+    // Supervised practice (logbook, supervisor, case study) if the course has it
+    const P = course.practical && course.practical.enabled ? course.practical : null;
+    const SUP = (P && P.supervisorTitle) || 'supervisor';
+    let supervisions = [], cases = [], mark = null;
+    async function loadPractical() {
+      if (!P || adminView) return;
+      try {
+        supervisions = (await D.listSupervisionsForLearner(user.uid)).filter(s => s.slug === slug).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        cases = (await D.listCasesForLearner(user.uid)).filter(c => c.slug === slug).sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
+        mark = await D.getMark(user.uid, slug);
+      } catch (e) { console.error(e); toast('Could not load your logbook. Please refresh the page.', 'error'); }
+    }
+    await loadPractical();
+    const activeSupervision = () => supervisions.find(s => s.status !== 'rejected') || null;
+    const approvedSupervision = () => supervisions.find(s => s.status === 'approved') || null;
+    const satisfactoryCases = () => cases.filter(c => c.status === 'signed' && c.signoff && c.signoff.outcome === 'satisfactory');
+    const logbookComplete = () => !!P && satisfactoryCases().length >= Number(P.cases || 0) && !!(approvedSupervision() && approvedSupervision().finalDeclaration);
+    const caseStudyOn = () => !!(P && P.caseStudy && P.caseStudy.enabled);
+    const caseStudyPassed = () => !!(mark && prog.caseStudy && mark.status === 'satisfactory' && mark.forVersion === prog.caseStudy.version);
+
+    // Completion window
+    const acc = access[slug] || {};
+    const expired = !adminView && acc.expiresAt && new Date(acc.expiresAt) < new Date() && !prog.completedAt;
+
     if (adminView) document.getElementById('adminNote').innerHTML = '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Admin view</div><p>You are viewing this course as an admin. Everything is unlocked and nothing you do here is saved.</p></div>';
 
     async function save(data) {
       Object.assign(prog, data);
       if (adminView) return;
-      prog.percent = Math.round(D.stepsDone(content, prog) / D.courseSteps(content) * 100);
+      prog.percent = percentDone();
       try { await D.saveProgress(user.uid, slug, { ...data, percent: prog.percent, title: course.title, hours: course.hours, cpdType: course.cpdType || 'verifiable' }); }
       catch (e) { console.error(e); toast('Could not save your progress. Please check your connection.', 'error'); throw e; }
     }
@@ -74,26 +98,36 @@
     // ── Steps and locking ────────────────────────────────────────────────
     const lessonDone = id => prog.lessonsDone.includes(id);
     const allLessonsDone = () => lessons.every(l => lessonDone(l.id));
+    const hasReflection = (content.reflection || []).length > 0;
+    const quizPassed = () => !!(prog.quiz && prog.quiz.passed);
+    const steps = [['intro', '🏠', 'Course overview'], ...lessons.map((l, i) => ['lesson:' + l.id, String(i + 1), l.title]),
+      ['quiz', '✅', lessons.some(l => l.quiz && (l.quiz.questions || []).length) ? 'Final assessment' : 'Quiz'],
+      ...(P ? [['supervisor', '🤝', 'Your ' + SUP], ['logbook', '📒', 'Supervised logbook']] : []),
+      ...(caseStudyOn() ? [['casestudy', '📝', 'Case study']] : []),
+      ...(hasReflection ? [['reflection', '🪞', 'Reflection']] : []),
+      ['feedback', '💬', 'Feedback'], ['done', '🏅', 'Certificate']];
+    function isDone(step) {
+      if (step.startsWith('lesson:')) return lessonDone(step.slice(7));
+      return { quiz: quizPassed(), supervisor: !!approvedSupervision(), logbook: logbookComplete(), casestudy: caseStudyPassed(),
+               reflection: !!prog.reflection, feedback: !!prog.feedback, done: !!prog.completedAt, intro: false }[step];
+    }
     function unlocked(step) {
       if (adminView) return true;
       if (step === 'intro') return true;
-      if (step.startsWith('lesson:')) { const i = lessons.findIndex(l => 'lesson:' + l.id === step); return lessons.slice(0, i).every(l => lessonDone(l.id)); }
-      if (step === 'quiz') return allLessonsDone();
-      if (step === 'reflection') return !!(prog.quiz && prog.quiz.passed);
-      if (step === 'feedback') return !!prog.reflection;
-      if (step === 'done') return !!prog.feedback;
-      return false;
+      if (expired && step !== 'done') return false;
+      // The supervisor can be invited at any time, as approval can take a while
+      if (step === 'supervisor') return true;
+      if (step === 'logbook') return quizPassed() && !!approvedSupervision();
+      // Everything else unlocks in order
+      const i = steps.findIndex(s => s[0] === step);
+      return steps.slice(1, i).every(([id]) => isDone(id));
     }
-    function isDone(step) {
-      if (step.startsWith('lesson:')) return lessonDone(step.slice(7));
-      return { quiz: prog.quiz && prog.quiz.passed, reflection: !!prog.reflection, feedback: !!prog.feedback, done: !!prog.completedAt, intro: false }[step];
-    }
-    const steps = [['intro', '🏠', 'Course overview'], ...lessons.map((l, i) => ['lesson:' + l.id, String(i + 1), l.title]),
-      ['quiz', '✅', lessons.some(l => l.quiz && (l.quiz.questions || []).length) ? 'Final assessment' : 'Quiz'], ['reflection', '🪞', 'Reflection'], ['feedback', '💬', 'Feedback'], ['done', '🏅', 'Certificate']];
+    const progressSteps = () => steps.filter(([id]) => id !== 'intro' && id !== 'done');
+    const percentDone = () => Math.round(progressSteps().filter(([id]) => isDone(id)).length / Math.max(1, progressSteps().length) * 100);
 
     let current = 'intro';
     function drawSidebar() {
-      const pct = Math.round(D.stepsDone(content, prog) / D.courseSteps(content) * 100);
+      const pct = percentDone();
       sidebar.innerHTML = '<div style="padding:0 0.5rem 0.75rem;color:var(--white)"><div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;opacity:0.5">CPD course</div><div style="font-weight:700;line-height:1.3;margin-top:0.2rem">' + esc(course.title) + '</div>'
         + '<div class="progress-bar-wrap" style="background:rgba(255,255,255,0.15)"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div><div style="font-size:0.75rem;opacity:0.6">' + pct + '% complete</div></div>'
         + '<div class="sidebar-section-title">Lessons</div>'
@@ -114,7 +148,7 @@
       window.scrollTo(0, 0);
       if (step === 'intro') return showIntro();
       if (step.startsWith('lesson:')) return showLesson(lessons.findIndex(l => 'lesson:' + l.id === step));
-      ({ quiz: showQuiz, reflection: showReflection, feedback: showFeedback, done: showDone })[step]();
+      ({ quiz: showQuiz, supervisor: showSupervisor, logbook: showLogbook, casestudy: showCaseStudy, reflection: showReflection, feedback: showFeedback, done: showDone })[step]();
     }
     function nextStep() {
       const i = steps.findIndex(s => s[0] === current);
@@ -129,15 +163,15 @@
     function showIntro() {
       const started = prog.lessonsDone.length || prog.quiz;
       const c = { ...course, lessonTitles: lessons.map(l => l.title), questionCount: (quiz.questions || []).length, passMark: quiz.passMark || 80, quizPerAttempt: Number(quiz.perAttempt) || 0,
-        lessonQuizFlags: lessons.map(l => !!lessonQuiz(l)), lessonQuizCount: lessons.filter(lessonQuiz).length };
-      const pct = Math.round(D.stepsDone(content, prog) / D.courseSteps(content) * 100);
+        lessonQuizFlags: lessons.map(l => !!lessonQuiz(l)), lessonQuizCount: lessons.filter(lessonQuiz).length, hasReflection };
+      const pct = percentDone();
       const label = prog.completedAt ? 'View my certificate' : started ? 'Continue course →' : 'Start course →';
       main.innerHTML = '<div class="ov-hero"><div class="ov-icon">' + courseVisual(c) + '</div><div style="flex:1;min-width:0">'
           + '<div class="ch-tags"><span class="ch-tag">' + esc(course.category || 'Course') + '</span><span class="ch-tag">' + esc({ verifiable: 'Verifiable CPD', both: 'GDC verifiable CPD', general: 'CPD' }[cpdType(c)]) + '</span></div>'
           + '<h1>' + esc(course.title) + '</h1><div class="ch-chips">' + courseChips(c) + '</div>'
           + (started && !prog.completedAt ? '<div style="margin-top:1rem;max-width:420px"><div class="progress-bar-wrap" style="background:rgba(255,255,255,0.2)"><div class="progress-bar-fill" style="width:' + pct + '%;background:var(--white)"></div></div><div style="color:rgba(255,255,255,0.8);font-size:0.8rem">' + pct + '% complete</div></div>' : '')
           + '<button class="btn btn-white btn-lg" id="startBtn" style="margin-top:1.1rem">' + label + '</button></div></div>'
-        + (course.certNote ? '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Please note</div><p>' + esc(course.certNote) + '</p></div>' : '')
+        + deadlineHtml() + (course.certNote ? '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Please note</div><p>' + esc(course.certNote) + '</p></div>' : '')
         + '<div class="cd-section"><h2 style="font-size:1.25rem;margin-bottom:0.8rem">What you\'ll learn</h2>' + objectivesGrid(c) + '</div>'
         + '<div class="cd-section"><h2 style="font-size:1.25rem;margin-bottom:0.8rem">Course content</h2>' + lessonList(c) + '</div>'
         + '<div class="cd-section"><h2 style="font-size:1.25rem;margin-bottom:0.8rem">About this course</h2><div class="cd-card"><p>' + esc(course.aims || '') + '</p>'
@@ -225,17 +259,17 @@
       const title = hasLessonQuizzes ? 'Final assessment' : 'End of course quiz';
       if (prog.quiz && prog.quiz.passed && !main.dataset.retake) {
         main.innerHTML = '<div class="content-card quiz-result"><div class="quiz-score quiz-pass">' + prog.quiz.best + '%</div><div class="quiz-score-sub">You passed the ' + title.toLowerCase() + '.</div><button class="btn btn-primary" id="nx">Continue →</button></div>';
-        document.getElementById('nx').onclick = () => go('reflection');
+        document.getElementById('nx').onclick = () => go(nextStep());
         return;
       }
       runQuiz({
-        heading: title, quiz,
-        record: async (score, passed) => {
+        heading: title, quiz, lastIds: (prog.quiz && prog.quiz.lastIds) || [],
+        record: async (score, passed, ids) => {
           const prev = prog.quiz || {};
-          await save({ quiz: { best: Math.max(prev.best || 0, score), last: score, attempts: (prev.attempts || 0) + 1, passed: prev.passed || passed, passedAt: prev.passedAt || (passed ? new Date().toISOString() : null) } });
+          await save({ quiz: { best: Math.max(prev.best || 0, score), last: score, attempts: (prev.attempts || 0) + 1, passed: prev.passed || passed, passedAt: prev.passedAt || (passed ? new Date().toISOString() : null), lastIds: ids } });
         },
-        nextLabel: 'Continue to reflection →',
-        onNext: () => go('reflection'),
+        nextLabel: 'Continue →',
+        onNext: () => go(nextStep()),
         onRetry: () => { main.dataset.retake = '1'; showQuiz(); delete main.dataset.retake; },
       });
     }
@@ -247,13 +281,28 @@
       const bank = o.quiz.questions || [];
       const per = Number(o.quiz.perAttempt) > 0 ? Math.min(Number(o.quiz.perAttempt), bank.length) : bank.length;
       if (!bank.length) { main.innerHTML = '<div class="content-card"><p>There are no quiz questions yet.</p></div>'; return; }
-      const paper = shuffle(bank.map((q, qi) => qi)).slice(0, per).map(qi => {
+      // Choose questions: at least "minPerTag" from each module tag, then fill
+      // up at random, preferring questions not asked in the learner's last attempt.
+      const seen = new Set((o.lastIds || []).map(String));
+      const freshFirst = ids => [...shuffle(ids.filter(i => !seen.has(String(i)))), ...shuffle(ids.filter(i => seen.has(String(i))))];
+      let picked = [];
+      const minPer = Number(o.quiz.minPerTag) || 0;
+      if (minPer && per < bank.length) {
+        const tags = [...new Set(bank.map(q => q.tag).filter(t => t !== undefined && t !== ''))];
+        tags.forEach(t => { picked.push(...freshFirst(bank.map((q, i) => i).filter(i => String(bank[i].tag) === String(t))).slice(0, minPer)); });
+        picked = picked.slice(0, per);
+      }
+      picked.push(...freshFirst(bank.map((q, i) => i).filter(i => !picked.includes(i))).slice(0, per - picked.length));
+      const paperIds = picked;
+      const paper = shuffle(picked).map(qi => {
         const q = bank[qi];
         const order = shuffle(q.options.map((x, oi) => oi));
         return { q, order, correct: order.indexOf(Number(q.answer) - 1) };
       });
+      const limit = Number(o.quiz.timeLimit) || 0;
       const answers = {};
-      main.innerHTML = '<div class="dash-header"><h1>' + esc(o.heading) + '</h1><p>' + paper.length + ' questions' + (per < bank.length ? ' chosen at random' : '') + ' · pass mark ' + pass + '%. Answer every question, then submit.</p>'
+      main.innerHTML = '<div class="dash-header"><h1>' + esc(o.heading) + '</h1><p>' + paper.length + ' questions' + (per < bank.length ? ' chosen at random' : '') + ' · pass mark ' + pass + '%' + (limit ? ' · ' + limit + ' minutes' : '') + '. Answer every question, then submit.</p>'
+          + (limit ? '<div id="qTimer" style="position:sticky;top:calc(var(--nav-h) + 0.5rem);z-index:5;display:inline-block;margin-top:0.6rem;background:var(--teal-dark);color:var(--white);border-radius:100px;padding:0.35rem 1rem;font-weight:700;font-size:0.9rem"></div>' : '')
           + (o.onBack ? '<p style="margin-top:0.4rem"><a href="#" id="qBack" class="submission-link">← Back to the lesson</a></p>' : '') + '</div>'
         + paper.map((p, i) => '<div class="content-card quiz-wrap" style="max-width:none"><div class="quiz-progress"><span>Question ' + (i + 1) + ' of ' + paper.length + '</span></div><div class="quiz-q">' + esc(p.q.q) + '</div><div class="quiz-options" data-q="' + i + '">'
           + p.order.map((oi, k) => '<div class="quiz-option" data-k="' + k + '"><span class="quiz-option-key">' + 'ABCDEFGH'[k] + '</span><span>' + esc(p.q.options[oi]) + '</span></div>').join('') + '</div><div class="fb"></div></div>').join('')
@@ -266,8 +315,24 @@
         box.querySelectorAll('.quiz-option').forEach(x => x.classList.remove('selected'));
         opt.classList.add('selected'); answers[box.dataset.q] = Number(opt.dataset.k);
       }));
-      document.getElementById('submitQuiz').onclick = async () => {
-        if (Object.keys(answers).length < paper.length) { const e = document.getElementById('quizErr'); e.textContent = 'Please answer every question before submitting.'; e.style.display = 'block'; return; }
+      let timer = null, finished = false;
+      if (limit) {
+        const end = Date.now() + limit * 60000;
+        const tick = () => {
+          const el = document.getElementById('qTimer');
+          if (!el || finished) { clearInterval(timer); return; }
+          const left = Math.max(0, Math.round((end - Date.now()) / 1000));
+          el.textContent = '⏱ ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0') + ' left';
+          if (left <= 60) el.style.background = 'var(--warn)';
+          if (left === 0) { clearInterval(timer); toast('Time is up. Your answers have been submitted.'); submit(true); }
+        };
+        tick(); timer = setInterval(tick, 1000);
+      }
+      const submit = async (force) => {
+        if (finished) return;
+        if (!force && Object.keys(answers).length < paper.length) { const e = document.getElementById('quizErr'); e.textContent = 'Please answer every question before submitting.'; e.style.display = 'block'; return; }
+        finished = true; clearInterval(timer);
+        const qt = document.getElementById('qTimer'); if (qt) qt.remove();
         let right = 0;
         paper.forEach((p, i) => {
           const box = main.querySelector('.quiz-options[data-q="' + i + '"]'); box.dataset.locked = '1';
@@ -276,7 +341,7 @@
           box.nextElementSibling.innerHTML = '<div class="act-feedback ' + (ok ? 'good' : 'bad') + '"><strong>' + (ok ? 'Correct.' : 'Incorrect.') + '</strong>' + (p.q.explain ? ' ' + esc(p.q.explain) : '') + '</div>';
         });
         const score = Math.round(right / paper.length * 100), passed = score >= pass;
-        try { await o.record(score, passed); } catch (e) { return; }
+        try { await o.record(score, passed, paperIds); } catch (e) { return; }
         drawSidebar();
         document.getElementById('submitQuiz').remove();
         const res = document.createElement('div');
@@ -287,6 +352,231 @@
         if (passed) document.getElementById('nx').onclick = o.onNext;
         else document.getElementById('retry').onclick = o.onRetry;
       };
+      document.getElementById('submitQuiz').onclick = () => submit(false);
+    }
+
+    // ── Completion window ────────────────────────────────────────────────
+    function deadlineHtml() {
+      if (!acc.expiresAt || prog.completedAt || adminView) return '';
+      if (expired) return '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Your time to complete this course has ended</div><p>Your completion window ended on ' + fmtDate(acc.expiresAt) + '. Please email <a href="mailto:' + esc(NOTIFY_EMAIL) + '">' + esc(NOTIFY_EMAIL) + '</a> to ask for an extension. Your progress is saved.</p></div>';
+      const days = Math.ceil((new Date(acc.expiresAt) - new Date()) / 86400000);
+      return '<div class="callout" style="margin-top:0"><div class="callout-label">Complete by ' + fmtDate(acc.expiresAt) + '</div><p>You have ' + days + ' day' + (days === 1 ? '' : 's') + ' left to finish this course. If you need more time, email <a href="mailto:' + esc(NOTIFY_EMAIL) + '">' + esc(NOTIFY_EMAIL) + '</a> before then.</p></div>';
+    }
+
+    // ── Supervised practice ─────────────────────────────────────────────
+    const SITE = location.origin + location.pathname.replace(/learn\.html$/, '');
+    const inviteLink = id => SITE + 'supervisor.html?invite=' + encodeURIComponent(id);
+    const NO_ID_WARNING = '<div class="callout callout-warn" style="margin:0 0 1rem"><div class="callout-label">Patient confidentiality</div><p>Never enter a patient\'s name, date of birth or anything else that could identify them, the practice or your colleagues. Use "the patient" and "the ' + esc(SUP) + '".</p></div>';
+    const words = t => (String(t || '').trim().match(/\S+/g) || []).length;
+    function emailSupervisor(sv, subject, message, link) {
+      if (D.PREVIEW || typeof emailjs === 'undefined' || !sv.supEmail) return;
+      try {
+        emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+          to_email: sv.supEmail, to_name: sv.supName, subject,
+          learner_name: user.name, learner_email: user.email, learner_gdc: user.gdc || '',
+          submission_type: subject, file_url: link, submitted_at: new Date().toLocaleString('en-GB'),
+          message: 'Dear ' + sv.supName + ',\n\n' + message + '\n\n' + link + '\n\nIf you have any questions, please contact ' + NOTIFY_EMAIL + '.\n\nKind regards,\nDental Nurse Training',
+        });
+      } catch (e) { console.warn(e); }
+    }
+
+    function showSupervisor() {
+      const sv = activeSupervision();
+      const rejected = supervisions.find(x => x.status === 'rejected');
+      let html = '<div class="dash-header"><h1>Your ' + esc(SUP) + '</h1><p>Your supervised practice must be overseen by a GDC registered ' + esc(SUP) + '. They sign an online agreement, which we check before your logbook opens.</p></div>';
+      if (!sv) {
+        html += (rejected ? '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Supervisor not approved</div><p>We could not approve ' + esc(rejected.supName) + ' as your ' + esc(SUP) + '. ' + esc(rejected.rejectReason || 'Please check their details, or ask another ' + SUP + '.') + '</p></div>' : '')
+          + '<div class="content-card"><h2>Ask your ' + esc(SUP) + ' to supervise you</h2>'
+          + '<p>Enter their details. We will email them a link to read and sign the supervisor agreement. Only a GDC registered ' + esc(SUP) + ' can supervise this course.</p>'
+          + '<div class="form-group"><label>' + esc(SUP[0].toUpperCase() + SUP.slice(1)) + '\'s full name *</label><input type="text" id="svName"/></div>'
+          + '<div class="form-group"><label>Their email address *</label><input type="email" id="svEmail"/></div>'
+          + '<div class="form-group"><label>Their GDC registration number *</label><input type="text" id="svGdc" inputmode="numeric"/></div>'
+          + '<div class="form-group"><label>Practice name *</label><input type="text" id="svPractice"/></div>'
+          + '<div id="svErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div><button class="btn btn-primary" id="svSend">Send the agreement</button></div>';
+        main.innerHTML = html;
+        document.getElementById('svSend').onclick = async () => {
+          const v = id => document.getElementById(id).value.trim();
+          const data = { supName: v('svName'), supEmail: v('svEmail'), supGdc: v('svGdc'), supPractice: v('svPractice') };
+          const err = document.getElementById('svErr');
+          if (!data.supName || !data.supEmail || !data.supGdc || !data.supPractice) { err.textContent = 'Please fill in every field.'; err.style.display = 'block'; return; }
+          if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.supEmail)) { err.textContent = 'Please check the email address.'; err.style.display = 'block'; return; }
+          if (data.supEmail.toLowerCase() === String(user.email).toLowerCase()) { err.textContent = 'Your ' + SUP + ' must use their own email address, not yours.'; err.style.display = 'block'; return; }
+          if (adminView) { toast('Admin view: nothing is saved.'); return; }
+          try {
+            const id = await D.inviteSupervisor({ ...data, learnerUid: user.uid, learnerName: user.name, learnerEmail: user.email, learnerGdc: user.gdc || '', slug, courseTitle: course.title, supervisorTitle: SUP });
+            const sv2 = { id, ...data };
+            emailSupervisor(sv2, 'Supervisor agreement for ' + user.name, user.name + ' has asked you to be their supervising ' + SUP + ' for the Dental Nurse Training course "' + course.title + '".\n\nPlease read and sign the supervisor agreement using the link below. You will be asked to set a password so that only you can sign off their work.', inviteLink(id));
+            D.notify('Supervisor invited - ' + course.title, user.name + ' has invited ' + data.supName + ' (GDC ' + data.supGdc + ', ' + data.supPractice + ') to supervise them on "' + course.title + '".', user);
+            await loadPractical(); showSupervisor(); toast('Agreement sent to ' + data.supEmail, 'success');
+          } catch (e) { console.error(e); err.textContent = 'Could not send. Please try again.'; err.style.display = 'block'; }
+        };
+        return;
+      }
+      const statusBox = {
+        invited: '<div class="callout" style="margin-top:0"><div class="callout-label">Waiting for ' + esc(sv.supName) + ' to sign</div><p>We emailed the agreement to <strong>' + esc(sv.supEmail) + '</strong>. If they have not received it, ask them to check their junk folder, or send them the link below yourself.</p></div>',
+        signed: '<div class="callout" style="margin-top:0"><div class="callout-label">Signed, waiting for approval</div><p>' + esc(sv.supName) + ' has signed the agreement. We will check their GDC registration and approve them, usually within 1 working day. Your logbook opens once they are approved.</p></div>',
+        approved: '<div class="callout" style="margin-top:0;border-left-color:var(--success);background:var(--success-light)"><div class="callout-label" style="color:var(--success)">✓ Approved</div><p>' + esc(sv.supName) + ' (GDC ' + esc(sv.supGdc) + ') is your approved ' + esc(SUP) + '.' + (quizPassed() ? '' : ' Your logbook opens once you have passed the quiz.') + '</p></div>',
+      }[sv.status] || '';
+      html += statusBox + '<div class="content-card"><h2>' + esc(sv.supName) + '</h2><p>' + esc(sv.supEmail) + ' · GDC ' + esc(sv.supGdc) + ' · ' + esc(sv.supPractice || '') + '</p>'
+        + (sv.status === 'invited' ? '<div class="form-group"><label>Agreement link</label><input type="text" readonly value="' + esc(inviteLink(sv.id)) + '" onclick="this.select()"/></div><div class="admin-actions"><button class="btn btn-outline btn-sm" id="svCopy">Copy link</button><button class="btn btn-outline btn-sm" id="svResend">Email it again</button><button class="btn btn-sm" style="background:none;color:var(--warn)" id="svCancel">Cancel and ask someone else</button></div>' : '')
+        + (sv.status === 'approved' && quizPassed() ? '<button class="btn btn-primary" id="svNext" style="margin-top:0.5rem">Go to your logbook →</button>' : '')
+        + '</div>';
+      main.innerHTML = html;
+      const on = (id, fn) => { const b = document.getElementById(id); if (b) b.onclick = fn; };
+      on('svCopy', () => navigator.clipboard.writeText(inviteLink(sv.id)).then(() => toast('Link copied')));
+      on('svResend', () => { emailSupervisor(sv, 'Reminder: supervisor agreement for ' + user.name, user.name + ' is waiting for you to sign the supervisor agreement for "' + course.title + '".', inviteLink(sv.id)); toast('Email sent again', 'success'); });
+      on('svCancel', async () => { if (!confirm('Cancel this invitation?')) return; await D.deleteSupervision(sv.id); await loadPractical(); showSupervisor(); });
+      on('svNext', () => go('logbook'));
+    }
+
+    function caseNumberLabel(c) { const i = cases.indexOf(c); return 'Case ' + (i + 1); }
+    function caseStatusPill(c) {
+      if (c.status === 'draft') return '<span class="pill pill-grey">Draft</span>';
+      if (c.status === 'submitted') return '<span class="pill pill-orange">Awaiting sign-off</span>';
+      return c.signoff && c.signoff.outcome === 'satisfactory' ? '<span class="pill pill-green">Satisfactory</span>' : '<span class="pill pill-red">Needs development</span>';
+    }
+    function canAddCase() {
+      const sat = satisfactoryCases().length, open = cases.filter(c => c.status === 'draft' || c.status === 'submitted').length;
+      const N = Number(P.cases || 0), obs = Number(P.observedCases || 0);
+      if (sat + open >= N) return false;
+      if (sat < obs) return sat + open < obs;
+      return true;
+    }
+    function showLogbook() {
+      const sv = approvedSupervision();
+      const N = Number(P.cases || 0), obs = Number(P.observedCases || 0), sat = satisfactoryCases().length;
+      let html = '<div class="dash-header"><h1>Supervised logbook</h1><p>Record ' + N + ' suture removals carried out on patients in your workplace, each signed off by ' + esc(sv ? sv.supName : 'your ' + SUP) + '.</p>'
+        + '<div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.6rem;max-width:420px"><div class="progress-bar-wrap" style="flex:1;margin:0"><div class="progress-bar-fill" style="width:' + Math.round(sat / Math.max(1, N) * 100) + '%"></div></div><span style="font-size:0.85rem;color:var(--ink-light);white-space:nowrap">' + sat + ' of ' + N + ' signed off</span></div></div>'
+        + '<div class="callout" style="margin-top:0"><div class="callout-label">How the logbook works</div><p>' + md(
+            (obs ? '- Cases 1 to ' + obs + ': your ' + SUP + ' must watch the whole removal. You cannot start case ' + (obs + 1) + ' until these are signed off.\n' : '')
+            + '- For every case, your ' + SUP + ' checks the wound and directs the removal before you start.\n'
+            + '- Save a case as a draft, then submit it. Your ' + SUP + ' gets an email to sign it off. You cannot change a case once it is signed.\n'
+            + '- A case marked "Needs development" does not count. Add a new case to replace it.') + '</p></div>';
+      html += '<div class="lesson-list" style="margin-bottom:1rem">' + (cases.length ? cases.map(c => '<div class="ll-item" style="cursor:pointer" data-case="' + esc(c.id) + '"><span class="ll-num">' + (cases.indexOf(c) + 1) + '</span><span class="ll-title" style="flex:1">' + esc((c.fields && c.fields.procedure) || 'Case') + '<small>' + esc((c.fields && c.fields.date) ? fmtDate(c.fields.date) : '') + (c.observedRequired ? ' · ' + SUP + ' to observe' : '') + '</small></span>' + caseStatusPill(c) + '</div>').join('')
+        : '<div class="ll-item"><span class="ll-title" style="color:var(--ink-light);font-weight:400">No cases yet.</span></div>') + '</div>';
+      const add = canAddCase();
+      html += '<button class="btn btn-primary" id="addCase"' + (add ? '' : ' disabled') + '>＋ Add a case</button>'
+        + (!add && sat < N ? '<p style="font-size:0.82rem;color:var(--ink-light);margin-top:0.4rem">' + (sat < obs ? 'Wait for your first ' + obs + ' cases to be signed off before adding more.' : 'Finish your open cases first.') + '</p>' : '');
+      if (sat >= N && sv) {
+        html += sv.finalDeclaration
+          ? '<div class="callout" style="border-left-color:var(--success);background:var(--success-light);margin-top:1.25rem"><div class="callout-label" style="color:var(--success)">✓ Final competence declaration signed</div><p>Signed by ' + esc(sv.finalDeclaration.name) + ' on ' + fmtDate(sv.finalDeclaration.signedAt) + '.</p></div>'
+            + '<button class="btn btn-primary" id="lbNext" style="margin-top:0.5rem">Continue →</button>'
+          : '<div class="callout" style="margin-top:1.25rem"><div class="callout-label">Last step: final competence declaration</div><p>All ' + N + ' cases are signed off. ' + esc(sv.supName) + ' now needs to sign your final competence declaration. We have emailed them. <a href="#" id="lbRemind">Email them again</a></p></div>';
+        if (!sv.finalDeclaration && !prog.declarationRequested) { emailSupervisor(sv, 'Final competence declaration for ' + user.name, user.name + ' has completed all ' + N + ' logbook cases. Please log in to sign their final competence declaration.', SITE + 'supervisor.html'); save({ declarationRequested: true }).catch(() => {}); }
+      }
+      main.innerHTML = html;
+      main.querySelectorAll('[data-case]').forEach(r => r.onclick = () => showCase(cases.find(c => c.id === r.dataset.case)));
+      document.getElementById('addCase').onclick = () => showCase(null);
+      const nx = document.getElementById('lbNext'); if (nx) nx.onclick = () => go(nextStep());
+      const rm = document.getElementById('lbRemind'); if (rm) rm.onclick = (e) => { e.preventDefault(); emailSupervisor(sv, 'Reminder: final competence declaration for ' + user.name, user.name + ' is waiting for you to sign their final competence declaration.', SITE + 'supervisor.html'); toast('Email sent', 'success'); };
+    }
+
+    function fieldInput(f, val, disabled) {
+      const dis = disabled ? ' disabled' : '';
+      const id = 'cf_' + f.key;
+      if (f.type === 'textarea') return '<textarea id="' + id + '" class="short"' + dis + '>' + esc(val || '') + '</textarea>';
+      if (f.type === 'yesno') return '<select id="' + id + '"' + dis + '><option value="">Select...</option><option' + (val === 'Yes' ? ' selected' : '') + '>Yes</option><option' + (val === 'No' ? ' selected' : '') + '>No</option></select>';
+      if (f.type === 'select') return '<select id="' + id + '"' + dis + '><option value="">Select...</option>' + (f.options || []).map(o => '<option' + (val === o ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select>';
+      return '<input type="' + (f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text') + '" id="' + id + '" value="' + esc(val == null ? '' : val) + '"' + dis + (f.type === 'number' ? ' min="0"' : '') + '/>';
+    }
+    function showCase(c) {
+      const isNew = !c;
+      const sv = approvedSupervision();
+      if (isNew) c = { fields: {}, reflection: {}, status: 'draft', observedRequired: satisfactoryCases().length + cases.filter(x => x.status === 'draft' || x.status === 'submitted').length < Number(P.observedCases || 0) };
+      const locked = c.status === 'signed' || c.status === 'submitted' || adminView;
+      const fields = P.caseFields || [];
+      const prompts = P.reflectionPrompts || [];
+      let html = '<p style="margin-bottom:0.5rem"><a href="#" id="cBack" class="submission-link">← Back to logbook</a></p>'
+        + '<div class="dash-header"><h1>' + (isNew ? 'New case' : esc(caseNumberLabel(c))) + '</h1>'
+        + (c.observedRequired ? '<p><strong>Your ' + esc(SUP) + ' must watch the whole of this removal.</strong></p>' : '') + '</div>';
+      if (c.status === 'signed' && c.signoff) {
+        const ok = c.signoff.outcome === 'satisfactory';
+        html += '<div class="callout" style="margin-top:0;' + (ok ? 'border-left-color:var(--success);background:var(--success-light)' : '') + '"><div class="callout-label"' + (ok ? ' style="color:var(--success)"' : '') + '>' + (ok ? '✓ Signed off: Satisfactory' : 'Signed off: Needs development') + '</div><p>' + esc(c.signoff.name) + ' (GDC ' + esc(c.signoff.gdc || '') + '), ' + fmtDate(c.signoff.signedAt) + (c.signoff.comment ? '<br/>"' + esc(c.signoff.comment) + '"' : '') + (ok ? '' : '<br/>This case does not count. Please add a new case to replace it.') + '</p></div>';
+      } else if (c.status === 'submitted') {
+        html += '<div class="callout" style="margin-top:0"><div class="callout-label">Waiting for sign-off</div><p>' + esc(sv ? sv.supName : 'Your ' + SUP) + ' has been emailed to sign this case off. <a href="#" id="cRemind">Email them again</a> · <a href="#" id="cUnsubmit">Take it back to edit</a></p></div>';
+      }
+      html += '<div class="content-card">' + (locked ? '' : NO_ID_WARNING)
+        + '<h2>Case details</h2>' + fields.map(f => '<div class="form-group"><label>' + esc(f.label) + (f.required === false ? '' : ' *') + '</label>' + fieldInput(f, c.fields[f.key], locked) + (f.help ? '<div class="ed-help">' + esc(f.help) + '</div>' : '') + '</div>').join('')
+        + '<h2 style="margin-top:1.5rem">Reflection</h2><p style="font-size:0.88rem">Write ' + esc(P.reflectionWords || 'a short reflection') + ' in total across these questions. <span id="rCount"></span></p>'
+        + prompts.map((q, i) => '<div class="form-group"><label>' + esc(q) + ' *</label><textarea id="rf_' + i + '" class="short"' + (locked ? ' disabled' : '') + '>' + esc(c.reflection[i] || '') + '</textarea></div>').join('')
+        + '<div id="cErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div>'
+        + (locked ? '' : '<div class="admin-actions"><button class="btn btn-outline" id="cSave">Save draft</button><button class="btn btn-primary" id="cSubmit">Submit for sign-off</button>' + (!isNew ? '<button class="btn btn-sm" style="background:none;color:var(--warn)" id="cDelete">Delete draft</button>' : '') + '</div>')
+        + '</div>';
+      main.innerHTML = html; window.scrollTo(0, 0);
+      const minWords = Number((String(P.reflectionWords || '').match(/\d+/) || [0])[0]);
+      const countWords = () => { const n = prompts.reduce((t, q, i) => t + words(document.getElementById('rf_' + i).value), 0); const el = document.getElementById('rCount'); if (el) el.textContent = '(' + n + ' words so far)'; return n; };
+      prompts.forEach((q, i) => document.getElementById('rf_' + i).addEventListener('input', countWords)); countWords();
+      document.getElementById('cBack').onclick = (e) => { e.preventDefault(); showLogbook(); };
+      const collect = () => {
+        const f = {}; fields.forEach(x => { f[x.key] = document.getElementById('cf_' + x.key).value.trim(); });
+        const r = {}; prompts.forEach((q, i) => { r[i] = document.getElementById('rf_' + i).value.trim(); });
+        return { ...c, fields: f, reflection: r };
+      };
+      const err = (m) => { const e = document.getElementById('cErr'); e.textContent = m; e.style.display = m ? 'block' : 'none'; };
+      async function store(data) {
+        const id = await D.saveCase({ ...data, learnerUid: user.uid, learnerName: user.name, slug, courseTitle: course.title, createdAt: data.createdAt || new Date().toISOString() });
+        await loadPractical(); return id;
+      }
+      const on = (id, fn) => { const b = document.getElementById(id); if (b) b.onclick = fn; };
+      on('cSave', async () => { try { const id = await store({ ...collect(), status: 'draft' }); toast('Draft saved', 'success'); showCase(cases.find(x => x.id === id)); } catch (e) { console.error(e); err('Could not save. Please try again.'); } });
+      on('cSubmit', async () => {
+        const data = collect();
+        const missing = fields.filter(x => x.required !== false && !data.fields[x.key]);
+        if (missing.length) return err('Please complete: ' + missing.map(x => x.label).join(', ') + '.');
+        if (prompts.some((q, i) => !data.reflection[i])) return err('Please answer every reflection question.');
+        if (minWords && countWords() < minWords) return err('Your reflection needs at least ' + minWords + ' words in total.');
+        if (!sv) return err('Your ' + SUP + ' must be approved before you can submit cases.');
+        if (!confirm('Submit this case to ' + sv.supName + ' for sign-off? You will not be able to change it once it is signed.')) return;
+        try {
+          await store({ ...data, status: 'submitted', supervisionId: sv.id, supervisorUid: sv.supervisorUid, supervisorName: sv.supName, submittedAt: new Date().toISOString() });
+          emailSupervisor(sv, 'Logbook case to sign off for ' + user.name, user.name + ' has submitted a logbook case for you to check and sign off. Please log in using the link below.', SITE + 'supervisor.html');
+          toast('Sent to ' + sv.supName + ' for sign-off', 'success'); showLogbook();
+        } catch (e) { console.error(e); err('Could not submit. Please try again.'); }
+      });
+      on('cDelete', async () => { if (!confirm('Delete this draft case?')) return; await D.deleteCase(c.id); await loadPractical(); showLogbook(); });
+      on('cRemind', (e) => { e.preventDefault(); emailSupervisor(sv, 'Reminder: logbook case to sign off for ' + user.name, user.name + ' is waiting for you to sign off a logbook case.', SITE + 'supervisor.html'); toast('Email sent', 'success'); });
+      on('cUnsubmit', async (e) => { e.preventDefault(); if (!confirm('Take this case back to edit it? You will need to submit it again.')) return; const { signoff, ...rest } = c; await store({ ...rest, status: 'draft' }); showCase(cases.find(x => x.id === c.id)); });
+    }
+
+    function showCaseStudy() {
+      const cs = P.caseStudy || {};
+      const sub = prog.caseStudy || null;
+      const marked = mark && sub && mark.forVersion === sub.version ? mark : null;
+      const editable = !adminView && (!sub || (marked && marked.status === 'needs-development'));
+      const minW = Number(cs.minWords || 0), maxW = Number(cs.maxWords || 0);
+      let html = '<div class="dash-header"><h1>Case study</h1><p>Write up one of your logbook cases' + (minW ? ' in ' + minW + (maxW ? ' to ' + maxW : '+') + ' words' : '') + '.</p></div>';
+      if (marked && marked.status === 'satisfactory') html += '<div class="callout" style="margin-top:0;border-left-color:var(--success);background:var(--success-light)"><div class="callout-label" style="color:var(--success)">✓ Marked Satisfactory</div>' + (marked.feedback ? '<div class="md">' + md(marked.feedback) + '</div>' : '') + '</div><button class="btn btn-primary" id="csNext">Continue →</button>';
+      else if (marked && marked.status === 'needs-development') html += '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Feedback: amendments needed</div><div class="md">' + md(marked.feedback || '') + '</div><p style="margin-top:0.5rem"><strong>Make the amendments below and resubmit.</strong></p></div>';
+      else if (sub) html += '<div class="callout" style="margin-top:0"><div class="callout-label">Submitted for marking</div><p>Submitted on ' + fmtDate(sub.submittedAt) + '. We will mark it and let you know, usually within 5 working days.</p></div>';
+      html += '<div class="content-card">' + (cs.brief ? '<div class="md">' + md(cs.brief) + '</div>' : '')
+        + ((cs.headings || []).length ? '<h3>Cover these headings</h3><ol>' + cs.headings.map(h => '<li>' + esc(h) + '</li>').join('') + '</ol>' : '')
+        + (editable ? NO_ID_WARNING : '')
+        + '<div class="form-group"><label>Which logbook case are you writing about?</label><select id="csCase"' + (editable ? '' : ' disabled') + '><option value="">Select...</option>' + satisfactoryCases().map(c => '<option value="' + esc(c.id) + '"' + (sub && sub.caseId === c.id ? ' selected' : '') + '>' + esc(caseNumberLabel(c) + ': ' + ((c.fields && c.fields.procedure) || '')) + '</option>').join('') + '</select></div>'
+        + '<div class="form-group"><label>Your case study</label><textarea id="csText" style="min-height:420px"' + (editable ? '' : ' disabled') + '>' + esc((sub && sub.text) || '') + '</textarea><div class="ed-help" id="csCount"></div></div>'
+        + '<div id="csErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div>'
+        + (editable ? '<div class="admin-actions"><button class="btn btn-outline" id="csSave">Save draft</button><button class="btn btn-primary" id="csSubmit">' + (sub ? 'Resubmit for marking' : 'Submit for marking') + '</button></div>' : '')
+        + '</div>';
+      main.innerHTML = html;
+      const ta = document.getElementById('csText');
+      const count = () => { const n = words(ta.value); document.getElementById('csCount').textContent = n + ' words' + (minW ? ' (aim for ' + minW + (maxW ? ' to ' + maxW : '+') + ')' : ''); return n; };
+      ta.addEventListener('input', count); count();
+      if (!sub && prog.caseStudyDraft && editable) { ta.value = prog.caseStudyDraft; count(); }
+      const err = (m) => { const e = document.getElementById('csErr'); e.textContent = m; e.style.display = m ? 'block' : 'none'; };
+      const on = (id, fn) => { const b = document.getElementById(id); if (b) b.onclick = fn; };
+      on('csNext', () => go(nextStep()));
+      on('csSave', async () => { try { await save({ caseStudyDraft: ta.value }); toast('Draft saved', 'success'); } catch (e) {} });
+      on('csSubmit', async () => {
+        const n = count(), caseId = document.getElementById('csCase').value;
+        if (!caseId) return err('Choose which logbook case you are writing about.');
+        if (minW && n < minW) return err('Your case study needs at least ' + minW + ' words. It has ' + n + '.');
+        if (maxW && n > Math.round(maxW * 1.1)) return err('Your case study is ' + n + ' words. Please keep it under ' + maxW + ' words.');
+        if (!confirm('Submit your case study for marking?')) return;
+        try {
+          await save({ caseStudy: { text: ta.value, caseId, words: n, submittedAt: new Date().toISOString(), version: ((sub && sub.version) || 0) + 1 }, caseStudyDraft: '' });
+          D.notify('Case study to mark - ' + course.title, user.name + ' (' + user.email + ') has ' + (sub ? 're' : '') + 'submitted their case study for "' + course.title + '". Mark it in the CPD Hub admin under Case studies.', user);
+          toast('Submitted for marking', 'success'); showCaseStudy();
+        } catch (e) { err('Could not submit. Please try again.'); }
+      });
     }
 
     // ── Reflection ───────────────────────────────────────────────────────
@@ -331,6 +621,10 @@
         if (first) {
           const d = new Date();
           data.completedAt = d.toISOString();
+          if (P) {
+            const sv = approvedSupervision();
+            data.practical = { supervisorName: sv ? ((sv.agreement && sv.agreement.name) || sv.supName) : '', supervisorGdc: sv ? ((sv.agreement && sv.agreement.gdc) || sv.supGdc) : '', casesSignedOff: satisfactoryCases().length, declaredAt: sv && sv.finalDeclaration ? sv.finalDeclaration.signedAt : '', caseStudyMarkedAt: mark ? mark.markedAt || '' : '' };
+          }
           data.certNo = 'DNT-CPD-' + String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '-' + Math.random().toString(36).slice(2, 7).toUpperCase();
         }
         try { await save(data); } catch (e) { return; }

@@ -48,8 +48,13 @@ export function deriveMeta(meta, content) {
     quizPerAttempt: Number((content && content.quiz && content.quiz.perAttempt) || 0),
     lessonQuizFlags: lessons.map(l => !!(l.quiz && (l.quiz.questions || []).length)),
     lessonQuizCount: lessons.filter(l => l.quiz && (l.quiz.questions || []).length).length,
-    passMark: Number((content && content.quiz && content.quiz.passMark) || 80) };
+    passMark: Number((content && content.quiz && content.quiz.passMark) || 80),
+    hasReflection: ((content && content.reflection) || []).length > 0 };
 }
+
+// Long random id, used for links emailed to supervisors
+const token = () => Array.from(crypto.getRandomValues(new Uint8Array(20))).map(b => b.toString(16).padStart(2, '0')).join('');
+const addMonths = (months) => { const d = new Date(); d.setMonth(d.getMonth() + Number(months)); return d.toISOString(); };
 
 const lc = (e) => String(e || '').trim().toLowerCase();
 const now = () => new Date().toISOString();
@@ -72,7 +77,9 @@ const fb = {
     try { const s = await getDoc(doc(db, 'learners', user.uid)); if (s.exists()) profile = s.data(); } catch (e) {}
     let isAdmin = ADMIN_EMAILS.map(lc).includes(lc(user.email));
     if (!isAdmin) { try { isAdmin = (await getDoc(doc(db, 'admins', lc(user.email)))).exists(); } catch (e) {} }
-    return { uid: user.uid, email: user.email, name: profile.name || user.email, gdc: profile.gdc || '', workplace: profile.workplace || '', isAdmin };
+    let isSupervisor = false;
+    try { isSupervisor = (await getDoc(doc(db, 'supervisors', user.uid))).exists(); } catch (e) {}
+    return { uid: user.uid, email: user.email, name: profile.name || user.email, gdc: profile.gdc || '', workplace: profile.workplace || '', isAdmin, isSupervisor };
   },
   async login(email, password) { await signInWithEmailAndPassword(auth, email, password); },
   async register({ name, email, gdc, workplace, password }) {
@@ -97,16 +104,42 @@ const fb = {
   async deleteCourse(slug) { await deleteDoc(doc(db, 'courseContent', slug)); await deleteDoc(doc(db, 'courses', slug)); },
 
   async getAccess(uid) { const s = await getDoc(doc(db, 'access', uid)); return s.exists() ? (s.data().courses || {}) : {}; },
-  async grantAccess(uid, slug, by, note) {
-    await setDoc(doc(db, 'access', uid), { courses: { [slug]: { grantedAt: now(), grantedBy: by, note: note || '' } } }, { merge: true });
+  async grantAccess(uid, slug, by, note, months) {
+    const entry = { grantedAt: now(), grantedBy: by, note: note || '' };
+    if (Number(months) > 0) entry.expiresAt = addMonths(months);
+    await setDoc(doc(db, 'access', uid), { courses: { [slug]: entry } }, { merge: true });
     try { const o = doc(db, 'learners', uid, 'orders', slug); if ((await getDoc(o)).exists()) await updateDoc(o, { status: 'unlocked', unlockedAt: now(), unlockedBy: by }); } catch (e) {}
   },
   async revokeAccess(uid, slug) { await updateDoc(doc(db, 'access', uid), { ['courses.' + slug]: deleteField() }); },
+  async setAccessExpiry(uid, slug, iso) { await updateDoc(doc(db, 'access', uid), { ['courses.' + slug + '.expiresAt']: iso || deleteField() }); },
 
-  async createOrder(user, course) {
+  // ── Supervised practice: supervisors, agreements, logbook cases, marking ──
+  async inviteSupervisor(data) { const id = token(); await setDoc(doc(db, 'supervisions', id), { ...data, status: 'invited', createdAt: now() }); return id; },
+  async getSupervision(id) { try { const s = await getDoc(doc(db, 'supervisions', id)); return s.exists() ? { id, ...s.data() } : null; } catch (e) { return null; } },
+  async listSupervisionsForLearner(uid) { return (await getDocs(query(collection(db, 'supervisions'), where('learnerUid', '==', uid)))).docs.map(d => ({ id: d.id, ...d.data() })); },
+  async listSupervisionsForSupervisor(uid) { return (await getDocs(query(collection(db, 'supervisions'), where('supervisorUid', '==', uid)))).docs.map(d => ({ id: d.id, ...d.data() })); },
+  async listAllSupervisions() { return (await getDocs(collection(db, 'supervisions'))).docs.map(d => ({ id: d.id, ...d.data() })); },
+  async signSupervision(id, supervisorUid, agreement) { await updateDoc(doc(db, 'supervisions', id), { status: 'signed', supervisorUid, agreement, signedAt: now() }); },
+  async setSupervisionStatus(id, status, by, reason) { await updateDoc(doc(db, 'supervisions', id), { status, reviewedBy: by, reviewedAt: now(), rejectReason: reason || '' }); },
+  async signFinalDeclaration(id, declaration) { await updateDoc(doc(db, 'supervisions', id), { finalDeclaration: declaration }); },
+  async deleteSupervision(id) { await deleteDoc(doc(db, 'supervisions', id)); },
+  async saveSupervisorProfile(uid, data) { await setDoc(doc(db, 'supervisors', uid), { ...data, updatedAt: now() }, { merge: true }); },
+
+  async listCasesForLearner(uid) { return (await getDocs(query(collection(db, 'cases'), where('learnerUid', '==', uid)))).docs.map(d => ({ id: d.id, ...d.data() })); },
+  async listCasesForSupervisor(uid) { return (await getDocs(query(collection(db, 'cases'), where('supervisorUid', '==', uid)))).docs.map(d => ({ id: d.id, ...d.data() })); },
+  async listAllCases() { return (await getDocs(collection(db, 'cases'))).docs.map(d => ({ id: d.id, ...d.data() })); },
+  async saveCase(c) { const { id, ...data } = c; const cid = id || token(); await setDoc(doc(db, 'cases', cid), { ...data, updatedAt: now() }); return cid; },
+  async deleteCase(id) { await deleteDoc(doc(db, 'cases', id)); },
+  async signCase(id, signoff) { await updateDoc(doc(db, 'cases', id), { status: 'signed', signoff, signedAt: now() }); },
+
+  async getMark(uid, slug) { try { const s = await getDoc(doc(db, 'marks', uid + '_' + slug)); return s.exists() ? s.data() : null; } catch (e) { return null; } },
+  async listAllMarks() { return (await getDocs(collection(db, 'marks'))).docs.map(d => d.data()); },
+  async setMark(uid, slug, data) { await setDoc(doc(db, 'marks', uid + '_' + slug), { ...data, learnerUid: uid, slug, markedAt: now() }); },
+
+  async createOrder(user, course, extra) {
     await setDoc(doc(db, 'learners', user.uid, 'orders', course.slug), {
       uid: user.uid, name: user.name, email: user.email, gdc: user.gdc, slug: course.slug,
-      title: course.title, price: course.price, status: 'pending', createdAt: now() });
+      title: course.title, price: course.price, status: 'pending', createdAt: now(), ...(extra || {}) });
   },
   async getOrders(uid) { return (await getDocs(collection(db, 'learners', uid, 'orders'))).docs.map(d => d.data()); },
   async listAllOrders() { return (await getDocs(collectionGroup(db, 'orders'))).docs.map(d => d.data()); },
@@ -189,7 +222,9 @@ async function pload() {
     try { d = JSON.parse(localStorage.getItem(PKEY)); } catch (e) {}
     if (d) { await psave(d); try { localStorage.removeItem(PKEY); } catch (e) {} }
   }
-  return d || seed();
+  d = d || seed();
+  for (const k of ['supervisions', 'cases', 'marks', 'supervisors']) d[k] = d[k] || {};
+  return d;
 }
 async function psave(d) {
   try { await idbReq('readwrite', st => st.put(d, PKEY)); }
@@ -202,7 +237,7 @@ const pv = {
     const d = (await pload());
     if (d.loggedOut) return null;
     const l = d.learners[PUSER.uid] || {};
-    return { ...PUSER, name: l.name || PUSER.name, gdc: l.gdc != null ? l.gdc : PUSER.gdc, workplace: l.workplace != null ? l.workplace : PUSER.workplace };
+    return { ...PUSER, name: l.name || PUSER.name, gdc: l.gdc != null ? l.gdc : PUSER.gdc, workplace: l.workplace != null ? l.workplace : PUSER.workplace, isSupervisor: !!d.supervisors[PUSER.uid] };
   },
   async login() { const d = (await pload()); d.loggedOut = false; await psave(d); },
   async register() { const d = (await pload()); d.loggedOut = false; await psave(d); },
@@ -217,14 +252,37 @@ const pv = {
   async deleteCourse(slug) { const d = (await pload()); delete d.courses[slug]; delete d.content[slug]; await psave(d); },
 
   async getAccess(uid) { return clone((await pload()).access[uid] || {}); },
-  async grantAccess(uid, slug, by, note) {
-    const d = (await pload()); d.access[uid] = d.access[uid] || {}; d.access[uid][slug] = { grantedAt: now(), grantedBy: by, note: note || '' };
+  async grantAccess(uid, slug, by, note, months) {
+    const d = (await pload()); d.access[uid] = d.access[uid] || {}; d.access[uid][slug] = { grantedAt: now(), grantedBy: by, note: note || '', ...(Number(months) > 0 ? { expiresAt: addMonths(months) } : {}) };
     const o = d.orders[uid + '/' + slug]; if (o) Object.assign(o, { status: 'unlocked', unlockedAt: now(), unlockedBy: by });
     await psave(d);
   },
   async revokeAccess(uid, slug) { const d = (await pload()); if (d.access[uid]) delete d.access[uid][slug]; await psave(d); },
+  async setAccessExpiry(uid, slug, iso) { const d = (await pload()); const a = (d.access[uid] || {})[slug]; if (a) { if (iso) a.expiresAt = iso; else delete a.expiresAt; } await psave(d); },
 
-  async createOrder(user, course) { const d = (await pload()); d.orders[user.uid + '/' + course.slug] = { uid: user.uid, name: user.name, email: user.email, gdc: user.gdc, slug: course.slug, title: course.title, price: course.price, status: 'pending', createdAt: now() }; await psave(d); },
+  async inviteSupervisor(data) { const d = (await pload()); const id = token(); d.supervisions[id] = { ...clone(data), status: 'invited', createdAt: now() }; await psave(d); return id; },
+  async getSupervision(id) { const s = (await pload()).supervisions[id]; return s ? { id, ...clone(s) } : null; },
+  async listSupervisionsForLearner(uid) { return Object.entries((await pload()).supervisions).filter(([, s]) => s.learnerUid === uid).map(([id, s]) => ({ id, ...clone(s) })); },
+  async listSupervisionsForSupervisor(uid) { return Object.entries((await pload()).supervisions).filter(([, s]) => s.supervisorUid === uid).map(([id, s]) => ({ id, ...clone(s) })); },
+  async listAllSupervisions() { return Object.entries((await pload()).supervisions).map(([id, s]) => ({ id, ...clone(s) })); },
+  async signSupervision(id, supervisorUid, agreement) { const d = (await pload()); Object.assign(d.supervisions[id], { status: 'signed', supervisorUid, agreement: clone(agreement), signedAt: now() }); await psave(d); },
+  async setSupervisionStatus(id, status, by, reason) { const d = (await pload()); Object.assign(d.supervisions[id], { status, reviewedBy: by, reviewedAt: now(), rejectReason: reason || '' }); await psave(d); },
+  async signFinalDeclaration(id, declaration) { const d = (await pload()); d.supervisions[id].finalDeclaration = clone(declaration); await psave(d); },
+  async deleteSupervision(id) { const d = (await pload()); delete d.supervisions[id]; await psave(d); },
+  async saveSupervisorProfile(uid, data) { const d = (await pload()); d.supervisors[uid] = { ...(d.supervisors[uid] || {}), ...clone(data), updatedAt: now() }; await psave(d); },
+
+  async listCasesForLearner(uid) { return Object.entries((await pload()).cases).filter(([, c]) => c.learnerUid === uid).map(([id, c]) => ({ id, ...clone(c) })); },
+  async listCasesForSupervisor(uid) { return Object.entries((await pload()).cases).filter(([, c]) => c.supervisorUid === uid).map(([id, c]) => ({ id, ...clone(c) })); },
+  async listAllCases() { return Object.entries((await pload()).cases).map(([id, c]) => ({ id, ...clone(c) })); },
+  async saveCase(c) { const d = (await pload()); const { id, ...data } = clone(c); const cid = id || token(); d.cases[cid] = { ...data, updatedAt: now() }; await psave(d); return cid; },
+  async deleteCase(id) { const d = (await pload()); delete d.cases[id]; await psave(d); },
+  async signCase(id, signoff) { const d = (await pload()); Object.assign(d.cases[id], { status: 'signed', signoff: clone(signoff), signedAt: now() }); await psave(d); },
+
+  async getMark(uid, slug) { return clone((await pload()).marks[uid + '_' + slug] || null); },
+  async listAllMarks() { return Object.values((await pload()).marks).map(clone); },
+  async setMark(uid, slug, data) { const d = (await pload()); d.marks[uid + '_' + slug] = { ...clone(data), learnerUid: uid, slug, markedAt: now() }; await psave(d); },
+
+  async createOrder(user, course, extra) { const d = (await pload()); d.orders[user.uid + '/' + course.slug] = { uid: user.uid, name: user.name, email: user.email, gdc: user.gdc, slug: course.slug, title: course.title, price: course.price, status: 'pending', createdAt: now(), ...clone(extra || {}) }; await psave(d); },
   async getOrders(uid) { return Object.values((await pload()).orders).filter(o => o.uid === uid).map(clone); },
   async listAllOrders() { return Object.values((await pload()).orders).map(clone); },
   async deleteOrder(uid, slug) { const d = (await pload()); delete d.orders[uid + '/' + slug]; await psave(d); },
@@ -265,7 +323,11 @@ const api = PREVIEW ? pv : fb;
 export const {
   getSessionUser, login, register, resetPassword, logout, updateProfile,
   listCourses, getCourse, getCourseContent, saveCourse, deleteCourse,
-  getAccess, grantAccess, revokeAccess,
+  getAccess, grantAccess, revokeAccess, setAccessExpiry,
+  inviteSupervisor, getSupervision, listSupervisionsForLearner, listSupervisionsForSupervisor, listAllSupervisions,
+  signSupervision, setSupervisionStatus, signFinalDeclaration, deleteSupervision, saveSupervisorProfile,
+  listCasesForLearner, listCasesForSupervisor, listAllCases, saveCase, deleteCase, signCase,
+  getMark, listAllMarks, setMark,
   createOrder, getOrders, listAllOrders, deleteOrder,
   getProgress, listMyProgress, saveProgress, resetProgress,
   listLearners, listAllAccess, listAllProgress,
@@ -299,6 +361,7 @@ export async function mountChrome({ active, prefix = '' } = {}) {
   const right = user
     ? '<a href="' + link(prefix + 'index.html') + '" class="btn btn-outline btn-sm">Courses</a>'
       + '<a href="' + link(prefix + 'dashboard.html') + '" class="btn btn-primary btn-sm">My CPD</a>'
+      + (user.isSupervisor ? '<a href="' + link(prefix + 'supervisor.html') + '" class="btn btn-outline btn-sm">Supervisor</a>' : '')
       + (user.isAdmin ? '<a href="' + link(prefix + 'admin/index.html') + '" class="btn btn-outline btn-sm">Admin</a>' : '')
       + '<button class="btn btn-sm" style="background:none;color:var(--ink-light)" id="navLogout">Log out</button>'
     : '<a href="' + link(prefix + 'login.html') + '" class="btn btn-outline btn-sm">Log in</a>'
