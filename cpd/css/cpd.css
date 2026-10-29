@@ -229,3 +229,6 @@
 @media print {
   .nav, .site-footer, .building-strip, .preview-strip, .setup-strip { display:none !important; }
 }
+.callout ul, .callout ol { margin: 0.3rem 0 0; padding-left: 1.2rem; font-size: 0.9rem; color: var(--ink-mid); }
+.callout ul { list-style: disc; } .callout ol { list-style: decimal; }
+.callout li { margin-bottom: 0.25rem; }

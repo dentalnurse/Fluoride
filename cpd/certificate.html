@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/gate.js?v=20261028a"></script>
+  <script src="js/gate.js?v=20261029a"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -59,11 +59,11 @@
   <div class="screen-bar"><a href="dashboard.html" id="backLink">← Back to My CPD</a><button class="print-btn" onclick="window.print()">🖨 Print / save as PDF</button></div>
   <div id="out"><div class="msg">Loading certificate...</div></div>
 
-  <script src="js/config.js?v=20261028a"></script>
-  <script src="js/ui.js?v=20261028a"></script>
-  <script src="js/demo-course.js?v=20261028a"></script>
+  <script src="js/config.js?v=20261029a"></script>
+  <script src="js/ui.js?v=20261029a"></script>
+  <script src="js/demo-course.js?v=20261029a"></script>
   <script type="module">
-    import * as D from './js/data.js?v=20261028a';
+    import * as D from './js/data.js?v=20261029a';
     document.getElementById('backLink').href = D.link('dashboard.html');
     if (D.PREVIEW) document.querySelector('.screen-bar').insertAdjacentHTML('afterend', '<div style="background:#FFF3CD;color:#92400E;text-align:center;padding:0.6rem 1rem;font-size:0.9rem"><strong>Preview mode:</strong> this is a sample certificate.</div>');
     const out = document.getElementById('out');
@@ -85,21 +85,23 @@
 
     // Courses with supervised practice: check the signed records, not just the
     // learner's own progress, before showing the certificate.
-    const P = course && course.practical && course.practical.enabled ? course.practical : null;
+    const P = practicalOf(course);
     let practicalLine = '', supBlock = '';
     if (P) {
-      const [svs, cs, mark] = await Promise.all([D.listSupervisionsForLearner(uid).catch(() => []), D.listCasesForLearner(uid).catch(() => []), D.getMark(uid, slug)]);
-      const sv = svs.find(x => x.slug === slug && x.status === 'approved' && x.finalDeclaration);
-      const sat = cs.filter(x => x.slug === slug && x.status === 'signed' && x.signoff && x.signoff.outcome === 'satisfactory').length;
-      const csOk = !(P.caseStudy && P.caseStudy.enabled) || (mark && mark.status === 'satisfactory');
-      if (!sv || sat < Number(P.cases || 0) || !csOk) { fail('This certificate is not available yet. Your supervised logbook, final declaration' + (P.caseStudy && P.caseStudy.enabled ? ' and case study' : '') + ' must all be signed off and marked first.'); throw 0; }
-      const supName = (sv.agreement && sv.agreement.name) || sv.supName || '';
-      const supGdc = (sv.agreement && sv.agreement.gdc) || sv.supGdc || '';
-      const supTitle = P.supervisorTitle || 'supervisor';
-      practicalLine = 'has successfully completed the above course, including the knowledge quiz, ' + sat + ' supervised cases signed off by their supervising ' + supTitle + ', a final competence declaration' + (P.caseStudy && P.caseStudy.enabled ? ' and a marked case study' : '') + '.';
-      supBlock = '<div class="cert-gdc" style="margin-top:-0.4rem">Supervising ' + esc(supTitle) + ': <strong>' + esc(supName) + '</strong>' + (supGdc ? ' (GDC ' + esc(supGdc) + ')' : '') + ', competence declared ' + fmtDate(sv.finalDeclaration.signedAt) + '</div>';
+      const [svs, cs] = await Promise.all([D.listSupervisionsForLearner(uid).catch(() => []), D.listCasesForLearner(uid).catch(() => [])]);
+      const mySvs = svs.filter(x => x.slug === slug), myCases = cs.filter(x => x.slug === slug);
+      const st = logbookStatus(P, myCases, mySvs);
+      const A = assignmentsOf(P).filter(a => a.marked !== false);
+      const marks = await Promise.all(A.map(a => D.getMark(uid, markKey(slug, a))));
+      const marksOk = marks.every(m => m && m.status === 'satisfactory');
+      if (!st.complete || !marksOk) { fail('This certificate is not available yet. Your supervised logbook' + (st.needDecl ? ', final declaration' : '') + (A.length ? ' and marked work' : '') + ' must all be signed off and marked first.'); throw 0; }
+      const supTitle = P.supervisorTitle || 'supervisor', noun = caseNoun(P);
+      const used = mySvs.filter(sv => sv.status === 'approved' && myCases.some(c => isSatCase(c) && c.supervisionId === sv.id));
+      const supRole = (/supervisor/i.test(supTitle) ? '' : 'supervising ') + supTitle + (used.length > 1 ? 's' : '');
+      const supText = used.map(sv => '<strong>' + esc((sv.agreement && sv.agreement.name) || sv.supName || '') + '</strong>' + (((sv.agreement && sv.agreement.gdc) || sv.supGdc) ? ' (GDC ' + esc((sv.agreement && sv.agreement.gdc) || sv.supGdc) + ')' : '')).join(', ');
+      practicalLine = 'has successfully completed the above course, including ' + (prog.quiz ? 'the knowledge quiz, ' : 'the module quizzes, ') + st.needed + ' supervised ' + noun + 's signed off by their ' + supRole + (st.needDecl ? ', a final competence declaration' : '') + (A.length ? ' and ' + (A.length === 1 ? 'a marked ' + A[0].title.toLowerCase() : 'marked written work') : '') + '.';
+      supBlock = '<div class="cert-gdc" style="margin-top:-0.4rem">' + esc(supRole[0].toUpperCase() + supRole.slice(1)) + ': ' + supText + (st.declared ? ', competence declared ' + fmtDate(st.declared.finalDeclaration.signedAt) : '') + '</div>';
     }
-
     out.innerHTML = '<div class="cert-page">'
       + '<div class="cert-logo"><img src="' + LOGO_URL + '" alt="Dental Nurse Training" onerror="this.style.display=\'none\'"/></div>'
       + '<div class="cert-type">' + (ver ? 'Certificate of verifiable CPD' : 'Certificate of CPD') + '</div>'
@@ -117,7 +119,7 @@
       + '<div class="cpd-col"><div class="cpd-label">Date completed</div><div class="cpd-value">' + fmtDate(prog.completedAt) + '</div></div>'
       + '</div>'
       + '<div class="sig-section"><div class="sig-block"><img src="../images/signature.png" alt="" onerror="this.style.display=\'none\'"/><div class="sig-name">' + esc(CERT_SIGNATORY_NAME) + '</div><div class="sig-role">' + esc(CERT_SIGNATORY_ROLE) + '</div></div>'
-      + '<div class="right"><div class="small">Certificate number</div><div class="sig-name">' + esc(prog.certNo || '') + '</div><div class="small" style="margin-top:0.3rem">Quiz score: ' + esc((prog.quiz && prog.quiz.best) || '') + '%</div></div></div>'
+      + '<div class="right"><div class="small">Certificate number</div><div class="sig-name">' + esc(prog.certNo || '') + '</div>' + (prog.quiz && prog.quiz.best != null ? '<div class="small" style="margin-top:0.3rem">Quiz score: ' + esc(prog.quiz.best) + '%</div>' : '') + '</div></div>'
       + '</div>'
 
       + '<div class="cert-page cert-back">'

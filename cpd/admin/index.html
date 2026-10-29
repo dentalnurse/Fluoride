@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="../js/gate.js?v=20261028a"></script>
+  <script src="../js/gate.js?v=20261029a"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin - Dental Nurse Training CPD Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../../css/style.css?v=20261028a"/>
-  <link rel="stylesheet" href="../css/cpd.css?v=20261028a"/>
+  <link rel="stylesheet" href="../../css/style.css?v=20261029a"/>
+  <link rel="stylesheet" href="../css/cpd.css?v=20261029a"/>
 </head>
 <body>
   <div id="navHolder"></div>
@@ -40,7 +40,7 @@
         <div class="admin-tab" data-tab="learners">👥 Learners</div>
         <div class="admin-tab" data-tab="courses">📚 Courses</div>
         <div class="admin-tab" data-tab="supervisors">🤝 Supervisors <span id="supBadge" class="admin-tab-badge" style="display:none"></span></div>
-        <div class="admin-tab" data-tab="marking">📝 Case studies <span id="markBadge" class="admin-tab-badge" style="display:none"></span></div>
+        <div class="admin-tab" data-tab="marking">📝 Marking <span id="markBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab" data-tab="completions">🏅 Completions</div>
         <div class="admin-tab" data-tab="feedback">💬 Feedback</div>
         <div class="admin-tab" data-tab="media">🖼️ Pictures &amp; videos</div>
@@ -54,12 +54,12 @@
   <input type="file" id="importFile" accept=".json,application/json" style="display:none"/>
   <div id="footHolder"></div>
 
-  <script src="../js/config.js?v=20261028a"></script>
-  <script src="../js/ui.js?v=20261028a"></script>
-  <script src="../js/render.js?v=20261028a"></script>
-  <script src="../js/demo-course.js?v=20261028a"></script>
+  <script src="../js/config.js?v=20261029a"></script>
+  <script src="../js/ui.js?v=20261029a"></script>
+  <script src="../js/render.js?v=20261029a"></script>
+  <script src="../js/demo-course.js?v=20261029a"></script>
   <script type="module">
-    import * as D from '../js/data.js?v=20261028a';
+    import * as D from '../js/data.js?v=20261029a';
     const me = await D.mountChrome({ prefix: '../' });
     document.getElementById('adminLoginLink').href = D.link('../login.html?next=admin/index.html');
     document.getElementById('viewHub').href = D.link('../index.html');
@@ -81,7 +81,15 @@
       S = { courses, learners, access, progress, orders, supervisions, cases, marks, bySlug: Object.fromEntries(courses.map(c => [c.slug, c])) };
       S.markOf = (uid, slug) => marks.find(m => m.learnerUid === uid && m.slug === slug) || null;
       S.supPending = supervisions.filter(x => x.status === 'signed');
-      S.toMark = progress.filter(p => p.caseStudy && !(S.markOf(p.uid, p.slug) && S.markOf(p.uid, p.slug).forVersion === p.caseStudy.version));
+      // Every piece of marked written work that has been handed in
+      S.subs = [];
+      progress.forEach(p => assignmentsOf(practicalOf(S.bySlug[p.slug])).filter(a => a.marked !== false).forEach(a => {
+        const sub = a.legacy ? p.caseStudy : (p.assignments || {})[a.id];
+        if (!sub) return;
+        const mk = S.markOf(p.uid, markKey(p.slug, a));
+        S.subs.push({ p, a, sub, mk, cur: mk && mk.forVersion === sub.version ? mk : null });
+      }));
+      S.toMark = S.subs.filter(x => !x.cur);
       [['supBadge', S.supPending.length], ['markBadge', S.toMark.length]].forEach(([id, n]) => { const b = document.getElementById(id); b.textContent = n; b.style.display = n ? '' : 'none'; });
       const pending = orders.filter(o => o.status === 'pending' && !((access[o.uid] || {})[o.slug]));
       S.pending = pending;
@@ -169,18 +177,18 @@
     }
 
     function practicalSummary(uid, slug, a) {
-      const c = S.bySlug[slug] || {}, P = c.practical && c.practical.enabled ? c.practical : null;
+      const c = S.bySlug[slug] || {}, P = practicalOf(c);
       let h = '';
       if (a.expiresAt) { const past = new Date(a.expiresAt) < new Date(); h += '<p style="font-size:0.85rem">' + (past ? '<strong style="color:var(--warn)">Deadline passed</strong> ' : 'Complete by ') + fmtDate(a.expiresAt) + ' <button class="btn btn-outline btn-sm" data-extend="' + esc(slug) + '" style="margin-left:0.4rem">Extend by 1 month</button></p>'; }
       if (P) {
-        const sv = S.supervisions.filter(x => x.learnerUid === uid && x.slug === slug).sort((x, y) => (y.createdAt || '').localeCompare(x.createdAt || ''))[0];
-        const cs = S.cases.filter(x => x.learnerUid === uid && x.slug === slug);
-        const sat = cs.filter(x => x.status === 'signed' && x.signoff && x.signoff.outcome === 'satisfactory').length;
-        const mk = S.markOf(uid, slug);
-        h += '<p style="font-size:0.85rem">' + esc(P.supervisorTitle || 'Supervisor') + ': ' + (sv ? esc(sv.supName) + ' (' + esc(sv.status) + ')' : 'not invited yet') + ' · Logbook: ' + sat + ' of ' + P.cases + ' satisfactory'
-          + (cs.length ? ' (' + cs.filter(x => x.status === 'submitted').length + ' awaiting sign-off)' : '') + (sv && sv.finalDeclaration ? ' · ✓ final declaration' : '')
-          + (P.caseStudy && P.caseStudy.enabled ? ' · Case study: ' + (mk ? (mk.status === 'satisfactory' ? 'Satisfactory' : 'Needs development') : 'not marked') : '') + '</p>'
-          + (cs.length ? '<details class="reveal-item"><summary>Logbook cases</summary><div class="md">' + cs.sort((x, y) => (x.createdAt || '').localeCompare(y.createdAt || '')).map((x, i) => '<p><strong>Case ' + (i + 1) + '</strong>: ' + esc((x.fields || {}).procedure || '') + ' · ' + esc(x.status) + (x.signoff ? ' · ' + esc(x.signoff.outcome) + ' by ' + esc(x.signoff.name) + (x.signoff.observed ? ' (observed: ' + esc(x.signoff.observed) + ')' : '') : '') + '</p>').join('') + '</div></details>' : '');
+        const svs = S.supervisions.filter(x => x.learnerUid === uid && x.slug === slug);
+        const cs = S.cases.filter(x => x.learnerUid === uid && x.slug === slug).sort((x, y) => (x.createdAt || '').localeCompare(y.createdAt || ''));
+        const st = logbookStatus(P, cs, svs);
+        h += '<p style="font-size:0.85rem">' + esc(P.supervisorTitle || 'Supervisor') + ': ' + (svs.length ? svs.map(sv => esc(sv.supName) + ' (' + esc(sv.status) + ')').join(', ') : 'not invited yet') + ' · Logbook: ' + st.satCount + ' of ' + st.needed + ' satisfactory'
+          + (cs.length ? ' (' + cs.filter(x => x.status === 'submitted').length + ' awaiting sign-off)' : '') + (st.distinct ? ' · ' + esc(st.distinct.label) + ': ' + st.distinct.have + ' of ' + st.distinct.min : '') + (st.declared ? ' · ✓ final declaration' : '')
+          + assignmentsOf(P).map(as => { const x = S.subs.find(y => y.p.uid === uid && y.p.slug === slug && y.a.id === as.id); const p = S.progress.find(y => y.uid === uid && y.slug === slug) || {}; const handed = as.legacy ? p.caseStudy : (p.assignments || {})[as.id];
+              return ' · ' + esc(as.title) + ': ' + (as.marked === false ? (handed ? 'handed in' : 'not yet') : x ? (x.cur ? (x.cur.status === 'satisfactory' ? 'Satisfactory' : 'Needs development') : 'to mark') : 'not yet'); }).join('') + '</p>'
+          + (cs.length ? '<details class="reveal-item"><summary>Logbook</summary><div class="md">' + cs.map((x, i) => '<p><strong>' + esc(x.category || ('Entry ' + (i + 1))) + '</strong>: ' + esc((x.fields || {}).procedure || '') + ' · ' + esc(x.status) + (x.signoff ? ' · ' + esc(x.signoff.outcome) + ' by ' + esc(x.signoff.name) + (x.signoff.observed ? ' (present: ' + esc(x.signoff.observed) + ')' : '') : '') + '</p>').join('') + '</div></details>' : '');
       }
       return h;
     }
@@ -346,7 +354,22 @@
     const PRACTICAL_FIELDS = [
       { key: 'enabled', label: 'This course includes supervised practice', type: 'check' },
       { key: 'supervisorTitle', label: 'Who supervises (e.g. dentist)', type: 'text' },
-      { key: 'cases', label: 'Number of logbook cases needed', type: 'number', min: 1 },
+      { key: 'supervisorWho', label: 'Who can supervise, in full (optional)', type: 'text', placeholder: 'e.g. a GDC registered dentist, dental hygienist or dental therapist' },
+      { key: 'multipleSupervisors', label: 'Learners can have more than one supervisor', type: 'check' },
+      { key: 'caseNoun', label: 'What one logbook entry is called (e.g. case, session, removal)', type: 'text' },
+      { key: 'cases', label: 'Number of logbook entries needed (ignored if you add groups below)', type: 'number', min: 1 },
+      { key: 'caseCategories', label: 'Groups of logbook entries (optional, e.g. topics)', type: 'rows', item: 'Group', fields: [
+        { key: 'label', label: 'Group name', type: 'text' },
+        { key: 'count', label: 'How many entries needed', type: 'number', min: 1 },
+        { key: 'help', label: 'Help text (optional)', type: 'text' },
+      ] },
+      { key: 'distinctKey', label: 'Must cover a range of answers to one logbook question: short code of the question (optional)', type: 'text', help: 'e.g. patientGroup, with the number below set to 4' },
+      { key: 'distinctMin', label: 'How many different answers are needed', type: 'number', min: 0 },
+      { key: 'distinctLabel', label: 'What these are called (e.g. Patient groups)', type: 'text' },
+      { key: 'logbookIntro', label: 'Logbook introduction (optional)', type: 'md', short: true },
+      { key: 'logbookRules', label: 'How the logbook works (optional, replaces the standard bullet points)', type: 'md', short: true },
+      { key: 'mustObserveAll', label: 'The supervisor must be present for every entry (they cannot mark it satisfactory otherwise)', type: 'check' },
+      { key: 'observeQuestion', label: 'Question the supervisor answers when signing off (optional)', type: 'text', placeholder: 'e.g. Were you physically present for the whole session?' },
       { key: 'observedCases', label: 'How many of the first cases must be directly observed', type: 'number', min: 0 },
       { key: 'agreement', label: 'Supervisor agreement statements (one per line)', type: 'lines', help: 'The supervisor ticks each one when signing the agreement.' },
       { key: 'caseFields', label: 'Logbook questions for each case', type: 'rows', item: 'Question', fields: [
@@ -359,7 +382,33 @@
       { key: 'reflectionPrompts', label: 'Reflection questions for each case (one per line)', type: 'lines' },
       { key: 'reflectionWords', label: 'Reflection length guidance (e.g. 100 to 150 words)', type: 'text', help: 'The first number is used as the minimum.' },
       { key: 'signoffStatement', label: 'Supervisor sign-off statement for each case', type: 'md', short: true },
-      { key: 'finalDeclaration', label: 'Final competence declaration', type: 'md', short: true },
+      { key: 'finalDeclaration', label: 'Final competence declaration (leave blank if not needed)', type: 'md', short: true },
+    ];
+    const ASSIGNMENT_FIELDS = [
+      { key: 'assignments', label: 'Written work marked by DNT (written tasks, reflections, reports...)', type: 'rows', item: 'Piece of work', fields: [
+        { key: 'id', label: 'Short code (lower case, e.g. written-tasks)', type: 'text' },
+        { key: 'title', label: 'Title', type: 'text' },
+        { key: 'icon', label: 'Icon (an emoji)', type: 'text' },
+        { key: 'stage', label: 'When it opens', type: 'select', options: [['theory', 'After the lessons, before the logbook'], ['practical', 'After the lessons, alongside the logbook'], ['end', 'Once the logbook is complete'], ['final', 'At the end, once everything else is done']] },
+        { key: 'marked', label: 'Marked by DNT (untick if learners just hand it in)', type: 'check' },
+        { key: 'requiredForLogbook', label: 'Must be handed in before the logbook opens', type: 'check' },
+        { key: 'pickCase', label: 'Learner chooses one of their logbook entries to write about', type: 'check' },
+        { key: 'summary', label: 'One line for the course page (optional)', type: 'text' },
+        { key: 'brief', label: 'Instructions', type: 'md', short: true },
+        { key: 'headings', label: 'Headings to cover (one per line, optional)', type: 'lines' },
+        { key: 'fields', label: 'Answer boxes', type: 'rows', item: 'Answer box', fields: [
+          { key: 'key', label: 'Short code (letters or numbers only)', type: 'text' },
+          { key: 'label', label: 'Question or heading', type: 'text' },
+          { key: 'type', label: 'Type', type: 'select', options: [['textarea', 'Long answer'], ['text', 'Short answer'], ['select', 'Drop-down list'], ['rows', 'Table']] },
+          { key: 'help', label: 'Help text (optional)', type: 'md', short: true },
+          { key: 'minWords', label: 'Minimum words (long answers)', type: 'number', min: 0 },
+          { key: 'maxWords', label: 'Maximum words (long answers)', type: 'number', min: 0 },
+          { key: 'options', label: 'Drop-down choices (one per line)', type: 'lines' },
+          { key: 'columns', label: 'Table columns (one per line)', type: 'lines' },
+          { key: 'minRows', label: 'Minimum table rows', type: 'number', min: 0 },
+        ] },
+        { key: 'criteria', label: 'Marking criteria (one per line)', type: 'lines' },
+      ] },
     ];
     const CASESTUDY_FIELDS = [
       { key: 'enabled', label: 'Learners write a case study, marked by you', type: 'check' },
@@ -431,7 +480,9 @@
         ed.meta.practical.caseStudy = ed.meta.practical.caseStudy || { enabled: false };
         panel.innerHTML = '<h3 style="margin-bottom:0.5rem">Supervised practice</h3><p style="font-size:0.88rem;margin-bottom:1rem">For courses with a workplace logbook signed off by a supervisor, such as suture removal. The learner invites their supervisor, who signs an agreement that you approve in the Supervisors tab.</p>';
         renderFields(panel, ed.meta.practical, PRACTICAL_FIELDS);
-        const cs = document.createElement('div'); cs.innerHTML = '<h3 style="margin:1.5rem 0 0.5rem">Case study</h3>'; panel.appendChild(cs);
+        const aw = document.createElement('div'); aw.innerHTML = '<h3 style="margin:1.5rem 0 0.5rem">Written work</h3>'; panel.appendChild(aw);
+        renderFields(aw, ed.meta.practical, ASSIGNMENT_FIELDS);
+        const cs = document.createElement('div'); cs.innerHTML = '<h3 style="margin:1.5rem 0 0.5rem">Single case study (older setting)</h3><p style="font-size:0.85rem">You can use this or add a piece of written work above.</p>'; panel.appendChild(cs);
         renderFields(cs, ed.meta.practical.caseStudy, CASESTUDY_FIELDS);
       } else if (edSection === 'reflection') {
         panel.innerHTML = '<h3 style="margin-bottom:0.5rem">Reflection questions</h3><p style="font-size:0.88rem;margin-bottom:1rem">Learners answer these after passing the quiz. Their answers are printed on the back of the certificate.</p>';
@@ -595,8 +646,12 @@
       }));
       const P = m.practical;
       if (P && P.enabled) {
-        if (!(Number(P.cases) >= 1)) errs.push('Supervised practice: set how many logbook cases are needed.');
-        if (Number(P.observedCases) > Number(P.cases)) errs.push('Supervised practice: observed cases cannot be more than the total cases.');
+        if (!(casesNeeded(P) >= 1)) errs.push('Supervised practice: set how many logbook entries are needed (or add groups with a number each).');
+        if (Number(P.observedCases) > casesNeeded(P)) errs.push('Supervised practice: observed entries cannot be more than the total.');
+        const ids = (P.assignments || []).map(x => x.id);
+        if (ids.some(k => !/^[a-z0-9-]+$/.test(k || ''))) errs.push('Written work: every piece needs a short code using lower case letters, numbers or dashes.');
+        if (new Set(ids).size !== ids.length) errs.push('Written work: two pieces have the same short code.');
+        (P.assignments || []).forEach(x => { if (!(x.fields || []).length) errs.push('Written work "' + (x.title || x.id) + '": add at least one answer box.'); const fk = (x.fields || []).map(f => f.key); if (fk.some(k => !/^[a-zA-Z0-9]+$/.test(k || ''))) errs.push('Written work "' + (x.title || x.id) + '": every answer box needs a short code using letters or numbers only.'); });
         if (!(P.agreement || []).length) errs.push('Supervised practice: add the supervisor agreement statements.');
         if (!(P.caseFields || []).length) errs.push('Supervised practice: add the logbook questions.');
         const keys = (P.caseFields || []).map(f => f.key);
@@ -732,32 +787,42 @@
       });
     }
 
-    // ══ Case study marking ════════════════════════════════════════════════
+    // ══ Marking written work ═════════════════════════════════════════════
     function tabMarking() {
-      const subs = S.progress.filter(p => p.caseStudy).map(p => ({ p, mk: S.markOf(p.uid, p.slug) }))
-        .sort((a, b) => (a.mk && a.mk.forVersion === a.p.caseStudy.version ? 1 : 0) - (b.mk && b.mk.forVersion === b.p.caseStudy.version ? 1 : 0) || (a.p.caseStudy.submittedAt || '').localeCompare(b.p.caseStudy.submittedAt || ''));
-      body.innerHTML = subs.length ? '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Learner</th><th>Course</th><th>Submitted</th><th>Status</th><th></th></tr></thead><tbody>'
-        + subs.map(({ p, mk }, i) => { const cur = mk && mk.forVersion === p.caseStudy.version; return '<tr><td class="td-name">' + esc(learnerOf(p.uid).name) + '</td><td>' + esc(titleOf(p.slug)) + '</td><td>' + fmtDate(p.caseStudy.submittedAt) + (p.caseStudy.version > 1 ? ' (resubmission)' : '') + '</td><td>' + (cur ? (mk.status === 'satisfactory' ? '<span class="pill pill-green">Satisfactory</span>' : '<span class="pill pill-red">Needs development</span>') : '<span class="pill pill-orange">To mark</span>') + '</td><td><button class="btn btn-primary btn-sm" data-mark="' + i + '">' + (cur ? 'View' : 'Mark') + '</button></td></tr>'; }).join('')
-        + '</tbody></table></div>' : '<p style="color:var(--ink-light)">No case studies submitted yet.</p>';
-      body.querySelectorAll('[data-mark]').forEach(b => b.onclick = () => markCaseStudy(subs[b.dataset.mark]));
+      const subs = S.subs.slice().sort((a, b) => (a.cur ? 1 : 0) - (b.cur ? 1 : 0) || (a.sub.submittedAt || '').localeCompare(b.sub.submittedAt || ''));
+      body.innerHTML = subs.length ? '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Learner</th><th>Course</th><th>Work</th><th>Submitted</th><th>Status</th><th></th></tr></thead><tbody>'
+        + subs.map(({ p, a, sub, cur }, i) => '<tr><td class="td-name">' + esc(learnerOf(p.uid).name) + '</td><td>' + esc(titleOf(p.slug)) + '</td><td>' + esc(a.title) + '</td><td>' + fmtDate(sub.submittedAt) + (sub.version > 1 ? ' (resubmission)' : '') + '</td><td>' + (cur ? (cur.status === 'satisfactory' ? '<span class="pill pill-green">Satisfactory</span>' : '<span class="pill pill-red">Needs development</span>') : '<span class="pill pill-orange">To mark</span>') + '</td><td><button class="btn btn-primary btn-sm" data-mark="' + i + '">' + (cur ? 'View' : 'Mark') + '</button></td></tr>').join('')
+        + '</tbody></table></div>' : '<p style="color:var(--ink-light)">No written work submitted yet.</p>';
+      body.querySelectorAll('[data-mark]').forEach(b => b.onclick = () => markWork(subs[b.dataset.mark]));
     }
-    function markCaseStudy({ p, mk }) {
-      const c = S.bySlug[p.slug] || {}, cs = (c.practical && c.practical.caseStudy) || {}, l = learnerOf(p.uid);
-      const cur = mk && mk.forVersion === p.caseStudy.version ? mk : null;
+    function workHtml(a, sub, cases) {
+      const vals = a.legacy ? { text: sub.text } : (sub.values || {});
+      const cs = sub.caseId ? cases.find(x => x.id === sub.caseId) : null;
+      return (cs ? '<p style="font-size:0.85rem"><strong>Logbook entry:</strong> ' + esc(cs.category || (cs.fields || {}).procedure || '') + '</p>' : '')
+        + (a.fields || []).map(f => {
+          const v = vals[f.key];
+          const shown = f.type === 'rows' ? '<table class="admin-table"><thead><tr>' + (f.columns || []).map(c => '<th>' + esc(c) + '</th>').join('') + '</tr></thead><tbody>' + (v || []).map(r => '<tr>' + (f.columns || []).map((c, ci) => '<td>' + esc(r[ci] || '') + '</td>').join('') + '</tr>').join('') + '</tbody></table>'
+            : '<div class="cd-card" style="max-height:340px;overflow:auto;white-space:pre-wrap;font-size:0.9rem">' + esc(v || '') + '</div>';
+          return '<h3 style="margin:0.9rem 0 0.35rem">' + esc(f.label) + (f.type === 'textarea' ? ' <small style="font-weight:400;color:var(--ink-light)">(' + wordCount(v) + ' words)</small>' : '') + '</h3>' + shown;
+        }).join('');
+    }
+    function markWork({ p, a, sub, cur }) {
+      const c = S.bySlug[p.slug] || {}, l = learnerOf(p.uid);
       const d = new Date(), today = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
       const template = today + '\n\nWell done ' + (l.name || '').split(' ')[0] + '. This is a good piece of work.\n\n1. \n2. \n\nPlease add these amendments and resubmit for marking.';
-      const m = modal('Case study: ' + l.name, '', true);
-      m.el.innerHTML = '<p style="font-size:0.88rem">' + esc(c.title || p.slug) + ' · ' + p.caseStudy.words + ' words · submitted ' + fmtDate(p.caseStudy.submittedAt) + (p.caseStudy.version > 1 ? ' (resubmission ' + p.caseStudy.version + ')' : '') + '</p>'
-        + '<div class="cd-card" style="max-height:340px;overflow:auto;white-space:pre-wrap;font-size:0.9rem;margin-bottom:1rem">' + esc(p.caseStudy.text) + '</div>'
-        + ((cs.criteria || []).length ? '<h3>Marking criteria</h3>' + cs.criteria.map((t, i) => '<label style="display:flex;gap:0.55rem;align-items:flex-start;font-size:0.86rem;margin-bottom:0.45rem"><input type="checkbox" class="crit" data-i="' + i + '"' + (cur && cur.criteria && cur.criteria[i] ? ' checked' : '') + ' style="margin-top:0.2rem"/><span>' + esc(t) + '</span></label>').join('') : '')
+      const m = modal(a.title + ': ' + l.name, '', true);
+      const crits = a.criteria || [];
+      m.el.innerHTML = '<p style="font-size:0.88rem">' + esc(c.title || p.slug) + ' · ' + (sub.words ? sub.words + ' words · ' : '') + 'submitted ' + fmtDate(sub.submittedAt) + (sub.version > 1 ? ' (resubmission ' + sub.version + ')' : '') + '</p>'
+        + workHtml(a, sub, S.cases.filter(x => x.learnerUid === p.uid))
+        + (crits.length ? '<h3 style="margin-top:1.1rem">Marking criteria</h3>' + crits.map((t, i) => '<label style="display:flex;gap:0.55rem;align-items:flex-start;font-size:0.86rem;margin-bottom:0.45rem"><input type="checkbox" class="crit" data-i="' + i + '"' + (cur && cur.criteria && cur.criteria[i] ? ' checked' : '') + ' style="margin-top:0.2rem"/><span>' + esc(t) + '</span></label>').join('') : '')
         + '<div class="form-group" style="margin-top:0.75rem"><label>Feedback for the learner</label><textarea id="mkFb" style="min-height:160px">' + esc(cur ? cur.feedback : template) + '</textarea></div>'
         + '<div class="admin-actions"><button class="btn btn-success btn-sm" id="mkSat">Mark Satisfactory</button><button class="btn btn-outline btn-sm" id="mkNd" style="color:var(--warn);border-color:var(--warn)">Needs development</button></div>';
       const doMark = async (status) => {
         const crit = {}; m.el.querySelectorAll('.crit').forEach(x => { crit[x.dataset.i] = x.checked; });
-        if (status === 'satisfactory' && Object.values(crit).some(v => !v) && !confirm('Not every criterion is ticked. The case study should only be Satisfactory when all criteria are met. Mark it Satisfactory anyway?')) return;
-        await D.setMark(p.uid, p.slug, { status, feedback: document.getElementById('mkFb').value.trim(), criteria: crit, forVersion: p.caseStudy.version, markedBy: me.email });
+        if (status === 'satisfactory' && Object.values(crit).some(v => !v) && !confirm('Not every criterion is ticked. Work should only be Satisfactory when all criteria are met. Mark it Satisfactory anyway?')) return;
+        await D.setMark(p.uid, markKey(p.slug, a), { status, feedback: document.getElementById('mkFb').value.trim(), criteria: crit, forVersion: sub.version, markedBy: me.email, assignment: a.id, course: p.slug });
         m.close(); toast('Marked. Please let the learner know.', 'success');
-        location.href = 'mailto:' + encodeURIComponent(l.email || '') + '?subject=' + encodeURIComponent('Your case study has been marked') + '&body=' + encodeURIComponent('Hi ' + (l.name || '').split(' ')[0] + ',\n\nYour case study for "' + (c.title || p.slug) + '" has been marked. Please log in to the CPD Hub to see your feedback.\n\nKind regards,\nDental Nurse Training');
+        location.href = 'mailto:' + encodeURIComponent(l.email || '') + '?subject=' + encodeURIComponent('Your ' + a.title.toLowerCase() + ' has been marked') + '&body=' + encodeURIComponent('Hi ' + (l.name || '').split(' ')[0] + ',\n\nYour ' + a.title.toLowerCase() + ' for "' + (c.title || p.slug) + '" has been marked. Please log in to the CPD Hub to see your feedback.\n\nKind regards,\nDental Nurse Training');
         show('marking');
       };
       document.getElementById('mkSat').onclick = () => doMark('satisfactory');
