@@ -460,7 +460,8 @@
       nav.innerHTML = item('details', '📋 Course details') + '<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-light);padding:0.75rem 0.75rem 0.25rem">Lessons</div>'
         + L.map((l, i) => item('lesson:' + l.id, (i + 1) + '. ' + esc(l.title || 'Untitled'), true)).join('')
         + '<button class="ed-sub" id="addLesson" style="color:var(--teal);font-weight:700">＋ Add lesson</button>'
-        + item('quiz', '✅ Quiz (' + ed.content.quiz.questions.length + ')') + item('practical', '🦷 Supervised practice') + item('reflection', '🪞 Reflection questions') + item('help', '❔ Writing tips');
+        + item('quiz', (() => { const mq = ed.content.lessons.filter(l => l.quiz && (l.quiz.questions || []).length); const n = mq.reduce((t, l) => t + l.quiz.questions.length, 0);
+            return '✅ End of course quiz (' + ed.content.quiz.questions.length + ')' + (mq.length ? '<small style="display:block;font-weight:400;opacity:0.75">+ ' + mq.length + ' module quiz' + (mq.length === 1 ? '' : 'zes') + ', ' + n + ' questions</small>' : ''); })()) + item('practical', '🦷 Supervised practice') + item('reflection', '🪞 Reflection questions') + item('help', '❔ Writing tips');
       nav.querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { edSection = b.dataset.sec; drawEditor(); });
       document.getElementById('addLesson').onclick = () => { const l = { id: newId(), title: 'Lesson ' + (L.length + 1), blocks: [] }; L.push(l); edSection = 'lesson:' + l.id; dirty(); drawEditor(); };
 
@@ -473,7 +474,10 @@
         if (i < 0) { edSection = 'details'; return drawEditor(); }
         drawLessonEditor(panel, L[i], i);
       } else if (edSection === 'quiz') {
-        panel.innerHTML = '<h3 style="margin-bottom:0.5rem">End of course quiz</h3><p style="font-size:0.88rem;margin-bottom:1rem">Learners must pass this to get their certificate. Questions and answer options are shuffled each attempt. Aim for at least 5 to 10 questions that test each objective.</p>';
+        const mq = ed.content.lessons.filter(l => l.quiz && (l.quiz.questions || []).length);
+        panel.innerHTML = '<h3 style="margin-bottom:0.5rem">End of course quiz</h3>'
+          + (mq.length ? '<div class="callout" style="margin-top:0"><div class="callout-label">This course has module quizzes</div><p>' + mq.length + ' lesson' + (mq.length === 1 ? ' has' : 's have') + ' a module quiz (' + mq.reduce((t, l) => t + l.quiz.questions.length, 0) + ' questions in total). Open a lesson and scroll to "Module quiz for this lesson" to see or edit them. An end of course quiz is optional: leave it empty and learners go straight on after the last module quiz.</p></div>' : '')
+          + '<p style="font-size:0.88rem;margin-bottom:1rem">Learners must pass this to get their certificate. Questions and answer options are shuffled each attempt. Aim for at least 5 to 10 questions that test each objective.</p>';
         renderFields(panel, ed.content.quiz, QUIZ_FIELDS);
       } else if (edSection === 'practical') {
         ed.meta.practical = ed.meta.practical || { enabled: false, supervisorTitle: 'dentist', cases: 5, observedCases: 0, agreement: [], caseFields: [], reflectionPrompts: [], caseStudy: { enabled: false } };
@@ -631,8 +635,9 @@
         if (!/^https:\/\//.test(m.stripeLink || '')) errs.push('Add the Stripe Payment Link (needed for a live course).');
         if (!c.lessons.length) errs.push('Add at least one lesson.');
         c.lessons.forEach((l, i) => { if (!l.blocks.length) errs.push('Lesson ' + (i + 1) + ' is empty.'); });
-        if (!c.quiz.questions.length) errs.push('Add some quiz questions.');
-        if (!c.reflection.length) errs.push('Add at least one reflection question.');
+        const hasModuleQuizzes = c.lessons.some(l => l.quiz && (l.quiz.questions || []).length);
+        if (!c.quiz.questions.length && !hasModuleQuizzes) errs.push('Add some quiz questions (an end of course quiz, or a module quiz in each lesson).');
+        if (!c.reflection.length && !(m.practical && m.practical.enabled)) errs.push('Add at least one reflection question.');
       }
       c.lessons.forEach((l, i) => l.blocks.forEach((b, bi) => {
         const where = 'Lesson ' + (i + 1) + ', item ' + (bi + 1) + ' (' + (BLOCK_TYPES[b.type] || {}).label + '): ';
