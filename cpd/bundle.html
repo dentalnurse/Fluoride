@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="js/gate.js?v=20261029b"></script>
+  <meta name="robots" content="noindex, nofollow"/>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0L9NXXFBFR');
+  </script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Course bundle - Dental Nurse Training CPD Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css?v=20261029b"/>
+  <link rel="stylesheet" href="css/cpd.css?v=20261029b"/>
+</head>
+<body>
+  <div id="navHolder"></div>
+  <div class="course-hero">
+    <div class="container">
+      <p class="crumbs"><a id="homeCrumb" href="index.html">CPD Hub</a> / Bundles</p>
+      <div class="ch-tags"><span class="ch-tag">Course bundle</span></div>
+      <h1 id="bTitle">Loading...</h1>
+      <p class="ch-summary" id="bSummary"></p>
+      <div class="ch-chips" id="bChips"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="cd-grid" id="detail" style="display:none">
+      <div class="cd-main">
+        <div class="cd-section">
+          <h2>Courses in this bundle</h2>
+          <div id="bCourses" class="course-grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))"></div>
+        </div>
+        <div class="cd-section" id="noticeBlock" style="display:none">
+          <h2>Before you buy</h2>
+          <div id="bNotices"></div>
+        </div>
+      </div>
+      <aside>
+        <div class="price-card">
+          <div class="pc-visual"><span class="cv-icon" id="bIcon">🎁</span></div>
+          <div class="pc-body">
+            <div class="pc-price" id="bPrice"></div>
+            <div class="pc-sub" id="bSave"></div>
+            <div id="action"></div>
+            <div class="pc-includes" id="bIncludes"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+    <div id="notFound" class="empty-state" style="display:none;margin:2.5rem 0"><div class="es-icon">🔍</div><h3>Bundle not found</h3><p><a href="index.html" id="backLink" style="color:var(--teal);font-weight:700">Back to all courses</a></p></div>
+  </div>
+  <div id="footHolder"></div>
+
+  <script src="js/config.js?v=20261029b"></script>
+  <script src="js/ui.js?v=20261029b"></script>
+  <script src="js/demo-course.js?v=20261029b"></script>
+  <script type="module">
+    import * as D from './js/data.js?v=20261029b';
+    const user = await D.mountChrome();
+    document.getElementById('homeCrumb').href = D.link('index.html');
+    document.getElementById('backLink').href = D.link('index.html');
+    const slug = qs('b');
+    const bundle = slug ? await D.getBundle(slug) : null;
+    const courses = bundle ? (await Promise.all((bundle.courses || []).map(c => D.getCourse(c)))).filter(Boolean) : [];
+    if (!bundle || (bundle.status !== 'live' && !(user && user.isAdmin)) || !courses.length) {
+      document.getElementById('bTitle').textContent = 'Bundle not found';
+      document.getElementById('notFound').style.display = 'block';
+      throw new Error('not found');
+    }
+    const priceNum = p => parseFloat(String(p || '').replace(/[^0-9.]/g, '')) || 0;
+    const money = n => '£' + (n % 1 ? n.toFixed(2) : String(n));
+    const full = courses.reduce((t, c) => t + priceNum(c.price), 0), saving = Math.round((full - priceNum(bundle.price)) * 100) / 100;
+    const hours = courses.reduce((t, c) => t + (Number(c.hours) || 0), 0);
+    document.title = bundle.title + ' - Dental Nurse Training CPD Hub';
+    document.getElementById('bTitle').textContent = bundle.title;
+    document.getElementById('bSummary').textContent = bundle.summary || '';
+    document.getElementById('bChips').innerHTML = ['📚 ' + courses.length + ' courses', '⏱ ' + hours + ' hours of CPD', ...(saving > 0 ? ['💷 Save ' + money(saving)] : [])].map(t => '<span class="ch-chip">' + esc(t) + '</span>').join('');
+    document.getElementById('bIcon').textContent = bundle.icon || '🎁';
+    document.getElementById('bPrice').textContent = bundle.price;
+    document.getElementById('bSave').innerHTML = saving > 0 ? '<s>' + money(full) + '</s> if bought separately' : '';
+    document.getElementById('bCourses').innerHTML = courses.map(c => '<a class="course-card" href="' + D.link('course.html?c=' + encodeURIComponent(c.slug)) + '"><div class="cc-body"><div class="cc-icon">' + esc(c.icon || '📘') + '</div><div class="cc-cat">' + esc(c.category || 'CPD') + '</div><h3>' + esc(c.title) + '</h3><p>' + esc(c.summary || '') + '</p></div>'
+      + '<div class="cc-foot"><span class="cc-meta">' + typePill(c) + ' <strong>' + esc(c.hours) + ' hr' + (Number(c.hours) === 1 ? '' : 's') + '</strong></span><span style="color:var(--ink-light)">' + esc(c.price || '') + ' on its own</span></div></a>').join('');
+    document.getElementById('bIncludes').innerHTML = courses.map(c => '<div><span>✓</span><span>' + esc(c.title) + '</span></div>').join('') + '<div><span>✓</span><span>Each course saved to your CPD Hub account</span></div>';
+    // Course notices (e.g. who a course is for) are shown before buying
+    const notices = courses.filter(c => c.notice);
+    if (notices.length) { document.getElementById('bNotices').innerHTML = notices.map(c => '<div class="callout callout-warn" style="margin:0 0 0.75rem"><div class="callout-label">' + esc(c.title) + '</div><div class="md">' + md(c.notice) + '</div></div>').join(''); document.getElementById('noticeBlock').style.display = ''; }
+    document.getElementById('detail').style.display = '';
+
+    const action = document.getElementById('action');
+    const btn = (href, label) => '<a href="' + href + '" class="btn btn-primary btn-lg" style="width:100%">' + label + '</a>';
+    const small = (html) => '<p style="text-align:center;margin-top:0.7rem;font-size:0.84rem;color:var(--ink-light)">' + html + '</p>';
+    const linkStyle = 'color:var(--teal);font-weight:700;text-decoration:underline';
+    const needGdc = courses.some(c => c.requireGdc);
+    const decl = [...new Set(courses.flatMap(c => c.enrolDeclarations || []))];
+    const orderId = 'bundle__' + slug;
+    if (!user) {
+      const next = encodeURIComponent('bundle.html?b=' + slug);
+      action.innerHTML = btn(D.link('register.html?next=' + next), 'Create account to buy') + small('Already registered? <a href="' + D.link('login.html?next=' + next) + '" style="' + linkStyle + '">Log in</a>');
+    } else {
+      const access = await D.getAccess(user.uid);
+      const order = (await D.getOrders(user.uid)).find(o => o.id === orderId);
+      const owned = courses.filter(c => access[c.slug]);
+      if (owned.length === courses.length) {
+        action.innerHTML = '<div class="pc-note">You already have every course in this bundle.</div>' + small('<a href="' + D.link('dashboard.html') + '" style="' + linkStyle + '">Go to My CPD</a>');
+      } else if (order && order.status === 'pending') {
+        action.innerHTML = '<div class="pc-note">⏳ <strong>Payment being checked.</strong> Your courses will be unlocked within 1 working day. We will email you when they are ready.</div>'
+          + small('Not finished paying? <a href="#" id="payAgain" style="' + linkStyle + '">Go to payment</a>');
+        document.getElementById('payAgain').onclick = (e) => { e.preventDefault(); buy(); };
+      } else if (needGdc && !user.gdc) {
+        action.innerHTML = '<div class="pc-note">Some courses in this bundle are for GDC registered dental professionals. Please add your GDC registration number in <a href="' + D.link('dashboard.html') + '" style="' + linkStyle + '">My CPD → My details</a>, then come back to buy.</div>';
+      } else {
+        action.innerHTML = (owned.length ? '<div class="pc-note" style="margin-bottom:0.9rem">You already have ' + owned.map(c => esc(c.title)).join(', ') + '. You may prefer to buy the other courses on their own.</div>' : '')
+          + (decl.length ? '<div style="margin-bottom:0.9rem">' + decl.map(d => '<label style="display:flex;gap:0.55rem;align-items:flex-start;font-size:0.84rem;color:var(--ink-mid);margin-bottom:0.55rem;line-height:1.45"><input type="checkbox" class="declBox" style="margin-top:0.2rem;flex-shrink:0"/><span>' + esc(d) + '</span></label>').join('') + '</div>' : '')
+          + '<button class="btn btn-primary btn-lg" style="width:100%" id="buyBtn">Buy bundle</button>' + small('🔒 Secure payment by Stripe');
+        document.getElementById('buyBtn').onclick = buy;
+      }
+    }
+
+    async function buy() {
+      if ([...document.querySelectorAll('.declBox')].some(b => !b.checked)) { toast('Please tick every statement to confirm before you buy.', 'error'); return; }
+      if (!D.PREVIEW && !bundle.stripeLink) { toast('Payment for this bundle is not set up yet. Please contact us.', 'error'); return; }
+      try {
+        await D.createOrder(user, { slug: 'bundle:' + slug, title: bundle.title, price: bundle.price },
+          { kind: 'bundle', bundle: slug, courses: bundle.courses, ...(decl.length ? { declarations: decl, declaredAt: new Date().toISOString() } : {}) }, orderId);
+      } catch (e) { console.error(e); toast('Something went wrong. Please try again.', 'error'); return; }
+      D.notify('Bundle bought - ' + bundle.title, user.name + ' (' + user.email + ') has clicked to buy the bundle "' + bundle.title + '" (' + bundle.price + '). Check Stripe, then unlock it in Admin → Payments.', user);
+      if (D.PREVIEW) { alert('Preview mode: no payment is taken. Open Admin → Payments to unlock the bundle.'); location.reload(); return; }
+      const sep = bundle.stripeLink.includes('?') ? '&' : '?';
+      location.href = bundle.stripeLink + sep + 'prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + encodeURIComponent(user.uid + '__bundle__' + slug);
+    }
+  </script>
+</body>
+</html>

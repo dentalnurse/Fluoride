@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/gate.js?v=20261029a"></script>
+  <script src="js/gate.js?v=20261029b"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
@@ -16,8 +16,8 @@
   <title>Course - Dental Nurse Training CPD Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../css/style.css?v=20261029a"/>
-  <link rel="stylesheet" href="css/cpd.css?v=20261029a"/>
+  <link rel="stylesheet" href="../css/style.css?v=20261029b"/>
+  <link rel="stylesheet" href="css/cpd.css?v=20261029b"/>
   <style>
     .mobile-menu-btn { display:none; margin-bottom:1rem; }
     @media (max-width:960px) { .mobile-menu-btn { display:inline-flex; } }
@@ -35,14 +35,14 @@
     </main>
   </div>
 
-  <script src="js/config.js?v=20261029a"></script>
-  <script src="js/ui.js?v=20261029a"></script>
-  <script src="js/render.js?v=20261029a"></script>
-  <script src="js/demo-course.js?v=20261029a"></script>
+  <script src="js/config.js?v=20261029b"></script>
+  <script src="js/ui.js?v=20261029b"></script>
+  <script src="js/render.js?v=20261029b"></script>
+  <script src="js/demo-course.js?v=20261029b"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
   <script type="module">
-    import * as D from './js/data.js?v=20261029a';
+    import * as D from './js/data.js?v=20261029b';
     const user = await D.mountChrome();
     const slug = qs('c');
     const main = document.getElementById('main');
@@ -90,8 +90,9 @@
     const markOf = a => { const m = marks[a.id], sub = subOf(a); return m && sub && m.forVersion === sub.version ? m : null; };
     const assignDone = a => { const sub = subOf(a); if (!sub) return false; if (a.marked === false) return true; const m = markOf(a); return !!(m && m.status === 'satisfactory'); };
 
-    // Completion window
+    // Completion window, and any extension the learner has paid for that is waiting to be checked
     const acc = access[slug] || {};
+    const extPending = hasAccess ? (await D.getOrders(user.uid).catch(() => [])).some(o => o.kind === 'extension' && o.slug === slug && o.status === 'pending') : false;
     const expired = !adminView && acc.expiresAt && new Date(acc.expiresAt) < new Date() && !prog.completedAt;
 
     if (adminView) document.getElementById('adminNote').innerHTML = '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Admin view</div><p>You are viewing this course as an admin. Everything is unlocked and nothing you do here is saved.</p></div>';
@@ -201,6 +202,7 @@
           + (usesGdc(c) ? '<p style="font-weight:700;color:var(--ink);margin:1rem 0 0.25rem">GDC development outcomes</p>' + outcomesBadges(c) : '')
           + '<p style="font-size:0.84rem;color:var(--ink-light);margin-top:1rem">' + esc(audienceText(c)) + '</p></div></div>';
       document.getElementById('startBtn').onclick = () => go(firstOpenStep() === 'intro' ? steps[1][0] : firstOpenStep());
+      const be = document.getElementById('buyExt'); if (be) be.onclick = buyExtension;
     }
 
     // ── Lessons ──────────────────────────────────────────────────────────
@@ -381,9 +383,23 @@
     // ── Completion window ────────────────────────────────────────────────
     function deadlineHtml() {
       if (!acc.expiresAt || prog.completedAt || adminView) return '';
-      if (expired) return '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Your time to complete this course has ended</div><p>Your completion window ended on ' + fmtDate(acc.expiresAt) + '. Please email <a href="mailto:' + esc(NOTIFY_EMAIL) + '">' + esc(NOTIFY_EMAIL) + '</a> to ask for an extension. Your progress is saved.</p></div>';
+      const canBuy = !!(course.extensionStripeLink || D.PREVIEW) && extensionPrice(course);
+      const ext = extPending ? '<p style="margin-top:0.5rem"><strong>Your extension payment is being checked.</strong> We will add the extra month within 1 working day.</p>'
+        : canBuy ? '<p style="margin-top:0.6rem"><button class="btn btn-primary btn-sm" id="buyExt">Buy 1 extra month (' + esc(extensionPrice(course)) + ')</button></p><p style="font-size:0.8rem;margin-top:0.35rem">In extenuating circumstances, such as illness, email us and we may extend for free.</p>' : '';
+      if (expired) return '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Your time to complete this course has ended</div><p>Your completion window ended on ' + fmtDate(acc.expiresAt) + '. Your progress is saved. ' + (canBuy ? 'Buy an extra month to carry on, or email' : 'Please email') + ' <a href="mailto:' + esc(NOTIFY_EMAIL) + '">' + esc(NOTIFY_EMAIL) + '</a>' + (canBuy ? ' if you have any questions.' : ' to ask for an extension.') + '</p>' + ext + '</div>';
       const days = Math.ceil((new Date(acc.expiresAt) - new Date()) / 86400000);
-      return '<div class="callout" style="margin-top:0"><div class="callout-label">Complete by ' + fmtDate(acc.expiresAt) + '</div><p>You have ' + days + ' day' + (days === 1 ? '' : 's') + ' left to finish this course. If you need more time, email <a href="mailto:' + esc(NOTIFY_EMAIL) + '">' + esc(NOTIFY_EMAIL) + '</a> before then.</p></div>';
+      return '<div class="callout" style="margin-top:0"><div class="callout-label">Complete by ' + fmtDate(acc.expiresAt) + '</div><p>You have ' + days + ' day' + (days === 1 ? '' : 's') + ' left to finish this course.' + (canBuy ? ' Need more time? You can buy an extra month at any time.' : ' If you need more time, email <a href="mailto:' + esc(NOTIFY_EMAIL) + '">' + esc(NOTIFY_EMAIL) + '</a> before then.') + '</p>' + ext + '</div>';
+    }
+    // The learner pays by Stripe, and an admin adds the month once the payment is checked
+    async function buyExtension() {
+      const price = extensionPrice(course);
+      if (!confirm('Buy 1 extra month on "' + course.title + '" for ' + price + '? You will go to Stripe to pay securely.')) return;
+      try { await D.createOrder(user, { slug, title: course.title + ' (1 month extension)', price }, { kind: 'extension', months: 1 }, slug + '__ext-' + Date.now()); }
+      catch (e) { console.error(e); toast('Something went wrong. Please try again.', 'error'); return; }
+      D.notify('Extension bought - ' + course.title, user.name + ' (' + user.email + ') has clicked to buy a 1 month extension (' + price + ') for "' + course.title + '". Check Stripe, then approve it in Admin → Payments.', user);
+      if (D.PREVIEW) { alert('Preview mode: no payment is taken. Open Admin → Payments to approve the extension.'); location.reload(); return; }
+      const link = course.extensionStripeLink, sep = link.includes('?') ? '&' : '?';
+      location.href = link + sep + 'prefilled_email=' + encodeURIComponent(user.email) + '&client_reference_id=' + encodeURIComponent(user.uid + '__' + slug + '__ext');
     }
 
     // ── Supervised practice ─────────────────────────────────────────────
@@ -505,12 +521,21 @@
         html += '<button class="btn btn-primary" id="addCase"' + (add ? '' : ' disabled') + '>＋ Add a ' + esc(NOUN) + '</button>'
           + (!add && sat < N ? '<p style="font-size:0.82rem;color:var(--ink-light);margin-top:0.4rem">' + (sat < obs ? 'Wait for your first ' + obs + ' to be signed off before adding more.' : 'Finish your open ' + NOUN + 's first.') + '</p>' : '');
       }
-      const sv = st.declared || svs[0];
-      if (st.casesDone && st.needDecl && sv) {
-        html += st.declared
-          ? '<div class="callout" style="border-left-color:var(--success);background:var(--success-light);margin-top:1.25rem"><div class="callout-label" style="color:var(--success)">✓ Final competence declaration signed</div><p>Signed by ' + esc(st.declared.finalDeclaration.name) + ' on ' + fmtDate(st.declared.finalDeclaration.signedAt) + '.</p></div>'
-          : '<div class="callout" style="margin-top:1.25rem"><div class="callout-label">Last step: final competence declaration</div><p>All ' + N + ' ' + esc(NOUN) + 's are signed off. ' + esc(sv.supName) + ' now needs to sign your final competence declaration. We have emailed them. <a href="#" id="lbRemind">Email them again</a></p></div>';
-        if (!st.declared && !prog.declarationRequested && !adminView) { emailSupervisor(sv, 'Final competence declaration for ' + user.name, user.name + ' has completed all ' + N + ' logbook ' + NOUN + 's. Please log in to sign their final competence declaration.', SITE + 'supervisor.html'); save({ declarationRequested: true }).catch(() => {}); }
+      // Final declaration: with one supervisor we ask them automatically; with more, the learner chooses
+      const asked = svs.find(x => x.declarationRequestedAt) || null;
+      const sv = st.declared || asked || (svs.length === 1 ? svs[0] : null);
+      const askDecl = async (to) => {
+        if (adminView) return;
+        try { await D.requestDeclaration(to.id); } catch (e) { console.warn(e); }
+        emailSupervisor(to, 'Final competence declaration for ' + user.name, user.name + ' has completed all ' + N + ' logbook ' + NOUN + 's. Please log in to sign their final competence declaration.', SITE + 'supervisor.html');
+        await save({ declarationRequested: true }).catch(() => {});
+      };
+      if (st.casesDone && st.needDecl && svs.length) {
+        if (st.declared) html += '<div class="callout" style="border-left-color:var(--success);background:var(--success-light);margin-top:1.25rem"><div class="callout-label" style="color:var(--success)">✓ Final competence declaration signed</div><p>Signed by ' + esc(st.declared.finalDeclaration.name) + ' on ' + fmtDate(st.declared.finalDeclaration.signedAt) + '.</p></div>';
+        else if (sv) html += '<div class="callout" style="margin-top:1.25rem"><div class="callout-label">Last step: final competence declaration</div><p>All ' + N + ' ' + esc(NOUN) + 's are signed off. ' + esc(sv.supName) + ' now needs to sign your final competence declaration. We have emailed them. <a href="#" id="lbRemind">Email them again</a></p></div>';
+        else html += '<div class="callout" style="margin-top:1.25rem"><div class="callout-label">Last step: final competence declaration</div><p>All ' + N + ' ' + esc(NOUN) + 's are signed off. Choose which ' + esc(SUP) + ' should sign your final competence declaration. Pick the one who knows your work best.</p>'
+          + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem"><select id="declSup" style="max-width:320px">' + svs.map(x => '<option value="' + esc(x.id) + '">' + esc(x.supName) + '</option>').join('') + '</select><button class="btn btn-primary btn-sm" id="declAsk">Ask them to sign</button></div></div>';
+        if (sv && !st.declared && !sv.declarationRequestedAt && !prog.declarationRequested && !adminView) askDecl(sv);
       }
       if (st.complete) html += '<button class="btn btn-primary" id="lbNext" style="margin-top:1rem">Continue →</button>';
       main.innerHTML = html;
@@ -518,6 +543,7 @@
       main.querySelectorAll('[data-add]').forEach(b => b.onclick = () => showCase(null, CATS[Number(b.dataset.add)]));
       const ad = document.getElementById('addCase'); if (ad) ad.onclick = () => showCase(null);
       const nx = document.getElementById('lbNext'); if (nx) nx.onclick = () => go(nextStep());
+      const da = document.getElementById('declAsk'); if (da) da.onclick = async () => { const to = svById(document.getElementById('declSup').value); await askDecl(to); await loadPractical(); toast('We have emailed ' + to.supName, 'success'); showLogbook(); };
       const rm = document.getElementById('lbRemind'); if (rm) rm.onclick = (e) => { e.preventDefault(); emailSupervisor(sv, 'Reminder: final competence declaration for ' + user.name, user.name + ' is waiting for you to sign their final competence declaration.', SITE + 'supervisor.html'); toast('Email sent', 'success'); };
     }
 

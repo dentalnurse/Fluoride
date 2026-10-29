@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/gate.js?v=20261029a"></script>
+  <script src="js/gate.js?v=20261029b"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
@@ -16,8 +16,8 @@
   <title>CPD Hub - Dental Nurse Training</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../css/style.css?v=20261029a"/>
-  <link rel="stylesheet" href="css/cpd.css?v=20261029a"/>
+  <link rel="stylesheet" href="../css/style.css?v=20261029b"/>
+  <link rel="stylesheet" href="css/cpd.css?v=20261029b"/>
 </head>
 <body>
   <div id="navHolder"></div>
@@ -52,6 +52,10 @@
       <div class="cat-toolbar">
         <input type="search" id="search" class="cat-search" placeholder="Search courses..."/>
         <div id="chips" style="display:flex;gap:0.4rem;flex-wrap:wrap"></div>
+      </div>
+      <div id="bundles" style="display:none;margin-bottom:2rem">
+        <h3 style="margin-bottom:0.75rem">🎁 Save with a bundle</h3>
+        <div id="bundleGrid" class="course-grid"></div>
       </div>
       <div id="grid" class="course-grid"><p style="color:var(--ink-light)">Loading courses...</p></div>
     </div>
@@ -88,11 +92,11 @@
 
   <div id="footHolder"></div>
 
-  <script src="js/config.js?v=20261029a"></script>
-  <script src="js/ui.js?v=20261029a"></script>
-  <script src="js/demo-course.js?v=20261029a"></script>
+  <script src="js/config.js?v=20261029b"></script>
+  <script src="js/ui.js?v=20261029b"></script>
+  <script src="js/demo-course.js?v=20261029b"></script>
   <script type="module">
-    import * as D from './js/data.js?v=20261029a';
+    import * as D from './js/data.js?v=20261029b';
     await D.mountChrome();
 
     let courses = [];
@@ -130,6 +134,19 @@
         + (c.status === 'coming-soon' ? '<span class="pill pill-grey">Coming soon</span>' : '<span class="pill pill-teal">' + esc(c.price) + '</span>') + '</div></a>').join('');
     }
     draw();
+
+    // Course bundles (several courses for one price)
+    const priceNum = p => parseFloat(String(p || '').replace(/[^0-9.]/g, '')) || 0;
+    const bundles = (await D.listBundles(false).catch(() => [])).filter(b => (b.courses || []).every(s => courses.some(c => c.slug === s)));
+    if (bundles.length) {
+      document.getElementById('bundleGrid').innerHTML = bundles.map(b => {
+        const inc = b.courses.map(s => courses.find(c => c.slug === s));
+        const full = inc.reduce((t, c) => t + priceNum(c.price), 0), save = Math.round((full - priceNum(b.price)) * 100) / 100;
+        return '<a class="course-card" href="' + D.link('bundle.html?b=' + encodeURIComponent(b.slug)) + '"><div class="cc-body"><div class="cc-icon">' + esc(b.icon || '🎁') + '</div><div class="cc-cat">Bundle · ' + inc.length + ' courses</div><h3>' + esc(b.title) + '</h3><p>' + esc(b.summary || inc.map(c => c.title).join(', ')) + '</p></div>'
+          + '<div class="cc-foot"><span class="cc-meta">' + (save > 0 ? '<strong>Save £' + (save % 1 ? save.toFixed(2) : save) + '</strong>' : '') + '</span><span class="pill pill-teal">' + esc(b.price) + '</span></div></a>';
+      }).join('');
+      document.getElementById('bundles').style.display = '';
+    }
   </script>
 </body>
 </html>

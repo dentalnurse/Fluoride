@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/gate.js?v=20261029a"></script>
+  <script src="js/gate.js?v=20261029b"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
@@ -16,8 +16,8 @@
   <title>Course - Dental Nurse Training CPD Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../css/style.css?v=20261029a"/>
-  <link rel="stylesheet" href="css/cpd.css?v=20261029a"/>
+  <link rel="stylesheet" href="../css/style.css?v=20261029b"/>
+  <link rel="stylesheet" href="css/cpd.css?v=20261029b"/>
 </head>
 <body>
   <div id="navHolder"></div>
@@ -84,11 +84,11 @@
 
   <div id="footHolder"></div>
 
-  <script src="js/config.js?v=20261029a"></script>
-  <script src="js/ui.js?v=20261029a"></script>
-  <script src="js/demo-course.js?v=20261029a"></script>
+  <script src="js/config.js?v=20261029b"></script>
+  <script src="js/ui.js?v=20261029b"></script>
+  <script src="js/demo-course.js?v=20261029b"></script>
   <script type="module">
-    import * as D from './js/data.js?v=20261029a';
+    import * as D from './js/data.js?v=20261029b';
     const user = await D.mountChrome();
     document.getElementById('homeCrumb').href = D.link('index.html');
     document.getElementById('backLink').href = D.link('index.html');
@@ -140,7 +140,8 @@
     } else {
       const access = await D.getAccess(user.uid);
       const orders = await D.getOrders(user.uid);
-      const order = orders.find(o => o.slug === slug);
+      const order = orders.find(o => (o.kind || 'course') === 'course' && o.slug === slug)
+        || orders.find(o => o.kind === 'bundle' && o.status === 'pending' && (o.courses || []).includes(slug));
       if (access[slug]) {
         action.innerHTML = btn(D.link('learn.html?c=' + slug), 'Go to course →') + small('You have access to this course.');
       } else if (order && order.status === 'pending') {
@@ -157,8 +158,16 @@
           document.getElementById('buyBtn').onclick = buy;
         }
       }
+      if (!access[slug]) await showBundles();
       if (!access[slug] && user.isAdmin) action.insertAdjacentHTML('beforeend', small('<a href="' + D.link('learn.html?c=' + slug) + '" style="' + linkStyle + '">Open as admin (nothing is saved)</a>'));
     }
+
+    // "Save with a bundle" links for any live bundle that includes this course
+    async function showBundles() {
+      const bs = (await D.listBundles(false).catch(() => [])).filter(b => (b.courses || []).includes(slug));
+      if (bs.length) action.insertAdjacentHTML('beforeend', '<div class="pc-note" style="margin-top:0.9rem">🎁 <strong>Save with a bundle:</strong> ' + bs.map(b => '<a href="' + D.link('bundle.html?b=' + encodeURIComponent(b.slug)) + '" style="color:var(--teal);font-weight:700;text-decoration:underline">' + esc(b.title) + ' (' + esc(b.price) + ')</a>').join(', ') + '</div>');
+    }
+    if (!user && course.status === 'live') await showBundles();
 
     async function buy() {
       const boxes = [...document.querySelectorAll('.declBox')];

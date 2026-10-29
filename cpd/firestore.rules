@@ -96,7 +96,10 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'supervisorUid', 'agreement', 'signedAt']))
         // the approved supervisor signs the final competence declaration
         || (signedIn() && resource.data.status == 'approved' && resource.data.supervisorUid == request.auth.uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['finalDeclaration']));
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['finalDeclaration']))
+        // the learner asks one of their approved supervisors for the final declaration
+        || (signedIn() && resource.data.status == 'approved' && resource.data.learnerUid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['declarationRequestedAt']));
       allow delete: if isAdmin() || (signedIn() && resource.data.learnerUid == request.auth.uid && resource.data.status == 'invited');
     }
 
@@ -121,6 +124,12 @@ service cloud.firestore {
     // Case study marks: only admins write; learners can read their own.
     match /marks/{id} {
       allow read: if isAdmin() || (signedIn() && resource.data.learnerUid == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    // Course bundles: anyone can see live ones; only admins change them.
+    match /bundles/{slug} {
+      allow read: if resource.data.status == 'live' || isAdmin();
       allow write: if isAdmin();
     }
 

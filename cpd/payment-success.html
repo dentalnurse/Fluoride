@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/gate.js?v=20261029a"></script>
+  <script src="js/gate.js?v=20261029b"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
@@ -16,8 +16,8 @@
   <title>Payment received - Dental Nurse Training CPD Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../css/style.css?v=20261029a"/>
-  <link rel="stylesheet" href="css/cpd.css?v=20261029a"/>
+  <link rel="stylesheet" href="../css/style.css?v=20261029b"/>
+  <link rel="stylesheet" href="css/cpd.css?v=20261029b"/>
 </head>
 <body>
   <!-- Set each course's Stripe Payment Link to redirect here after payment:
@@ -33,24 +33,30 @@
     </div>
   </div>
   <div id="footHolder"></div>
-  <script src="js/config.js?v=20261029a"></script>
-  <script src="js/ui.js?v=20261029a"></script>
-  <script src="js/demo-course.js?v=20261029a"></script>
+  <script src="js/config.js?v=20261029b"></script>
+  <script src="js/ui.js?v=20261029b"></script>
+  <script src="js/demo-course.js?v=20261029b"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
   <script type="module">
-    import * as D from './js/data.js?v=20261029a';
+    import * as D from './js/data.js?v=20261029b';
     const user = await D.mountChrome();
     document.getElementById('dashLink').href = D.link('dashboard.html');
     const mail = document.getElementById('mail'); mail.textContent = NOTIFY_EMAIL; mail.href = 'mailto:' + NOTIFY_EMAIL;
-    const slug = qs('c');
+    // ?c=<course>, ?c=<course>&ext=1 for an extension, or ?b=<bundle>
+    const slug = qs('c'), bslug = qs('b'), ext = qs('ext') === '1';
     const course = slug ? await D.getCourse(slug) : null;
-    if (course) document.getElementById('msg').innerHTML = 'We will check your payment for <strong>' + esc(course.title) + '</strong> and unlock it within <strong>1 working day</strong>. We will email you as soon as it is ready.';
+    const bundle = bslug ? await D.getBundle(bslug) : null;
+    const msg = document.getElementById('msg');
+    if (bundle) msg.innerHTML = 'We will check your payment for the <strong>' + esc(bundle.title) + '</strong> bundle and unlock your courses within <strong>1 working day</strong>. We will email you as soon as they are ready.';
+    else if (course && ext) msg.innerHTML = 'We will check your payment and add an extra month to <strong>' + esc(course.title) + '</strong> within <strong>1 working day</strong>. You can carry on with the course in the meantime if your deadline has not passed.';
+    else if (course) msg.innerHTML = 'We will check your payment for <strong>' + esc(course.title) + '</strong> and unlock it within <strong>1 working day</strong>. We will email you as soon as it is ready.';
     // Tell the team once per browser, so a refresh doesn't send it twice.
-    const key = 'cpd_paid_' + slug;
-    if (user && course && !sessionStorage.getItem(key)) {
+    const key = 'cpd_paid_' + (bslug ? 'b_' + bslug : slug + (ext ? '_ext' : ''));
+    if (user && (course || bundle) && !sessionStorage.getItem(key)) {
       sessionStorage.setItem(key, '1');
-      D.notify('CPD payment to check - ' + course.title, user.name + ' (' + user.email + ', GDC ' + user.gdc + ') says they have paid ' + course.price + ' for "' + course.title + '". Please check Stripe, then unlock it in the CPD admin hub under Payments.', user);
+      const what = bundle ? 'the bundle "' + bundle.title + '" (' + bundle.price + ')' : ext ? 'a 1 month extension (' + extensionPrice(course) + ') for "' + course.title + '"' : course.price + ' for "' + course.title + '"';
+      D.notify('CPD payment to check - ' + (bundle ? bundle.title : course.title), user.name + ' (' + user.email + ', GDC ' + (user.gdc || 'not given') + ') says they have paid ' + what + '. Please check Stripe, then approve it in the CPD admin hub under Payments.', user);
     }
   </script>
 </body>

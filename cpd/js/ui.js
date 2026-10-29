@@ -109,6 +109,21 @@ function logbookStatus(P, cases, supervisions) {
   const casesDone = satCount >= needed && (!cats.length || perCat.every(x => x.sat >= x.count));
   return { needed, satCount, perCat, distinct, declared, needDecl, casesDone, complete: casesDone && (!distinct || distinct.ok) && (!needDecl || !!declared) };
 }
+// Add months to a date without spilling into the next month (31 Jan + 1 month = 28/29 Feb)
+function plusMonths(d, n) {
+  const r = new Date(d), day = r.getDate();
+  r.setDate(1); r.setMonth(r.getMonth() + n);
+  r.setDate(Math.min(day, new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate()));
+  return r;
+}
+// Price of a 1 month extension: set per course, or 10% of the course price
+function extensionPrice(c) {
+  if (c.extensionPrice) return String(c.extensionPrice);
+  const n = parseFloat(String(c.price || '').replace(/[^0-9.]/g, ''));
+  if (!n) return '';
+  const e = Math.round(n * 10) / 100;
+  return '£' + (e % 1 ? e.toFixed(2) : String(e));
+}
 function wordCount(t) { return (String(t || '').trim().match(/\S+/g) || []).length; }
 function wordRange(min, max) { min = Number(min) || 0; max = Number(max) || 0; return min && max ? min + ' to ' + max + ' words' : min ? 'at least ' + min + ' words' : max ? 'up to ' + max + ' words' : ''; }
 
