@@ -78,18 +78,53 @@ function typePill(c) {
 }
 function typeLabel(c) { return { verifiable: 'Verifiable CPD', both: 'CPD (verifiable for dental professionals)', general: 'CPD (not GDC verifiable)' }[cpdType(c)]; }
 
+// ── Supervised practice rules (shared by learner, supervisor, admin and certificate pages) ──
+function practicalOf(c) { return c && c.practical && c.practical.enabled ? c.practical : null; }
+// Optional groups of logbook entries, e.g. "Topic 1" needing 2 sessions
+function caseCats(P) { return ((P && P.caseCategories) || []).filter(x => x && x.label && Number(x.count) > 0); }
+function casesNeeded(P) { const cats = caseCats(P); return cats.length ? cats.reduce((n, x) => n + Number(x.count), 0) : Number((P && P.cases) || 0); }
+function caseNoun(P) { return (P && P.caseNoun) || 'case'; }
+// Pieces of written work marked by DNT. The older single "case study" setting is turned into one.
+function assignmentsOf(P) {
+  if (!P) return [];
+  const list = (P.assignments || []).filter(a => a && a.id && a.title).map(a => ({ marked: true, stage: 'end', ...a, fields: a.fields || [] }));
+  const cs = P.caseStudy;
+  if (cs && cs.enabled && !list.some(a => a.id === 'casestudy')) list.push({ id: 'casestudy', legacy: true, title: 'Case study', icon: '📝', stage: 'end', marked: true, pickCase: true,
+    brief: cs.brief, headings: cs.headings, criteria: cs.criteria, fields: [{ key: 'text', label: 'Your case study', type: 'textarea', minWords: cs.minWords, maxWords: cs.maxWords, big: true }] });
+  return list;
+}
+// Marks are stored under the course slug (the original case study) or slug__assignment
+function markKey(slug, a) { return a.legacy ? slug : slug + '__' + a.id; }
+function isSatCase(c) { return c.status === 'signed' && c.signoff && c.signoff.outcome === 'satisfactory'; }
+function logbookStatus(P, cases, supervisions) {
+  const cats = caseCats(P), needed = casesNeeded(P);
+  const sat = cases.filter(isSatCase);
+  const perCat = cats.map(cat => ({ ...cat, count: Number(cat.count), sat: sat.filter(c => c.category === cat.label).length }));
+  const satCount = cats.length ? perCat.reduce((n, x) => n + Math.min(x.sat, x.count), 0) : Math.min(sat.length, needed);
+  const dKey = P && P.distinctKey, dMin = Number((P && P.distinctMin) || 0);
+  const have = dKey ? new Set(sat.map(c => String((c.fields || {})[dKey] || '').trim()).filter(Boolean)).size : 0;
+  const distinct = dKey && dMin ? { label: P.distinctLabel || dKey, have, min: dMin, ok: have >= dMin } : null;
+  const declared = (supervisions || []).find(s => s.status === 'approved' && s.finalDeclaration) || null;
+  const needDecl = !!(P && String(P.finalDeclaration || '').trim());
+  const casesDone = satCount >= needed && (!cats.length || perCat.every(x => x.sat >= x.count));
+  return { needed, satCount, perCat, distinct, declared, needDecl, casesDone, complete: casesDone && (!distinct || distinct.ok) && (!needDecl || !!declared) };
+}
+function wordCount(t) { return (String(t || '').trim().match(/\S+/g) || []).length; }
+function wordRange(min, max) { min = Number(min) || 0; max = Number(max) || 0; return min && max ? min + ' to ' + max + ' words' : min ? 'at least ' + min + ' words' : max ? 'up to ' + max + ' words' : ''; }
+
 // ── Course page building blocks (used by course.html and learn.html) ──
 function courseChips(c) {
   const n = (c.lessonTitles || []).length, h = Number(c.hours) || 0, lq = c.lessonQuizCount || 0;
   const q = c.quizPerAttempt > 0 ? Math.min(c.quizPerAttempt, c.questionCount || 0) : (c.questionCount || 0);
+  const P = practicalOf(c), A = assignmentsOf(P).filter(a => a.marked !== false);
   return [
     '⏱ ' + h + ' hour' + (h === 1 ? '' : 's') + (cpdType(c) === 'general' ? ' CPD' : ' verifiable CPD'),
     '📚 ' + n + ' lesson' + (n === 1 ? '' : 's'),
     '🧩 Interactive activities',
-    ...(c.practical && c.practical.enabled ? ['🦷 ' + c.practical.cases + ' supervised cases'] : []),
-    ...(c.practical && c.practical.enabled && c.practical.caseStudy && c.practical.caseStudy.enabled ? ['📝 Case study'] : []),
+    ...(P ? ['🦷 ' + casesNeeded(P) + ' supervised ' + caseNoun(P) + 's'] : []),
+    ...(A.length === 1 ? [(A[0].icon || '📝') + ' ' + A[0].title] : A.length ? ['📝 ' + A.length + ' pieces of marked written work'] : []),
     ...(Number(c.completionMonths) > 0 ? ['📅 ' + c.completionMonths + ' months to complete'] : []),
-    lq ? '✅ ' + lq + ' module quiz' + (lq === 1 ? '' : 'zes') + ' + ' + q + '-question final assessment' : '✅ ' + q + '-question quiz',
+    lq && q ? '✅ ' + lq + ' module quiz' + (lq === 1 ? '' : 'zes') + ' + ' + q + '-question final assessment' : lq ? '✅ ' + lq + ' module quiz' + (lq === 1 ? '' : 'zes') : '✅ ' + q + '-question quiz',
     '🏅 ' + (cpdType(c) === 'general' ? 'CPD certificate' : 'Verifiable CPD certificate'),
   ].map(t => '<span class="ch-chip">' + esc(t) + '</span>').join('');
 }
@@ -99,11 +134,13 @@ function objectivesGrid(c) {
 function lessonList(c, opts) {
   opts = opts || {};
   const lessons = (c.lessonTitles || []).map((t, i) => '<div class="ll-item"><span class="ll-num">' + (i + 1) + '</span><span class="ll-title">' + esc(t) + (c.lessonQuizFlags && c.lessonQuizFlags[i] ? '<small>Includes a module quiz</small>' : '') + '</span></div>').join('');
-  const P = c.practical && c.practical.enabled ? c.practical : null, sup = (P && P.supervisorTitle) || 'supervisor';
-  const finish = [['✅', c.lessonQuizCount ? 'Final assessment' : 'End of course quiz', 'Pass mark ' + (c.passMark || 80) + '%. Retake as often as you need.'],
+  const P = practicalOf(c), sup = (P && P.supervisorTitle) || 'supervisor', A = assignmentsOf(P);
+  const aItem = a => [a.icon || '📝', a.title, a.summary || ((a.fields || []).filter(f => f.minWords || f.maxWords).map(f => wordRange(f.minWords, f.maxWords)).join(', ') + (a.marked === false ? '' : '. Marked by DNT.'))];
+  const finish = [...(c.questionCount ? [['✅', c.lessonQuizCount ? 'Final assessment' : 'End of course quiz', 'Pass mark ' + (c.passMark || 80) + '%. Retake as often as you need.']] : []),
+                  ...A.filter(a => a.stage === 'theory').map(aItem),
                   ...(P ? [['🤝', 'Your ' + sup, 'Your ' + sup + ' signs an online supervisor agreement, which we approve.'],
-                           ['📒', 'Supervised logbook', P.cases + ' cases in your workplace, each signed off by your ' + sup + (P.observedCases ? '. The first ' + P.observedCases + ' are directly observed.' : '.')]] : []),
-                  ...(P && P.caseStudy && P.caseStudy.enabled ? [['📝', 'Case study', 'Write up one of your cases' + (P.caseStudy.minWords ? ' (' + P.caseStudy.minWords + (P.caseStudy.maxWords ? ' to ' + P.caseStudy.maxWords : '+') + ' words)' : '') + '. Marked by DNT.']] : []),
+                           ['📒', 'Supervised logbook', casesNeeded(P) + ' ' + caseNoun(P) + 's in your workplace, each signed off by your ' + sup + (P.observedCases ? '. The first ' + P.observedCases + ' are directly observed.' : '.')]] : []),
+                  ...A.filter(a => a.stage !== 'theory').map(aItem),
                   ...(c.hasReflection === false ? [] : [['🪞', 'Reflection', 'A few short questions on what you learned.']]),
                   ['💬', 'Feedback', 'Tell us what you thought.'],
                   ['🏅', 'Your certificate', cpdType(c) === 'both' ? 'A verifiable CPD certificate if you add your GDC number, or a CPD certificate.' : cpdType(c) === 'general' ? 'A CPD certificate to download and keep.' : 'A verifiable CPD certificate for your CPD record.']]

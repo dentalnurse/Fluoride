@@ -6,7 +6,7 @@
     // access code, so a valid-looking invite link lets them in.
     (function () { if (/[?&]invite=[0-9a-f]{20,}/.test(location.search)) { try { localStorage.setItem('cpd_gate_unlocked', '1'); } catch (e) {} } })();
   </script>
-  <script src="js/gate.js?v=20261028a"></script>
+  <script src="js/gate.js?v=20261029a"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
@@ -21,8 +21,8 @@
   <title>Supervisor - Dental Nurse Training CPD Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../css/style.css?v=20261028a"/>
-  <link rel="stylesheet" href="css/cpd.css?v=20261028a"/>
+  <link rel="stylesheet" href="../css/style.css?v=20261029a"/>
+  <link rel="stylesheet" href="css/cpd.css?v=20261029a"/>
 </head>
 <body>
 <body>
@@ -38,13 +38,13 @@
     <div id="app"><p style="color:var(--ink-light)">Loading...</p></div>
   </div>
   <div id="footHolder"></div>
-  <script src="js/config.js?v=20261028a"></script>
-  <script src="js/ui.js?v=20261028a"></script>
-  <script src="js/demo-course.js?v=20261028a"></script>
+  <script src="js/config.js?v=20261029a"></script>
+  <script src="js/ui.js?v=20261029a"></script>
+  <script src="js/demo-course.js?v=20261029a"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
   <script type="module">
-    import * as D from './js/data.js?v=20261028a';
+    import * as D from './js/data.js?v=20261029a';
     let user = await D.mountChrome();
     const app = document.getElementById('app');
     const invite = qs('invite');
@@ -70,7 +70,7 @@
       if (user && !D.PREVIEW && user.uid === sv.learnerUid) return msg('🚫', 'This agreement is for your ' + SUP, 'You are logged in as ' + esc(user.email) + ', the learner who sent this invitation. Your ' + esc(SUP) + ' must open this link and sign it with their own login. Please log out, or send them the link.');
       const statements = P.agreement && P.agreement.length ? P.agreement : ['I am a GDC registered ' + SUP + ' and I am happy to supervise this dental nurse.'];
       app.innerHTML = '<div class="callout" style="margin-top:0"><div class="callout-label">You have been asked to supervise</div><p><strong>' + esc(sv.learnerName) + '</strong> has asked you to be their supervising ' + esc(SUP) + ' for the course <strong>' + esc(course.title || sv.courseTitle) + '</strong>. Details they gave for you: ' + esc(sv.supName) + ' · GDC ' + esc(sv.supGdc) + ' · ' + esc(sv.supPractice || '') + '.</p></div>'
-        + (course.summary ? '<div class="content-card"><h2>About the course</h2><p>' + esc(course.summary) + '</p>' + (P.cases ? '<p>The dental nurse completes ' + esc(P.cases) + ' supervised cases in your workplace' + (P.observedCases ? ', the first ' + esc(P.observedCases) + ' directly observed by you' : '') + '. You sign off each case online, then sign a final competence declaration.</p>' : '') + '</div>' : '')
+        + (course.summary ? '<div class="content-card"><h2>About the course</h2><p>' + esc(course.summary) + '</p>' + (casesNeeded(P) ? '<p>The dental nurse completes ' + casesNeeded(P) + ' supervised ' + esc(caseNoun(P)) + 's in your workplace' + (P.observedCases ? ', the first ' + esc(P.observedCases) + ' directly observed by you' : '') + '. You sign off each ' + esc(caseNoun(P)) + ' you supervised online' + (String(P.finalDeclaration || '').trim() ? ', then sign a final competence declaration' : '') + '.</p>' : '') + '</div>' : '')
         + '<div class="content-card"><h2>Your details</h2>'
         + '<div class="ed-grid"><div class="form-group"><label>Full name *</label><input type="text" id="aName" value="' + esc(user ? user.name : sv.supName) + '"/></div>'
         + '<div class="form-group"><label>GDC registration number *</label><input type="text" id="aGdc" value="' + esc(sv.supGdc) + '"/></div></div>'
@@ -128,18 +128,18 @@
       document.getElementById('pSub').textContent = 'Signed in as ' + user.email;
       const toSign = allCases.filter(c => c.status === 'submitted' && svs.some(s => s.id === c.supervisionId && s.status === 'approved'));
       let html = '<div class="content-card"><h2>Waiting for your sign-off ' + (toSign.length ? '<span class="pill pill-orange">' + toSign.length + '</span>' : '') + '</h2>'
-        + (toSign.length ? '<div class="lesson-list">' + toSign.map(c => '<div class="ll-item" style="cursor:pointer" data-case="' + esc(c.id) + '"><span class="ll-num">📒</span><span class="ll-title" style="flex:1">' + esc(c.learnerName) + '<small>' + esc(c.courseTitle || '') + ' · ' + esc((c.fields && c.fields.procedure) || '') + (c.observedRequired ? ' · directly observed case' : '') + '</small></span><span class="btn btn-primary btn-sm">Review</span></div>').join('') + '</div>' : '<p style="color:var(--ink-light)">Nothing to sign off right now.</p>')
+        + (toSign.length ? '<div class="lesson-list">' + toSign.map(c => '<div class="ll-item" style="cursor:pointer" data-case="' + esc(c.id) + '"><span class="ll-num">📒</span><span class="ll-title" style="flex:1">' + esc(c.learnerName) + '<small>' + esc(c.courseTitle || '') + ' · ' + esc(c.category || (c.fields && c.fields.procedure) || '') + (c.observedRequired ? ' · directly observed' : '') + '</small></span><span class="btn btn-primary btn-sm">Review</span></div>').join('') + '</div>' : '<p style="color:var(--ink-light)">Nothing to sign off right now.</p>')
         + '</div>';
       html += '<div class="content-card"><h2>Dental nurses you supervise</h2>' + svs.map(sv => {
-          const c = courses[sv.slug] || {}, P = practicalOf(c), N = Number(P.cases || 0);
+          const c = courses[sv.slug] || {}, P = practicalOf(c), N = casesNeeded(P), noun = caseNoun(P);
           const mine = allCases.filter(x => x.supervisionId === sv.id);
           const sat = mine.filter(x => x.status === 'signed' && x.signoff && x.signoff.outcome === 'satisfactory').length;
           const status = { signed: '<span class="pill pill-orange">Waiting for DNT to approve you</span>', approved: '<span class="pill pill-green">Approved</span>', rejected: '<span class="pill pill-red">Not approved</span>' }[sv.status] || '';
-          const needDecl = sv.status === 'approved' && N && sat >= N && !sv.finalDeclaration;
-          return '<div class="ed-block"><div class="ed-block-head"><strong>' + esc(sv.learnerName) + '</strong>' + status + '</div><div class="ed-block-body" style="font-size:0.9rem"><p style="font-size:0.9rem">' + esc(c.title || sv.courseTitle) + (N ? ' · ' + sat + ' of ' + N + ' cases signed off as satisfactory' : '') + '</p>'
+          const needDecl = sv.status === 'approved' && String(P.finalDeclaration || '').trim() && N && sat >= N && !sv.finalDeclaration;
+          return '<div class="ed-block"><div class="ed-block-head"><strong>' + esc(sv.learnerName) + '</strong>' + status + '</div><div class="ed-block-body" style="font-size:0.9rem"><p style="font-size:0.9rem">' + esc(c.title || sv.courseTitle) + (N ? ' · you have signed off ' + sat + ' ' + esc(noun) + (sat === 1 ? '' : 's') + ' as satisfactory (' + N + ' needed in total)' : '') + '</p>'
             + (sv.finalDeclaration ? '<p style="font-size:0.9rem">✓ Final competence declaration signed ' + fmtDate(sv.finalDeclaration.signedAt) + '</p>' : '')
             + (needDecl ? '<button class="btn btn-primary btn-sm" data-decl="' + esc(sv.id) + '">Sign final competence declaration</button>' : '')
-            + (mine.filter(x => x.status === 'signed').length ? '<details class="reveal-item" style="margin-top:0.6rem"><summary>Cases you have signed</summary><div class="md">' + mine.filter(x => x.status === 'signed').map(x => '<p><a href="#" class="submission-link" data-case="' + esc(x.id) + '">' + esc((x.fields && x.fields.procedure) || 'Case') + '</a>: ' + (x.signoff.outcome === 'satisfactory' ? 'Satisfactory' : 'Needs development') + ', ' + fmtDate(x.signoff.signedAt) + '</p>').join('') + '</div></details>' : '')
+            + (mine.filter(x => x.status === 'signed').length ? '<details class="reveal-item" style="margin-top:0.6rem"><summary>Signed off by you</summary><div class="md">' + mine.filter(x => x.status === 'signed').map(x => '<p><a href="#" class="submission-link" data-case="' + esc(x.id) + '">' + esc(x.category || (x.fields && x.fields.procedure) || 'Entry') + '</a>: ' + (x.signoff.outcome === 'satisfactory' ? 'Satisfactory' : 'Needs development') + ', ' + fmtDate(x.signoff.signedAt) + '</p>').join('') + '</div></details>' : '')
             + '</div></div>';
         }).join('') + '</div>';
       app.innerHTML = html;
@@ -149,24 +149,25 @@
 
     function showCase(c, svs) {
       const sv = svs.find(s => s.id === c.supervisionId) || {};
-      const course = courses[c.slug] || {}, P = practicalOf(course), SUP = P.supervisorTitle || 'supervisor';
+      const course = courses[c.slug] || {}, P = practicalOf(course), SUP = P.supervisorTitle || 'supervisor', noun = caseNoun(P);
       const fields = P.caseFields || [], prompts = P.reflectionPrompts || [];
       const signed = c.status === 'signed';
       let html = '<p style="margin-bottom:0.75rem"><a href="#" id="back" class="submission-link">← Back</a></p>'
-        + '<div class="content-card"><h2>' + esc(c.learnerName) + ': logbook case</h2>'
-        + (c.observedRequired ? '<div class="callout" style="margin-top:0"><div class="callout-label">Directly observed case</div><p>You must have watched the whole of this removal for it to be satisfactory.</p></div>' : '')
+        + '<div class="content-card"><h2>' + esc(c.learnerName) + ': logbook ' + esc(noun) + '</h2>'
+        + (c.category ? '<p><strong>' + esc(c.category) + '</strong></p>' : '')
+        + (c.observedRequired ? '<div class="callout" style="margin-top:0"><div class="callout-label">Directly observed</div><p>You must have watched the whole time for this to be satisfactory.</p></div>' : '')
         + '<table class="admin-table" style="margin-bottom:1rem"><tbody>' + fields.map(f => '<tr><td class="td-name" style="width:45%">' + esc(f.label) + '</td><td>' + esc((c.fields || {})[f.key] || '') + '</td></tr>').join('') + '</tbody></table>'
-        + '<h3>Reflection</h3>' + prompts.map((q, i) => '<p><strong>' + esc(q) + '</strong><br/>' + esc((c.reflection || {})[i] || '') + '</p>').join('') + '</div>';
+        + (prompts.length ? '<h3>Reflection</h3>' : '') + prompts.map((q, i) => '<p><strong>' + esc(q) + '</strong><br/>' + esc((c.reflection || {})[i] || '') + '</p>').join('') + '</div>';
       if (signed) {
         html += '<div class="callout"><div class="callout-label">You signed this case</div><p>' + (c.signoff.outcome === 'satisfactory' ? 'Satisfactory' : 'Needs development') + ' · ' + fmtDate(c.signoff.signedAt) + (c.signoff.comment ? '<br/>"' + esc(c.signoff.comment) + '"' : '') + '</p></div>';
       } else {
         html += '<div class="content-card"><h2>Your sign-off</h2>'
-          + '<div class="form-group"><label>Did you observe the whole removal? *</label><select id="sObs"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>'
+          + '<div class="form-group"><label>' + esc(P.observeQuestion || 'Did you observe the whole ' + noun + '?') + ' *</label><select id="sObs"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>'
           + '<div class="form-group"><label>Outcome *</label><select id="sOut"><option value="">Select...</option><option value="satisfactory">Satisfactory</option><option value="needs-development">Needs development</option></select></div>'
           + '<div class="form-group"><label>Comment (optional)</label><textarea id="sCom" class="short"></textarea></div>'
           + '<label style="display:flex;gap:0.6rem;align-items:flex-start;margin-bottom:0.9rem;font-size:0.92rem;color:var(--ink-mid)"><input type="checkbox" id="sStmt" style="margin-top:0.25rem;flex-shrink:0"/><span>' + esc(P.signoffStatement || 'I confirm this entry is accurate.') + '</span></label>'
           + '<div class="form-group"><label>Type your full name to sign *</label><input type="text" id="sSig"/></div>'
-          + '<div id="sErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div><button class="btn btn-primary" id="sSign">Sign off this case</button></div>';
+          + '<div id="sErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div><button class="btn btn-primary" id="sSign">Sign off</button></div>';
       }
       app.innerHTML = html; window.scrollTo(0, 0);
       document.getElementById('back').onclick = (e) => { e.preventDefault(); showDashboard(); };
@@ -176,13 +177,13 @@
         const err = m => { const e = document.getElementById('sErr'); e.textContent = m; e.style.display = 'block'; };
         const observed = v('sObs'), outcome = v('sOut'), sig = v('sSig');
         if (!observed || !outcome) return err('Please answer both questions.');
-        if (outcome === 'satisfactory' && c.observedRequired && observed !== 'Yes') return err('This case had to be directly observed, so it can only be marked satisfactory if you watched the whole removal.');
+        if (outcome === 'satisfactory' && (c.observedRequired || P.mustObserveAll) && observed !== 'Yes') return err('This had to be directly observed, so it can only be marked satisfactory if you watched the whole time.');
         if (!document.getElementById('sStmt').checked) return err('Please tick the statement to confirm.');
         if (!sig) return err('Please type your name to sign.');
         b.disabled = true;
         try {
           await D.signCase(c.id, { outcome, observed, comment: v('sCom'), statement: P.signoffStatement || '', name: sig, gdc: (sv.agreement && sv.agreement.gdc) || sv.supGdc || '', signedAt: new Date().toISOString() });
-          toast('Case signed off', 'success'); showDashboard();
+          toast('Signed off', 'success'); showDashboard();
         } catch (e) { console.error(e); b.disabled = false; err('Could not sign off. Please try again.'); }
       };
     }

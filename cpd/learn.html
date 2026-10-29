@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/gate.js?v=20261028a"></script>
+  <script src="js/gate.js?v=20261029a"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
@@ -16,8 +16,8 @@
   <title>Course - Dental Nurse Training CPD Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../css/style.css?v=20261028a"/>
-  <link rel="stylesheet" href="css/cpd.css?v=20261028a"/>
+  <link rel="stylesheet" href="../css/style.css?v=20261029a"/>
+  <link rel="stylesheet" href="css/cpd.css?v=20261029a"/>
   <style>
     .mobile-menu-btn { display:none; margin-bottom:1rem; }
     @media (max-width:960px) { .mobile-menu-btn { display:inline-flex; } }
@@ -35,14 +35,14 @@
     </main>
   </div>
 
-  <script src="js/config.js?v=20261028a"></script>
-  <script src="js/ui.js?v=20261028a"></script>
-  <script src="js/render.js?v=20261028a"></script>
-  <script src="js/demo-course.js?v=20261028a"></script>
+  <script src="js/config.js?v=20261029a"></script>
+  <script src="js/ui.js?v=20261029a"></script>
+  <script src="js/render.js?v=20261029a"></script>
+  <script src="js/demo-course.js?v=20261029a"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
   <script type="module">
-    import * as D from './js/data.js?v=20261028a';
+    import * as D from './js/data.js?v=20261029a';
     const user = await D.mountChrome();
     const slug = qs('c');
     const main = document.getElementById('main');
@@ -62,24 +62,33 @@
     document.title = course.title + ' - CPD Hub';
 
     // Supervised practice (logbook, supervisor, case study) if the course has it
-    const P = course.practical && course.practical.enabled ? course.practical : null;
+    const P = practicalOf(course);
     const SUP = (P && P.supervisorTitle) || 'supervisor';
-    let supervisions = [], cases = [], mark = null;
+    const NOUN = caseNoun(P);
+    const CATS = caseCats(P);
+    const ASSIGN = assignmentsOf(P);
+    let supervisions = [], cases = [], marks = {};
     async function loadPractical() {
       if (!P || adminView) return;
       try {
         supervisions = (await D.listSupervisionsForLearner(user.uid)).filter(s => s.slug === slug).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
         cases = (await D.listCasesForLearner(user.uid)).filter(c => c.slug === slug).sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
-        mark = await D.getMark(user.uid, slug);
+        marks = {};
+        for (const a of ASSIGN) marks[a.id] = await D.getMark(user.uid, markKey(slug, a));
       } catch (e) { console.error(e); toast('Could not load your logbook. Please refresh the page.', 'error'); }
     }
     await loadPractical();
-    const activeSupervision = () => supervisions.find(s => s.status !== 'rejected') || null;
-    const approvedSupervision = () => supervisions.find(s => s.status === 'approved') || null;
-    const satisfactoryCases = () => cases.filter(c => c.status === 'signed' && c.signoff && c.signoff.outcome === 'satisfactory');
-    const logbookComplete = () => !!P && satisfactoryCases().length >= Number(P.cases || 0) && !!(approvedSupervision() && approvedSupervision().finalDeclaration);
-    const caseStudyOn = () => !!(P && P.caseStudy && P.caseStudy.enabled);
-    const caseStudyPassed = () => !!(mark && prog.caseStudy && mark.status === 'satisfactory' && mark.forVersion === prog.caseStudy.version);
+    const activeSupervisions = () => supervisions.filter(s => s.status !== 'rejected');
+    const approvedSupervisions = () => supervisions.filter(s => s.status === 'approved');
+    const approvedSupervision = () => approvedSupervisions()[0] || null;
+    const satisfactoryCases = () => cases.filter(isSatCase);
+    const lbStatus = () => logbookStatus(P, cases, supervisions);
+    const logbookComplete = () => !!P && lbStatus().complete;
+    // Written work: stored on the learner's progress, marked by an admin
+    const subOf = a => a.legacy ? (prog.caseStudy || null) : ((prog.assignments || {})[a.id] || null);
+    const valuesOf = (a, sub) => !sub ? {} : a.legacy ? { text: sub.text } : (sub.values || {});
+    const markOf = a => { const m = marks[a.id], sub = subOf(a); return m && sub && m.forVersion === sub.version ? m : null; };
+    const assignDone = a => { const sub = subOf(a); if (!sub) return false; if (a.marked === false) return true; const m = markOf(a); return !!(m && m.status === 'satisfactory'); };
 
     // Completion window
     const acc = access[slug] || {};
@@ -99,25 +108,38 @@
     const lessonDone = id => prog.lessonsDone.includes(id);
     const allLessonsDone = () => lessons.every(l => lessonDone(l.id));
     const hasReflection = (content.reflection || []).length > 0;
-    const quizPassed = () => !!(prog.quiz && prog.quiz.passed);
+    // Courses with only module quizzes have no separate final quiz step
+    const hasFinalQuiz = (quiz.questions || []).length > 0;
+    const quizPassed = () => hasFinalQuiz ? !!(prog.quiz && prog.quiz.passed) : allLessonsDone();
+    const aStep = a => ['a:' + a.id, a.icon || '📝', a.title];
     const steps = [['intro', '🏠', 'Course overview'], ...lessons.map((l, i) => ['lesson:' + l.id, String(i + 1), l.title]),
-      ['quiz', '✅', lessons.some(l => l.quiz && (l.quiz.questions || []).length) ? 'Final assessment' : 'Quiz'],
+      ...(hasFinalQuiz ? [['quiz', '✅', lessons.some(l => l.quiz && (l.quiz.questions || []).length) ? 'Final assessment' : 'Quiz']] : []),
+      ...ASSIGN.filter(a => a.stage === 'theory').map(aStep),
       ...(P ? [['supervisor', '🤝', 'Your ' + SUP], ['logbook', '📒', 'Supervised logbook']] : []),
-      ...(caseStudyOn() ? [['casestudy', '📝', 'Case study']] : []),
+      ...ASSIGN.filter(a => a.stage === 'practical').map(aStep),
+      ...ASSIGN.filter(a => a.stage === 'end').map(aStep),
+      ...ASSIGN.filter(a => a.stage === 'final').map(aStep),
       ...(hasReflection ? [['reflection', '🪞', 'Reflection']] : []),
       ['feedback', '💬', 'Feedback'], ['done', '🏅', 'Certificate']];
+    const assignOf = step => ASSIGN.find(a => 'a:' + a.id === step);
     function isDone(step) {
       if (step.startsWith('lesson:')) return lessonDone(step.slice(7));
-      return { quiz: quizPassed(), supervisor: !!approvedSupervision(), logbook: logbookComplete(), casestudy: caseStudyPassed(),
+      if (step.startsWith('a:')) return assignDone(assignOf(step));
+      return { quiz: quizPassed(), supervisor: !!approvedSupervision(), logbook: logbookComplete(),
                reflection: !!prog.reflection, feedback: !!prog.feedback, done: !!prog.completedAt, intro: false }[step];
     }
+    // Work that must be handed in before the logbook opens (e.g. a starting reflection)
+    const preLogbookDone = () => ASSIGN.filter(a => a.requiredForLogbook).every(a => !!subOf(a));
     function unlocked(step) {
       if (adminView) return true;
       if (step === 'intro') return true;
       if (expired && step !== 'done') return false;
       // The supervisor can be invited at any time, as approval can take a while
       if (step === 'supervisor') return true;
-      if (step === 'logbook') return quizPassed() && !!approvedSupervision();
+      if (step === 'logbook') return quizPassed() && !!approvedSupervision() && preLogbookDone();
+      const a = assignOf(step);
+      if (a && (a.stage === 'theory' || a.stage === 'practical')) return quizPassed();
+      if (a && a.stage === 'end') return quizPassed() && logbookComplete();
       // Everything else unlocks in order
       const i = steps.findIndex(s => s[0] === step);
       return steps.slice(1, i).every(([id]) => isDone(id));
@@ -148,7 +170,8 @@
       window.scrollTo(0, 0);
       if (step === 'intro') return showIntro();
       if (step.startsWith('lesson:')) return showLesson(lessons.findIndex(l => 'lesson:' + l.id === step));
-      ({ quiz: showQuiz, supervisor: showSupervisor, logbook: showLogbook, casestudy: showCaseStudy, reflection: showReflection, feedback: showFeedback, done: showDone })[step]();
+      if (step.startsWith('a:')) return showAssignment(assignOf(step));
+      ({ quiz: showQuiz, supervisor: showSupervisor, logbook: showLogbook, reflection: showReflection, feedback: showFeedback, done: showDone })[step]();
     }
     function nextStep() {
       const i = steps.findIndex(s => s[0] === current);
@@ -177,7 +200,7 @@
         + '<div class="cd-section"><h2 style="font-size:1.25rem;margin-bottom:0.8rem">About this course</h2><div class="cd-card"><p>' + esc(course.aims || '') + '</p>'
           + (usesGdc(c) ? '<p style="font-weight:700;color:var(--ink);margin:1rem 0 0.25rem">GDC development outcomes</p>' + outcomesBadges(c) : '')
           + '<p style="font-size:0.84rem;color:var(--ink-light);margin-top:1rem">' + esc(audienceText(c)) + '</p></div></div>';
-      document.getElementById('startBtn').onclick = () => go(firstOpenStep() === 'intro' ? (steps[1] ? steps[1][0] : 'quiz') : firstOpenStep());
+      document.getElementById('startBtn').onclick = () => go(firstOpenStep() === 'intro' ? steps[1][0] : firstOpenStep());
     }
 
     // ── Lessons ──────────────────────────────────────────────────────────
@@ -247,7 +270,7 @@
           if (passed && !done) data.lessonsDone = [...prog.lessonsDone, l.id];
           await save(data);
         },
-        nextLabel: i < lessons.length - 1 ? 'Continue to the next lesson →' : (hasLessonQuizzes ? 'Continue to the final assessment →' : 'Continue →'),
+        nextLabel: i < lessons.length - 1 ? 'Continue to the next lesson →' : (hasFinalQuiz ? 'Continue to the final assessment →' : 'Continue →'),
         onNext: () => go(nextStep()),
         onRetry: () => showLessonQuiz(i),
         onBack: () => showLesson(i, lessonPages(l).length - 1),
@@ -380,138 +403,170 @@
       } catch (e) { console.warn(e); }
     }
 
+    const WHO = (P && P.supervisorWho) || 'a GDC registered ' + SUP;
+    const svById = id => supervisions.find(s => s.id === id) || null;
     function showSupervisor() {
-      const sv = activeSupervision();
-      const rejected = supervisions.find(x => x.status === 'rejected');
-      let html = '<div class="dash-header"><h1>Your ' + esc(SUP) + '</h1><p>Your supervised practice must be overseen by a GDC registered ' + esc(SUP) + '. They sign an online agreement, which we check before your logbook opens.</p></div>';
-      if (!sv) {
-        html += (rejected ? '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Supervisor not approved</div><p>We could not approve ' + esc(rejected.supName) + ' as your ' + esc(SUP) + '. ' + esc(rejected.rejectReason || 'Please check their details, or ask another ' + SUP + '.') + '</p></div>' : '')
-          + '<div class="content-card"><h2>Ask your ' + esc(SUP) + ' to supervise you</h2>'
-          + '<p>Enter their details. We will email them a link to read and sign the supervisor agreement. Only a GDC registered ' + esc(SUP) + ' can supervise this course.</p>'
-          + '<div class="form-group"><label>' + esc(SUP[0].toUpperCase() + SUP.slice(1)) + '\'s full name *</label><input type="text" id="svName"/></div>'
+      const active = activeSupervisions();
+      const multi = !!P.multipleSupervisors;
+      const rejected = supervisions.filter(x => x.status === 'rejected');
+      let html = '<div class="dash-header"><h1>Your ' + esc(SUP) + (multi ? 's' : '') + '</h1><p>Your supervised practice must be overseen by ' + esc(WHO) + '. ' + (multi ? 'You can have more than one. ' : '') + 'Each one signs an online agreement, which we check before they can sign off your work.</p></div>';
+      html += rejected.filter(r => !active.length || multi).map(r => '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Not approved: ' + esc(r.supName) + '</div><p>' + esc(r.rejectReason || 'Please check their details, or ask someone else.') + '</p></div>').join('');
+      html += active.map(sv => {
+        const box = {
+          invited: '<div class="callout" style="margin:0 0 0.75rem"><div class="callout-label">Waiting for ' + esc(sv.supName) + ' to sign</div><p>We emailed the agreement to <strong>' + esc(sv.supEmail) + '</strong>. If they have not received it, ask them to check their junk folder, or send them the link below yourself.</p></div>',
+          signed: '<div class="callout" style="margin:0 0 0.75rem"><div class="callout-label">Signed, waiting for approval</div><p>' + esc(sv.supName) + ' has signed the agreement. We will check their GDC registration and approve them, usually within 1 working day.</p></div>',
+          approved: '<div class="callout" style="margin:0 0 0.75rem;border-left-color:var(--success);background:var(--success-light)"><div class="callout-label" style="color:var(--success)">✓ Approved</div><p>' + esc(sv.supName) + ' (GDC ' + esc(sv.supGdc) + ') can sign off your logbook.</p></div>',
+        }[sv.status] || '';
+        return '<div class="content-card"><h2>' + esc(sv.supName) + '</h2><p>' + esc(sv.supEmail) + ' · GDC ' + esc(sv.supGdc) + ' · ' + esc(sv.supPractice || '') + '</p>' + box
+          + (sv.status === 'invited' ? '<div class="form-group"><label>Agreement link</label><input type="text" readonly value="' + esc(inviteLink(sv.id)) + '" onclick="this.select()"/></div><div class="admin-actions"><button class="btn btn-outline btn-sm" data-copy="' + esc(sv.id) + '">Copy link</button><button class="btn btn-outline btn-sm" data-resend="' + esc(sv.id) + '">Email it again</button><button class="btn btn-sm" style="background:none;color:var(--warn)" data-cancel="' + esc(sv.id) + '">Cancel invitation</button></div>' : '')
+          + '</div>';
+      }).join('');
+      const openForm = !active.length || multi;
+      if (openForm) html += '<div class="content-card"><h2>' + (active.length ? 'Add another ' + esc(SUP) : 'Ask your ' + esc(SUP) + ' to supervise you') + '</h2>'
+          + '<p>Enter their details. We will email them a link to read and sign the supervisor agreement. Only ' + esc(WHO) + ' can supervise this course.</p>'
+          + '<div class="form-group"><label>Full name *</label><input type="text" id="svName"/></div>'
           + '<div class="form-group"><label>Their email address *</label><input type="email" id="svEmail"/></div>'
           + '<div class="form-group"><label>Their GDC registration number *</label><input type="text" id="svGdc" inputmode="numeric"/></div>'
           + '<div class="form-group"><label>Practice name *</label><input type="text" id="svPractice"/></div>'
           + '<div id="svErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div><button class="btn btn-primary" id="svSend">Send the agreement</button></div>';
-        main.innerHTML = html;
-        document.getElementById('svSend').onclick = async () => {
-          const v = id => document.getElementById(id).value.trim();
-          const data = { supName: v('svName'), supEmail: v('svEmail'), supGdc: v('svGdc'), supPractice: v('svPractice') };
-          const err = document.getElementById('svErr');
-          if (!data.supName || !data.supEmail || !data.supGdc || !data.supPractice) { err.textContent = 'Please fill in every field.'; err.style.display = 'block'; return; }
-          if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.supEmail)) { err.textContent = 'Please check the email address.'; err.style.display = 'block'; return; }
-          if (data.supEmail.toLowerCase() === String(user.email).toLowerCase()) { err.textContent = 'Your ' + SUP + ' must use their own email address, not yours.'; err.style.display = 'block'; return; }
-          if (adminView) { toast('Admin view: nothing is saved.'); return; }
-          try {
-            const id = await D.inviteSupervisor({ ...data, learnerUid: user.uid, learnerName: user.name, learnerEmail: user.email, learnerGdc: user.gdc || '', slug, courseTitle: course.title, supervisorTitle: SUP });
-            const sv2 = { id, ...data };
-            emailSupervisor(sv2, 'Supervisor agreement for ' + user.name, user.name + ' has asked you to be their supervising ' + SUP + ' for the Dental Nurse Training course "' + course.title + '".\n\nPlease read and sign the supervisor agreement using the link below. You will be asked to set a password so that only you can sign off their work.', inviteLink(id));
-            D.notify('Supervisor invited - ' + course.title, user.name + ' has invited ' + data.supName + ' (GDC ' + data.supGdc + ', ' + data.supPractice + ') to supervise them on "' + course.title + '".', user);
-            await loadPractical(); showSupervisor(); toast('Agreement sent to ' + data.supEmail, 'success');
-          } catch (e) { console.error(e); err.textContent = 'Could not send. Please try again.'; err.style.display = 'block'; }
-        };
-        return;
-      }
-      const statusBox = {
-        invited: '<div class="callout" style="margin-top:0"><div class="callout-label">Waiting for ' + esc(sv.supName) + ' to sign</div><p>We emailed the agreement to <strong>' + esc(sv.supEmail) + '</strong>. If they have not received it, ask them to check their junk folder, or send them the link below yourself.</p></div>',
-        signed: '<div class="callout" style="margin-top:0"><div class="callout-label">Signed, waiting for approval</div><p>' + esc(sv.supName) + ' has signed the agreement. We will check their GDC registration and approve them, usually within 1 working day. Your logbook opens once they are approved.</p></div>',
-        approved: '<div class="callout" style="margin-top:0;border-left-color:var(--success);background:var(--success-light)"><div class="callout-label" style="color:var(--success)">✓ Approved</div><p>' + esc(sv.supName) + ' (GDC ' + esc(sv.supGdc) + ') is your approved ' + esc(SUP) + '.' + (quizPassed() ? '' : ' Your logbook opens once you have passed the quiz.') + '</p></div>',
-      }[sv.status] || '';
-      html += statusBox + '<div class="content-card"><h2>' + esc(sv.supName) + '</h2><p>' + esc(sv.supEmail) + ' · GDC ' + esc(sv.supGdc) + ' · ' + esc(sv.supPractice || '') + '</p>'
-        + (sv.status === 'invited' ? '<div class="form-group"><label>Agreement link</label><input type="text" readonly value="' + esc(inviteLink(sv.id)) + '" onclick="this.select()"/></div><div class="admin-actions"><button class="btn btn-outline btn-sm" id="svCopy">Copy link</button><button class="btn btn-outline btn-sm" id="svResend">Email it again</button><button class="btn btn-sm" style="background:none;color:var(--warn)" id="svCancel">Cancel and ask someone else</button></div>' : '')
-        + (sv.status === 'approved' && quizPassed() ? '<button class="btn btn-primary" id="svNext" style="margin-top:0.5rem">Go to your logbook →</button>' : '')
-        + '</div>';
+      const ready = approvedSupervision();
+      if (ready) html += !quizPassed() ? '<p style="color:var(--ink-light)">Your logbook opens once you have passed the module quizzes.</p>'
+        : !preLogbookDone() ? '<p style="color:var(--ink-light)">Your logbook opens once you have handed in: ' + esc(ASSIGN.filter(a => a.requiredForLogbook && !subOf(a)).map(a => a.title).join(', ')) + '.</p>'
+        : '<button class="btn btn-primary" id="svNext">Go to your logbook →</button>';
       main.innerHTML = html;
       const on = (id, fn) => { const b = document.getElementById(id); if (b) b.onclick = fn; };
-      on('svCopy', () => navigator.clipboard.writeText(inviteLink(sv.id)).then(() => toast('Link copied')));
-      on('svResend', () => { emailSupervisor(sv, 'Reminder: supervisor agreement for ' + user.name, user.name + ' is waiting for you to sign the supervisor agreement for "' + course.title + '".', inviteLink(sv.id)); toast('Email sent again', 'success'); });
-      on('svCancel', async () => { if (!confirm('Cancel this invitation?')) return; await D.deleteSupervision(sv.id); await loadPractical(); showSupervisor(); });
+      main.querySelectorAll('[data-copy]').forEach(b => b.onclick = () => navigator.clipboard.writeText(inviteLink(b.dataset.copy)).then(() => toast('Link copied')));
+      main.querySelectorAll('[data-resend]').forEach(b => b.onclick = () => { const sv = svById(b.dataset.resend); emailSupervisor(sv, 'Reminder: supervisor agreement for ' + user.name, user.name + ' is waiting for you to sign the supervisor agreement for "' + course.title + '".', inviteLink(sv.id)); toast('Email sent again', 'success'); });
+      main.querySelectorAll('[data-cancel]').forEach(b => b.onclick = async () => { if (!confirm('Cancel this invitation?')) return; await D.deleteSupervision(b.dataset.cancel); await loadPractical(); showSupervisor(); });
       on('svNext', () => go('logbook'));
+      on('svSend', async () => {
+        const v = id => document.getElementById(id).value.trim();
+        const data = { supName: v('svName'), supEmail: v('svEmail'), supGdc: v('svGdc'), supPractice: v('svPractice') };
+        const err = document.getElementById('svErr');
+        const fail = m => { err.textContent = m; err.style.display = 'block'; };
+        if (!data.supName || !data.supEmail || !data.supGdc || !data.supPractice) return fail('Please fill in every field.');
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.supEmail)) return fail('Please check the email address.');
+        if (data.supEmail.toLowerCase() === String(user.email).toLowerCase()) return fail('Your ' + SUP + ' must use their own email address, not yours.');
+        if (active.some(x => x.supEmail.toLowerCase() === data.supEmail.toLowerCase())) return fail('You have already invited this person.');
+        if (adminView) return toast('Admin view: nothing is saved.');
+        try {
+          const id = await D.inviteSupervisor({ ...data, learnerUid: user.uid, learnerName: user.name, learnerEmail: user.email, learnerGdc: user.gdc || '', slug, courseTitle: course.title, supervisorTitle: SUP });
+          emailSupervisor({ id, ...data }, 'Supervisor agreement for ' + user.name, user.name + ' has asked you to be their ' + SUP + ' for the Dental Nurse Training course "' + course.title + '".\n\nPlease read and sign the supervisor agreement using the link below. You will be asked to set a password so that only you can sign off their work.', inviteLink(id));
+          D.notify('Supervisor invited - ' + course.title, user.name + ' has invited ' + data.supName + ' (GDC ' + data.supGdc + ', ' + data.supPractice + ') to supervise them on "' + course.title + '".', user);
+          await loadPractical(); showSupervisor(); toast('Agreement sent to ' + data.supEmail, 'success');
+        } catch (e) { console.error(e); fail('Could not send. Please try again.'); }
+      });
     }
 
-    function caseNumberLabel(c) { const i = cases.indexOf(c); return 'Case ' + (i + 1); }
+    const caseTitle = c => (CATS.length ? (c.category || NOUN) : ((c.fields && c.fields.procedure) || NOUN[0].toUpperCase() + NOUN.slice(1)));
+    function caseNumberLabel(c) {
+      if (CATS.length) { const same = cases.filter(x => x.category === c.category); return (c.category || '') + ': ' + NOUN + ' ' + (same.indexOf(c) + 1); }
+      return NOUN[0].toUpperCase() + NOUN.slice(1) + ' ' + (cases.indexOf(c) + 1);
+    }
     function caseStatusPill(c) {
       if (c.status === 'draft') return '<span class="pill pill-grey">Draft</span>';
       if (c.status === 'submitted') return '<span class="pill pill-orange">Awaiting sign-off</span>';
-      return c.signoff && c.signoff.outcome === 'satisfactory' ? '<span class="pill pill-green">Satisfactory</span>' : '<span class="pill pill-red">Needs development</span>';
+      return isSatCase(c) ? '<span class="pill pill-green">Satisfactory</span>' : '<span class="pill pill-red">Needs development</span>';
     }
-    function canAddCase() {
-      const sat = satisfactoryCases().length, open = cases.filter(c => c.status === 'draft' || c.status === 'submitted').length;
-      const N = Number(P.cases || 0), obs = Number(P.observedCases || 0);
+    const openCases = list => list.filter(c => c.status === 'draft' || c.status === 'submitted');
+    function canAddCase(cat) {
+      if (cat) { const inCat = cases.filter(c => c.category === cat.label); return inCat.filter(isSatCase).length + openCases(inCat).length < Number(cat.count); }
+      const sat = satisfactoryCases().length, open = openCases(cases).length;
+      const N = casesNeeded(P), obs = Number(P.observedCases || 0);
       if (sat + open >= N) return false;
       if (sat < obs) return sat + open < obs;
       return true;
     }
+    const caseRow = c => '<div class="ll-item" style="cursor:pointer" data-case="' + esc(c.id) + '"><span class="ll-num">📒</span><span class="ll-title" style="flex:1">' + esc(caseNumberLabel(c)) + '<small>' + esc([CATS.length ? '' : '', (c.fields && c.fields.date) ? fmtDate(c.fields.date) : '', c.supervisorName || '', c.observedRequired ? SUP + ' to observe' : ''].filter(Boolean).join(' · ')) + '</small></span>' + caseStatusPill(c) + '</div>';
     function showLogbook() {
-      const sv = approvedSupervision();
-      const N = Number(P.cases || 0), obs = Number(P.observedCases || 0), sat = satisfactoryCases().length;
-      let html = '<div class="dash-header"><h1>Supervised logbook</h1><p>Record ' + N + ' suture removals carried out on patients in your workplace, each signed off by ' + esc(sv ? sv.supName : 'your ' + SUP) + '.</p>'
-        + '<div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.6rem;max-width:420px"><div class="progress-bar-wrap" style="flex:1;margin:0"><div class="progress-bar-fill" style="width:' + Math.round(sat / Math.max(1, N) * 100) + '%"></div></div><span style="font-size:0.85rem;color:var(--ink-light);white-space:nowrap">' + sat + ' of ' + N + ' signed off</span></div></div>'
-        + '<div class="callout" style="margin-top:0"><div class="callout-label">How the logbook works</div><p>' + md(
-            (obs ? '- Cases 1 to ' + obs + ': your ' + SUP + ' must watch the whole removal. You cannot start case ' + (obs + 1) + ' until these are signed off.\n' : '')
-            + '- For every case, your ' + SUP + ' checks the wound and directs the removal before you start.\n'
-            + '- Save a case as a draft, then submit it. Your ' + SUP + ' gets an email to sign it off. You cannot change a case once it is signed.\n'
-            + '- A case marked "Needs development" does not count. Add a new case to replace it.') + '</p></div>';
-      html += '<div class="lesson-list" style="margin-bottom:1rem">' + (cases.length ? cases.map(c => '<div class="ll-item" style="cursor:pointer" data-case="' + esc(c.id) + '"><span class="ll-num">' + (cases.indexOf(c) + 1) + '</span><span class="ll-title" style="flex:1">' + esc((c.fields && c.fields.procedure) || 'Case') + '<small>' + esc((c.fields && c.fields.date) ? fmtDate(c.fields.date) : '') + (c.observedRequired ? ' · ' + SUP + ' to observe' : '') + '</small></span>' + caseStatusPill(c) + '</div>').join('')
-        : '<div class="ll-item"><span class="ll-title" style="color:var(--ink-light);font-weight:400">No cases yet.</span></div>') + '</div>';
-      const add = canAddCase();
-      html += '<button class="btn btn-primary" id="addCase"' + (add ? '' : ' disabled') + '>＋ Add a case</button>'
-        + (!add && sat < N ? '<p style="font-size:0.82rem;color:var(--ink-light);margin-top:0.4rem">' + (sat < obs ? 'Wait for your first ' + obs + ' cases to be signed off before adding more.' : 'Finish your open cases first.') + '</p>' : '');
-      if (sat >= N && sv) {
-        html += sv.finalDeclaration
-          ? '<div class="callout" style="border-left-color:var(--success);background:var(--success-light);margin-top:1.25rem"><div class="callout-label" style="color:var(--success)">✓ Final competence declaration signed</div><p>Signed by ' + esc(sv.finalDeclaration.name) + ' on ' + fmtDate(sv.finalDeclaration.signedAt) + '.</p></div>'
-            + '<button class="btn btn-primary" id="lbNext" style="margin-top:0.5rem">Continue →</button>'
-          : '<div class="callout" style="margin-top:1.25rem"><div class="callout-label">Last step: final competence declaration</div><p>All ' + N + ' cases are signed off. ' + esc(sv.supName) + ' now needs to sign your final competence declaration. We have emailed them. <a href="#" id="lbRemind">Email them again</a></p></div>';
-        if (!sv.finalDeclaration && !prog.declarationRequested) { emailSupervisor(sv, 'Final competence declaration for ' + user.name, user.name + ' has completed all ' + N + ' logbook cases. Please log in to sign their final competence declaration.', SITE + 'supervisor.html'); save({ declarationRequested: true }).catch(() => {}); }
+      const st = lbStatus(), N = st.needed, obs = Number(P.observedCases || 0);
+      const svs = approvedSupervisions();
+      const svNames = svs.map(x => x.supName).join(', ') || 'your ' + SUP;
+      const intro = P.logbookIntro ? md(P.logbookIntro) : '<p>Record ' + N + ' ' + esc(NOUN) + 's carried out with patients in your workplace, each signed off by ' + esc(svNames) + '.</p>';
+      const rules = P.logbookRules ? P.logbookRules : (obs ? '- ' + NOUN[0].toUpperCase() + NOUN.slice(1) + 's 1 to ' + obs + ': your ' + SUP + ' must watch the whole time. You cannot start ' + NOUN + ' ' + (obs + 1) + ' until these are signed off.\n' : '')
+        + '- Save each ' + NOUN + ' as a draft, then submit it. Your ' + SUP + ' gets an email to sign it off. You cannot change it once it is signed.\n'
+        + '- A ' + NOUN + ' marked "Needs development" does not count. Add a new one to replace it.';
+      let html = '<div class="dash-header"><h1>Supervised logbook</h1>' + intro
+        + '<div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.6rem;max-width:420px"><div class="progress-bar-wrap" style="flex:1;margin:0"><div class="progress-bar-fill" style="width:' + Math.round(st.satCount / Math.max(1, N) * 100) + '%"></div></div><span style="font-size:0.85rem;color:var(--ink-light);white-space:nowrap">' + st.satCount + ' of ' + N + ' signed off</span></div></div>'
+        + '<div class="callout" style="margin-top:0"><div class="callout-label">How the logbook works</div>' + md(rules) + '</div>';
+      if (st.distinct) html += '<p style="font-size:0.9rem;margin-bottom:1rem">' + esc(st.distinct.label) + ' covered so far (signed off): <strong>' + st.distinct.have + '</strong> (you need at least ' + st.distinct.min + ')' + (st.distinct.ok ? ' ✓' : '') + '</p>';
+      if (CATS.length) {
+        html += st.perCat.map((cat, ci) => {
+          const list = cases.filter(c => c.category === cat.label);
+          return '<div class="content-card" style="padding:1.1rem 1.25rem"><div style="display:flex;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;align-items:center"><h3 style="margin:0">' + esc(cat.label) + '</h3><span class="pill ' + (cat.sat >= cat.count ? 'pill-green' : 'pill-grey') + '">' + Math.min(cat.sat, cat.count) + ' of ' + cat.count + ' signed off</span></div>'
+            + (cat.help ? '<p style="font-size:0.85rem;margin-top:0.3rem">' + esc(cat.help) + '</p>' : '')
+            + (list.length ? '<div class="lesson-list" style="margin-top:0.75rem">' + list.map(caseRow).join('') + '</div>' : '')
+            + (canAddCase(cat) ? '<button class="btn btn-outline btn-sm" style="margin-top:0.75rem" data-add="' + ci + '">＋ Add a ' + esc(NOUN) + '</button>' : '') + '</div>';
+        }).join('');
+      } else {
+        html += '<div class="lesson-list" style="margin-bottom:1rem">' + (cases.length ? cases.map(caseRow).join('') : '<div class="ll-item"><span class="ll-title" style="color:var(--ink-light);font-weight:400">Nothing recorded yet.</span></div>') + '</div>';
+        const add = canAddCase();
+        const sat = satisfactoryCases().length;
+        html += '<button class="btn btn-primary" id="addCase"' + (add ? '' : ' disabled') + '>＋ Add a ' + esc(NOUN) + '</button>'
+          + (!add && sat < N ? '<p style="font-size:0.82rem;color:var(--ink-light);margin-top:0.4rem">' + (sat < obs ? 'Wait for your first ' + obs + ' to be signed off before adding more.' : 'Finish your open ' + NOUN + 's first.') + '</p>' : '');
       }
+      const sv = st.declared || svs[0];
+      if (st.casesDone && st.needDecl && sv) {
+        html += st.declared
+          ? '<div class="callout" style="border-left-color:var(--success);background:var(--success-light);margin-top:1.25rem"><div class="callout-label" style="color:var(--success)">✓ Final competence declaration signed</div><p>Signed by ' + esc(st.declared.finalDeclaration.name) + ' on ' + fmtDate(st.declared.finalDeclaration.signedAt) + '.</p></div>'
+          : '<div class="callout" style="margin-top:1.25rem"><div class="callout-label">Last step: final competence declaration</div><p>All ' + N + ' ' + esc(NOUN) + 's are signed off. ' + esc(sv.supName) + ' now needs to sign your final competence declaration. We have emailed them. <a href="#" id="lbRemind">Email them again</a></p></div>';
+        if (!st.declared && !prog.declarationRequested && !adminView) { emailSupervisor(sv, 'Final competence declaration for ' + user.name, user.name + ' has completed all ' + N + ' logbook ' + NOUN + 's. Please log in to sign their final competence declaration.', SITE + 'supervisor.html'); save({ declarationRequested: true }).catch(() => {}); }
+      }
+      if (st.complete) html += '<button class="btn btn-primary" id="lbNext" style="margin-top:1rem">Continue →</button>';
       main.innerHTML = html;
       main.querySelectorAll('[data-case]').forEach(r => r.onclick = () => showCase(cases.find(c => c.id === r.dataset.case)));
-      document.getElementById('addCase').onclick = () => showCase(null);
+      main.querySelectorAll('[data-add]').forEach(b => b.onclick = () => showCase(null, CATS[Number(b.dataset.add)]));
+      const ad = document.getElementById('addCase'); if (ad) ad.onclick = () => showCase(null);
       const nx = document.getElementById('lbNext'); if (nx) nx.onclick = () => go(nextStep());
       const rm = document.getElementById('lbRemind'); if (rm) rm.onclick = (e) => { e.preventDefault(); emailSupervisor(sv, 'Reminder: final competence declaration for ' + user.name, user.name + ' is waiting for you to sign their final competence declaration.', SITE + 'supervisor.html'); toast('Email sent', 'success'); };
     }
 
-    function fieldInput(f, val, disabled) {
+    function fieldInput(f, val, disabled, prefix) {
       const dis = disabled ? ' disabled' : '';
-      const id = 'cf_' + f.key;
-      if (f.type === 'textarea') return '<textarea id="' + id + '" class="short"' + dis + '>' + esc(val || '') + '</textarea>';
+      const id = (prefix || 'cf_') + f.key;
+      if (f.type === 'textarea') return '<textarea id="' + id + '" class="' + (f.big ? '' : 'short') + '"' + (f.big ? ' style="min-height:360px"' : '') + dis + '>' + esc(val || '') + '</textarea>';
       if (f.type === 'yesno') return '<select id="' + id + '"' + dis + '><option value="">Select...</option><option' + (val === 'Yes' ? ' selected' : '') + '>Yes</option><option' + (val === 'No' ? ' selected' : '') + '>No</option></select>';
       if (f.type === 'select') return '<select id="' + id + '"' + dis + '><option value="">Select...</option>' + (f.options || []).map(o => '<option' + (val === o ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select>';
       return '<input type="' + (f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text') + '" id="' + id + '" value="' + esc(val == null ? '' : val) + '"' + dis + (f.type === 'number' ? ' min="0"' : '') + '/>';
     }
-    function showCase(c) {
+    function showCase(c, cat) {
       const isNew = !c;
-      const sv = approvedSupervision();
-      if (isNew) c = { fields: {}, reflection: {}, status: 'draft', observedRequired: satisfactoryCases().length + cases.filter(x => x.status === 'draft' || x.status === 'submitted').length < Number(P.observedCases || 0) };
+      const svs = approvedSupervisions();
+      if (isNew) c = { fields: {}, reflection: {}, status: 'draft', category: cat ? cat.label : '', observedRequired: !CATS.length && satisfactoryCases().length + openCases(cases).length < Number(P.observedCases || 0) };
+      const sv = svById(c.supervisionId) || (svs.length === 1 ? svs[0] : null);
       const locked = c.status === 'signed' || c.status === 'submitted' || adminView;
       const fields = P.caseFields || [];
       const prompts = P.reflectionPrompts || [];
+      const catInfo = CATS.find(x => x.label === c.category);
       let html = '<p style="margin-bottom:0.5rem"><a href="#" id="cBack" class="submission-link">← Back to logbook</a></p>'
-        + '<div class="dash-header"><h1>' + (isNew ? 'New case' : esc(caseNumberLabel(c))) + '</h1>'
-        + (c.observedRequired ? '<p><strong>Your ' + esc(SUP) + ' must watch the whole of this removal.</strong></p>' : '') + '</div>';
+        + '<div class="dash-header"><h1>' + (isNew ? 'New ' + esc(NOUN) + (c.category ? ': ' + esc(c.category) : '') : esc(caseNumberLabel(c))) + '</h1>'
+        + (catInfo && catInfo.help ? '<p>' + esc(catInfo.help) + '</p>' : '')
+        + (c.observedRequired ? '<p><strong>Your ' + esc(SUP) + ' must watch the whole time.</strong></p>' : '') + '</div>';
       if (c.status === 'signed' && c.signoff) {
         const ok = c.signoff.outcome === 'satisfactory';
-        html += '<div class="callout" style="margin-top:0;' + (ok ? 'border-left-color:var(--success);background:var(--success-light)' : '') + '"><div class="callout-label"' + (ok ? ' style="color:var(--success)"' : '') + '>' + (ok ? '✓ Signed off: Satisfactory' : 'Signed off: Needs development') + '</div><p>' + esc(c.signoff.name) + ' (GDC ' + esc(c.signoff.gdc || '') + '), ' + fmtDate(c.signoff.signedAt) + (c.signoff.comment ? '<br/>"' + esc(c.signoff.comment) + '"' : '') + (ok ? '' : '<br/>This case does not count. Please add a new case to replace it.') + '</p></div>';
+        html += '<div class="callout" style="margin-top:0;' + (ok ? 'border-left-color:var(--success);background:var(--success-light)' : '') + '"><div class="callout-label"' + (ok ? ' style="color:var(--success)"' : '') + '>' + (ok ? '✓ Signed off: Satisfactory' : 'Signed off: Needs development') + '</div><p>' + esc(c.signoff.name) + ' (GDC ' + esc(c.signoff.gdc || '') + '), ' + fmtDate(c.signoff.signedAt) + (c.signoff.comment ? '<br/>"' + esc(c.signoff.comment) + '"' : '') + (ok ? '' : '<br/>This does not count. Please add a new ' + esc(NOUN) + ' to replace it.') + '</p></div>';
       } else if (c.status === 'submitted') {
-        html += '<div class="callout" style="margin-top:0"><div class="callout-label">Waiting for sign-off</div><p>' + esc(sv ? sv.supName : 'Your ' + SUP) + ' has been emailed to sign this case off. <a href="#" id="cRemind">Email them again</a> · <a href="#" id="cUnsubmit">Take it back to edit</a></p></div>';
+        html += '<div class="callout" style="margin-top:0"><div class="callout-label">Waiting for sign-off</div><p>' + esc(c.supervisorName || 'Your ' + SUP) + ' has been emailed to sign this off. <a href="#" id="cRemind">Email them again</a> · <a href="#" id="cUnsubmit">Take it back to edit</a></p></div>';
       }
       html += '<div class="content-card">' + (locked ? '' : NO_ID_WARNING)
-        + '<h2>Case details</h2>' + fields.map(f => '<div class="form-group"><label>' + esc(f.label) + (f.required === false ? '' : ' *') + '</label>' + fieldInput(f, c.fields[f.key], locked) + (f.help ? '<div class="ed-help">' + esc(f.help) + '</div>' : '') + '</div>').join('')
-        + '<h2 style="margin-top:1.5rem">Reflection</h2><p style="font-size:0.88rem">Write ' + esc(P.reflectionWords || 'a short reflection') + ' in total across these questions. <span id="rCount"></span></p>'
-        + prompts.map((q, i) => '<div class="form-group"><label>' + esc(q) + ' *</label><textarea id="rf_' + i + '" class="short"' + (locked ? ' disabled' : '') + '>' + esc(c.reflection[i] || '') + '</textarea></div>').join('')
+        + '<h2>Details</h2>' + fields.map(f => '<div class="form-group"><label>' + esc(f.label) + (f.required === false ? '' : ' *') + '</label>' + fieldInput(f, c.fields[f.key], locked) + (f.help ? '<div class="ed-help">' + esc(f.help) + '</div>' : '') + '</div>').join('')
+        + (prompts.length ? '<h2 style="margin-top:1.5rem">Reflection</h2><p style="font-size:0.88rem">Write ' + esc(P.reflectionWords || 'a short reflection') + ' in total across these questions. <span id="rCount"></span></p>'
+          + prompts.map((q, i) => '<div class="form-group"><label>' + esc(q) + ' *</label><textarea id="rf_' + i + '" class="short"' + (locked ? ' disabled' : '') + '>' + esc(c.reflection[i] || '') + '</textarea></div>').join('') : '')
+        + (!locked && svs.length > 1 ? '<div class="form-group"><label>Which ' + esc(SUP) + ' supervised this? *</label><select id="cSup"><option value="">Select...</option>' + svs.map(x => '<option value="' + esc(x.id) + '"' + (sv && sv.id === x.id ? ' selected' : '') + '>' + esc(x.supName) + ' (GDC ' + esc(x.supGdc) + ')</option>').join('') + '</select></div>' : '')
         + '<div id="cErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div>'
         + (locked ? '' : '<div class="admin-actions"><button class="btn btn-outline" id="cSave">Save draft</button><button class="btn btn-primary" id="cSubmit">Submit for sign-off</button>' + (!isNew ? '<button class="btn btn-sm" style="background:none;color:var(--warn)" id="cDelete">Delete draft</button>' : '') + '</div>')
         + '</div>';
       main.innerHTML = html; window.scrollTo(0, 0);
       const minWords = Number((String(P.reflectionWords || '').match(/\d+/) || [0])[0]);
       const countWords = () => { const n = prompts.reduce((t, q, i) => t + words(document.getElementById('rf_' + i).value), 0); const el = document.getElementById('rCount'); if (el) el.textContent = '(' + n + ' words so far)'; return n; };
-      prompts.forEach((q, i) => document.getElementById('rf_' + i).addEventListener('input', countWords)); countWords();
+      prompts.forEach((q, i) => document.getElementById('rf_' + i).addEventListener('input', countWords)); if (prompts.length) countWords();
       document.getElementById('cBack').onclick = (e) => { e.preventDefault(); showLogbook(); };
       const collect = () => {
         const f = {}; fields.forEach(x => { f[x.key] = document.getElementById('cf_' + x.key).value.trim(); });
         const r = {}; prompts.forEach((q, i) => { r[i] = document.getElementById('rf_' + i).value.trim(); });
         return { ...c, fields: f, reflection: r };
       };
+      const pickSv = () => { const el = document.getElementById('cSup'); return el ? svById(el.value) : sv; };
       const err = (m) => { const e = document.getElementById('cErr'); e.textContent = m; e.style.display = m ? 'block' : 'none'; };
       async function store(data) {
         const id = await D.saveCase({ ...data, learnerUid: user.uid, learnerName: user.name, slug, courseTitle: course.title, createdAt: data.createdAt || new Date().toISOString() });
@@ -525,56 +580,106 @@
         if (missing.length) return err('Please complete: ' + missing.map(x => x.label).join(', ') + '.');
         if (prompts.some((q, i) => !data.reflection[i])) return err('Please answer every reflection question.');
         if (minWords && countWords() < minWords) return err('Your reflection needs at least ' + minWords + ' words in total.');
-        if (!sv) return err('Your ' + SUP + ' must be approved before you can submit cases.');
-        if (!confirm('Submit this case to ' + sv.supName + ' for sign-off? You will not be able to change it once it is signed.')) return;
+        const to = pickSv();
+        if (!to) return err(svs.length ? 'Choose which ' + SUP + ' supervised this.' : 'Your ' + SUP + ' must be approved before you can submit.');
+        if (!confirm('Submit this to ' + to.supName + ' for sign-off? You will not be able to change it once it is signed.')) return;
         try {
-          await store({ ...data, status: 'submitted', supervisionId: sv.id, supervisorUid: sv.supervisorUid, supervisorName: sv.supName, submittedAt: new Date().toISOString() });
-          emailSupervisor(sv, 'Logbook case to sign off for ' + user.name, user.name + ' has submitted a logbook case for you to check and sign off. Please log in using the link below.', SITE + 'supervisor.html');
-          toast('Sent to ' + sv.supName + ' for sign-off', 'success'); showLogbook();
+          await store({ ...data, status: 'submitted', supervisionId: to.id, supervisorUid: to.supervisorUid, supervisorName: to.supName, submittedAt: new Date().toISOString() });
+          emailSupervisor(to, 'Logbook ' + NOUN + ' to sign off for ' + user.name, user.name + ' has submitted a logbook ' + NOUN + ' for you to check and sign off. Please log in using the link below.', SITE + 'supervisor.html');
+          toast('Sent to ' + to.supName + ' for sign-off', 'success'); showLogbook();
         } catch (e) { console.error(e); err('Could not submit. Please try again.'); }
       });
-      on('cDelete', async () => { if (!confirm('Delete this draft case?')) return; await D.deleteCase(c.id); await loadPractical(); showLogbook(); });
-      on('cRemind', (e) => { e.preventDefault(); emailSupervisor(sv, 'Reminder: logbook case to sign off for ' + user.name, user.name + ' is waiting for you to sign off a logbook case.', SITE + 'supervisor.html'); toast('Email sent', 'success'); });
-      on('cUnsubmit', async (e) => { e.preventDefault(); if (!confirm('Take this case back to edit it? You will need to submit it again.')) return; const { signoff, ...rest } = c; await store({ ...rest, status: 'draft' }); showCase(cases.find(x => x.id === c.id)); });
+      on('cDelete', async () => { if (!confirm('Delete this draft?')) return; await D.deleteCase(c.id); await loadPractical(); showLogbook(); });
+      on('cRemind', (e) => { e.preventDefault(); const to = svById(c.supervisionId); if (to) emailSupervisor(to, 'Reminder: logbook ' + NOUN + ' to sign off for ' + user.name, user.name + ' is waiting for you to sign off a logbook ' + NOUN + '.', SITE + 'supervisor.html'); toast('Email sent', 'success'); });
+      on('cUnsubmit', async (e) => { e.preventDefault(); if (!confirm('Take this back to edit it? You will need to submit it again.')) return; const { signoff, ...rest } = c; await store({ ...rest, status: 'draft' }); showCase(cases.find(x => x.id === c.id)); });
     }
 
-    function showCaseStudy() {
-      const cs = P.caseStudy || {};
-      const sub = prog.caseStudy || null;
-      const marked = mark && sub && mark.forVersion === sub.version ? mark : null;
-      const editable = !adminView && (!sub || (marked && marked.status === 'needs-development'));
-      const minW = Number(cs.minWords || 0), maxW = Number(cs.maxWords || 0);
-      let html = '<div class="dash-header"><h1>Case study</h1><p>Write up one of your logbook cases' + (minW ? ' in ' + minW + (maxW ? ' to ' + maxW : '+') + ' words' : '') + '.</p></div>';
-      if (marked && marked.status === 'satisfactory') html += '<div class="callout" style="margin-top:0;border-left-color:var(--success);background:var(--success-light)"><div class="callout-label" style="color:var(--success)">✓ Marked Satisfactory</div>' + (marked.feedback ? '<div class="md">' + md(marked.feedback) + '</div>' : '') + '</div><button class="btn btn-primary" id="csNext">Continue →</button>';
+    // ── Written work (case study, written tasks, reflections...) ────────
+    // Field types: text, textarea (with word limits), select, rows (a simple table)
+    function assignFieldHtml(f, val, editable) {
+      const id = 'af_' + f.key;
+      const wr = wordRange(f.minWords, f.maxWords);
+      let input;
+      if (f.type === 'rows') {
+        const cols = f.columns || [];
+        const rows = Array.isArray(val) && val.length ? val : [cols.map(() => '')];
+        input = '<div style="overflow-x:auto"><table class="admin-table" id="' + id + '" data-rows><thead><tr>' + cols.map(c => '<th>' + esc(c) + '</th>').join('') + (editable ? '<th></th>' : '') + '</tr></thead><tbody>'
+          + rows.map(r => '<tr>' + cols.map((c, ci) => '<td>' + (editable ? '<input type="text" value="' + esc(r[ci] || '') + '"/>' : esc(r[ci] || '')) + '</td>').join('') + (editable ? '<td><button type="button" class="mini-btn" data-delrow style="color:var(--warn)">✕</button></td>' : '') + '</tr>').join('')
+          + '</tbody></table></div>' + (editable ? '<button type="button" class="btn btn-outline btn-sm" data-addrow="' + esc(f.key) + '" style="margin-top:0.4rem">＋ Add a row</button>' : '');
+      } else input = fieldInput(f, val, !editable, 'af_');
+      return '<div class="form-group"><label>' + esc(f.label) + (f.required === false ? ' (optional)' : '') + '</label>' + (f.help ? '<div class="ed-help" style="margin:0 0 0.35rem">' + md(f.help) + '</div>' : '') + input
+        + (f.type === 'textarea' ? '<div class="ed-help" data-wc="' + esc(f.key) + '"></div>' : '') + (wr && f.type !== 'textarea' ? '' : '') + '</div>';
+    }
+    function readAssignField(f) {
+      const el = document.getElementById('af_' + f.key);
+      if (!el) return '';
+      if (f.type === 'rows') return [...el.querySelectorAll('tbody tr')].map(tr => [...tr.querySelectorAll('input')].map(i => i.value.trim())).filter(r => r.some(Boolean));
+      return el.value.trim();
+    }
+    function showAssignment(a) {
+      const sub = subOf(a), marked = markOf(a);
+      const editable = !adminView && (!sub || (a.marked !== false ? (marked && marked.status === 'needs-development') : false));
+      const draft = a.legacy ? (prog.caseStudyDraft ? { text: prog.caseStudyDraft } : null) : ((prog.assignmentDrafts || {})[a.id] || null);
+      const vals = sub && !editable ? valuesOf(a, sub) : (draft || valuesOf(a, sub));
+      const fields = a.fields || [];
+      let html = '<div class="dash-header"><h1>' + esc(a.title) + '</h1>' + (a.intro ? '<p>' + esc(a.intro) + '</p>' : '') + '</div>';
+      if (a.marked === false && sub) html += '<div class="callout" style="margin-top:0;border-left-color:var(--success);background:var(--success-light)"><div class="callout-label" style="color:var(--success)">✓ Handed in</div><p>Submitted on ' + fmtDate(sub.submittedAt) + '. Thank you.</p></div><button class="btn btn-primary" id="asNext" style="margin-bottom:1rem">Continue →</button>';
+      else if (marked && marked.status === 'satisfactory') html += '<div class="callout" style="margin-top:0;border-left-color:var(--success);background:var(--success-light)"><div class="callout-label" style="color:var(--success)">✓ Marked Satisfactory</div>' + (marked.feedback ? '<div class="md">' + md(marked.feedback) + '</div>' : '') + '</div><button class="btn btn-primary" id="asNext" style="margin-bottom:1rem">Continue →</button>';
       else if (marked && marked.status === 'needs-development') html += '<div class="callout callout-warn" style="margin-top:0"><div class="callout-label">Feedback: amendments needed</div><div class="md">' + md(marked.feedback || '') + '</div><p style="margin-top:0.5rem"><strong>Make the amendments below and resubmit.</strong></p></div>';
       else if (sub) html += '<div class="callout" style="margin-top:0"><div class="callout-label">Submitted for marking</div><p>Submitted on ' + fmtDate(sub.submittedAt) + '. We will mark it and let you know, usually within 5 working days.</p></div>';
-      html += '<div class="content-card">' + (cs.brief ? '<div class="md">' + md(cs.brief) + '</div>' : '')
-        + ((cs.headings || []).length ? '<h3>Cover these headings</h3><ol>' + cs.headings.map(h => '<li>' + esc(h) + '</li>').join('') + '</ol>' : '')
+      html += '<div class="content-card">' + (a.brief ? '<div class="md">' + md(a.brief) + '</div>' : '')
+        + ((a.headings || []).length ? '<h3>Cover these headings</h3><ol>' + a.headings.map(h => '<li>' + esc(h) + '</li>').join('') + '</ol>' : '')
         + (editable ? NO_ID_WARNING : '')
-        + '<div class="form-group"><label>Which logbook case are you writing about?</label><select id="csCase"' + (editable ? '' : ' disabled') + '><option value="">Select...</option>' + satisfactoryCases().map(c => '<option value="' + esc(c.id) + '"' + (sub && sub.caseId === c.id ? ' selected' : '') + '>' + esc(caseNumberLabel(c) + ': ' + ((c.fields && c.fields.procedure) || '')) + '</option>').join('') + '</select></div>'
-        + '<div class="form-group"><label>Your case study</label><textarea id="csText" style="min-height:420px"' + (editable ? '' : ' disabled') + '>' + esc((sub && sub.text) || '') + '</textarea><div class="ed-help" id="csCount"></div></div>'
-        + '<div id="csErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div>'
-        + (editable ? '<div class="admin-actions"><button class="btn btn-outline" id="csSave">Save draft</button><button class="btn btn-primary" id="csSubmit">' + (sub ? 'Resubmit for marking' : 'Submit for marking') + '</button></div>' : '')
+        + (a.pickCase ? '<div class="form-group"><label>Which logbook ' + esc(NOUN) + ' are you writing about?</label><select id="asCase"' + (editable ? '' : ' disabled') + '><option value="">Select...</option>' + satisfactoryCases().map(c => '<option value="' + esc(c.id) + '"' + (sub && sub.caseId === c.id ? ' selected' : '') + '>' + esc(caseNumberLabel(c) + (CATS.length ? '' : ': ' + ((c.fields && c.fields.procedure) || ''))) + '</option>').join('') + '</select></div>' : '')
+        + fields.map(f => assignFieldHtml(f, vals[f.key], editable)).join('')
+        + '<div id="asErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div>'
+        + (editable ? '<div class="admin-actions"><button class="btn btn-outline" id="asSave">Save draft</button><button class="btn btn-primary" id="asSubmit">' + (a.marked === false ? 'Hand in' : sub ? 'Resubmit for marking' : 'Submit for marking') + '</button></div>' : '')
         + '</div>';
-      main.innerHTML = html;
-      const ta = document.getElementById('csText');
-      const count = () => { const n = words(ta.value); document.getElementById('csCount').textContent = n + ' words' + (minW ? ' (aim for ' + minW + (maxW ? ' to ' + maxW : '+') + ')' : ''); return n; };
-      ta.addEventListener('input', count); count();
-      if (!sub && prog.caseStudyDraft && editable) { ta.value = prog.caseStudyDraft; count(); }
-      const err = (m) => { const e = document.getElementById('csErr'); e.textContent = m; e.style.display = m ? 'block' : 'none'; };
+      main.innerHTML = html; window.scrollTo(0, 0);
+      const counters = fields.filter(f => f.type === 'textarea').map(f => {
+        const ta = document.getElementById('af_' + f.key), out = main.querySelector('[data-wc="' + f.key + '"]');
+        const upd = () => { const n = words(ta.value), wr = wordRange(f.minWords, f.maxWords); out.textContent = n + ' words' + (wr ? ' (aim for ' + wr + ')' : ''); return n; };
+        ta.addEventListener('input', upd); upd(); return { f, upd };
+      });
+      main.querySelectorAll('[data-addrow]').forEach(b => b.onclick = () => {
+        const t = document.getElementById('af_' + b.dataset.addrow), n = t.querySelectorAll('thead th').length - 1;
+        const tr = document.createElement('tr'); tr.innerHTML = Array(n).fill('<td><input type="text"/></td>').join('') + '<td><button type="button" class="mini-btn" data-delrow style="color:var(--warn)">✕</button></td>';
+        t.querySelector('tbody').appendChild(tr); tr.querySelector('[data-delrow]').onclick = () => tr.remove();
+      });
+      main.querySelectorAll('[data-delrow]').forEach(b => b.onclick = () => b.closest('tr').remove());
+      const err = (m) => { const e = document.getElementById('asErr'); e.textContent = m; e.style.display = m ? 'block' : 'none'; };
+      const collect = () => Object.fromEntries(fields.map(f => [f.key, readAssignField(f)]));
       const on = (id, fn) => { const b = document.getElementById(id); if (b) b.onclick = fn; };
-      on('csNext', () => go(nextStep()));
-      on('csSave', async () => { try { await save({ caseStudyDraft: ta.value }); toast('Draft saved', 'success'); } catch (e) {} });
-      on('csSubmit', async () => {
-        const n = count(), caseId = document.getElementById('csCase').value;
-        if (!caseId) return err('Choose which logbook case you are writing about.');
-        if (minW && n < minW) return err('Your case study needs at least ' + minW + ' words. It has ' + n + '.');
-        if (maxW && n > Math.round(maxW * 1.1)) return err('Your case study is ' + n + ' words. Please keep it under ' + maxW + ' words.');
-        if (!confirm('Submit your case study for marking?')) return;
+      on('asNext', () => go(nextStep()));
+      on('asSave', async () => {
+        const v = collect();
+        try { await save(a.legacy ? { caseStudyDraft: v.text || '' } : { assignmentDrafts: { ...(prog.assignmentDrafts || {}), [a.id]: v } }); toast('Draft saved', 'success'); } catch (e) {}
+      });
+      on('asSubmit', async () => {
+        const v = collect();
+        const caseEl = document.getElementById('asCase'), caseId = caseEl ? caseEl.value : '';
+        if (a.pickCase && !caseId) return err('Choose which logbook ' + NOUN + ' you are writing about.');
+        for (const f of fields) {
+          const val = v[f.key];
+          if (f.required !== false && (Array.isArray(val) ? !val.length : !val)) return err('Please complete: ' + f.label + '.');
+          if (f.type === 'rows' && Number(f.minRows) && val.length < Number(f.minRows)) return err(f.label + ' needs at least ' + f.minRows + ' rows.');
+          if (f.type === 'textarea' && val) {
+            const n = words(val), min = Number(f.minWords) || 0, max = Number(f.maxWords) || 0;
+            if (min && n < min) return err(f.label + ' needs at least ' + min + ' words. It has ' + n + '.');
+            if (max && n > Math.round(max * 1.1)) return err(f.label + ' is ' + n + ' words. Please keep it under ' + max + ' words.');
+          }
+        }
+        if (!confirm(a.marked === false ? 'Hand this in? You will not be able to change it afterwards.' : 'Submit "' + a.title + '" for marking?')) return;
+        const n = fields.filter(f => f.type === 'textarea').reduce((t, f) => t + words(v[f.key]), 0);
+        const data = { caseId, words: n, submittedAt: new Date().toISOString(), version: ((sub && sub.version) || 0) + 1 };
         try {
-          await save({ caseStudy: { text: ta.value, caseId, words: n, submittedAt: new Date().toISOString(), version: ((sub && sub.version) || 0) + 1 }, caseStudyDraft: '' });
-          D.notify('Case study to mark - ' + course.title, user.name + ' (' + user.email + ') has ' + (sub ? 're' : '') + 'submitted their case study for "' + course.title + '". Mark it in the CPD Hub admin under Case studies.', user);
-          toast('Submitted for marking', 'success'); showCaseStudy();
+          if (a.legacy) await save({ caseStudy: { ...data, text: v.text }, caseStudyDraft: '' });
+          else {
+            const drafts = { ...(prog.assignmentDrafts || {}), [a.id]: null };
+            await save({ assignments: { ...(prog.assignments || {}), [a.id]: { ...data, values: v } }, assignmentDrafts: drafts });
+          }
+          if (a.marked !== false) D.notify(a.title + ' to mark - ' + course.title, user.name + ' (' + user.email + ') has ' + (sub ? 're' : '') + 'submitted "' + a.title + '" for "' + course.title + '". Mark it in the CPD Hub admin under Marking.', user);
+          toast(a.marked === false ? 'Handed in' : 'Submitted for marking', 'success'); drawSidebar(); showAssignment(a);
         } catch (e) { err('Could not submit. Please try again.'); }
       });
     }
@@ -622,8 +727,11 @@
           const d = new Date();
           data.completedAt = d.toISOString();
           if (P) {
-            const sv = approvedSupervision();
-            data.practical = { supervisorName: sv ? ((sv.agreement && sv.agreement.name) || sv.supName) : '', supervisorGdc: sv ? ((sv.agreement && sv.agreement.gdc) || sv.supGdc) : '', casesSignedOff: satisfactoryCases().length, declaredAt: sv && sv.finalDeclaration ? sv.finalDeclaration.signedAt : '', caseStudyMarkedAt: mark ? mark.markedAt || '' : '' };
+            const used = approvedSupervisions().filter(sv => satisfactoryCases().some(c => c.supervisionId === sv.id));
+            const st = lbStatus();
+            data.practical = { supervisors: used.map(sv => ({ name: (sv.agreement && sv.agreement.name) || sv.supName, gdc: (sv.agreement && sv.agreement.gdc) || sv.supGdc })),
+              casesSignedOff: st.satCount, declaredAt: st.declared ? st.declared.finalDeclaration.signedAt : '',
+              marked: Object.fromEntries(ASSIGN.filter(a => a.marked !== false).map(a => [a.id, (markOf(a) || {}).markedAt || ''])) };
           }
           data.certNo = 'DNT-CPD-' + String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '-' + Math.random().toString(36).slice(2, 7).toUpperCase();
         }
