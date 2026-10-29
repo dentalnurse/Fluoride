@@ -11,7 +11,9 @@
 //   courseContent/{slug}             lessons, quiz, reflection questions
 //   learners/{uid}                   learner profile
 //   learners/{uid}/progress/{slug}   progress, quiz, reflection, feedback, certificate
-//   learners/{uid}/orders/{slug}     "I've paid" records waiting for an admin to check
+//   learners/{uid}/orders/{id}       "I've paid" records waiting for an admin to check
+//                                    (id = course slug, slug__ext-<time> for extensions, bundle__<slug> for bundles)
+//   bundles/{slug}                   several courses sold together for one price
 //   access/{uid}                     { courses: { slug: {...} } } - admin-only write
 //   admins/{email}                   extra admins added in the admin hub
 //   media/{id}                       uploaded pictures/videos (files live in Storage)
@@ -54,7 +56,7 @@ export function deriveMeta(meta, content) {
 
 // Long random id, used for links emailed to supervisors
 const token = () => Array.from(crypto.getRandomValues(new Uint8Array(20))).map(b => b.toString(16).padStart(2, '0')).join('');
-const addMonths = (months) => { const d = new Date(); d.setMonth(d.getMonth() + Number(months)); return d.toISOString(); };
+const addMonths = (months) => plusMonths(new Date(), Number(months)).toISOString();
 
 const lc = (e) => String(e || '').trim().toLowerCase();
 const now = () => new Date().toISOString();
@@ -96,6 +98,13 @@ const fb = {
     return (await getDocs(q)).docs.map(d => d.data());
   },
   async getCourse(slug) { try { const s = await getDoc(doc(db, 'courses', slug)); return s.exists() ? s.data() : null; } catch (e) { return null; } },
+  async listBundles(includeAll) {
+    if (!db) return [];
+    try { const q = includeAll ? collection(db, 'bundles') : query(collection(db, 'bundles'), where('status', '==', 'live')); return (await getDocs(q)).docs.map(d => d.data()); } catch (e) { console.warn(e); return []; }
+  },
+  async getBundle(slug) { try { const s = await getDoc(doc(db, 'bundles', slug)); return s.exists() ? s.data() : null; } catch (e) { return null; } },
+  async saveBundle(b) { await setDoc(doc(db, 'bundles', b.slug), { ...b, updatedAt: now() }); },
+  async deleteBundle(slug) { await deleteDoc(doc(db, 'bundles', slug)); },
   async getCourseContent(slug) { const s = await getDoc(doc(db, 'courseContent', slug)); return s.exists() ? s.data() : null; },
   async saveCourse(meta, content) {
     await setDoc(doc(db, 'courseContent', meta.slug), content);
@@ -123,6 +132,7 @@ const fb = {
   async setSupervisionStatus(id, status, by, reason) { await updateDoc(doc(db, 'supervisions', id), { status, reviewedBy: by, reviewedAt: now(), rejectReason: reason || '' }); },
   async signFinalDeclaration(id, declaration) { await updateDoc(doc(db, 'supervisions', id), { finalDeclaration: declaration }); },
   async deleteSupervision(id) { await deleteDoc(doc(db, 'supervisions', id)); },
+  async requestDeclaration(id) { await updateDoc(doc(db, 'supervisions', id), { declarationRequestedAt: now() }); },
   async saveSupervisorProfile(uid, data) { await setDoc(doc(db, 'supervisors', uid), { ...data, updatedAt: now() }, { merge: true }); },
 
   async listCasesForLearner(uid) { return (await getDocs(query(collection(db, 'cases'), where('learnerUid', '==', uid)))).docs.map(d => ({ id: d.id, ...d.data() })); },
@@ -136,14 +146,17 @@ const fb = {
   async listAllMarks() { return (await getDocs(collection(db, 'marks'))).docs.map(d => d.data()); },
   async setMark(uid, slug, data) { await setDoc(doc(db, 'marks', uid + '_' + slug), { ...data, learnerUid: uid, slug, markedAt: now() }); },
 
-  async createOrder(user, course, extra) {
-    await setDoc(doc(db, 'learners', user.uid, 'orders', course.slug), {
-      uid: user.uid, name: user.name, email: user.email, gdc: user.gdc, slug: course.slug,
+  // id defaults to the course slug; extensions and bundles pass their own
+  async createOrder(user, course, extra, id) {
+    id = id || course.slug;
+    await setDoc(doc(db, 'learners', user.uid, 'orders', id), {
+      id, kind: 'course', uid: user.uid, name: user.name, email: user.email, gdc: user.gdc || '', slug: course.slug,
       title: course.title, price: course.price, status: 'pending', createdAt: now(), ...(extra || {}) });
   },
+  async markOrderUnlocked(uid, id, by) { await updateDoc(doc(db, 'learners', uid, 'orders', id), { status: 'unlocked', unlockedAt: now(), unlockedBy: by }); },
   async getOrders(uid) { return (await getDocs(collection(db, 'learners', uid, 'orders'))).docs.map(d => d.data()); },
   async listAllOrders() { return (await getDocs(collectionGroup(db, 'orders'))).docs.map(d => d.data()); },
-  async deleteOrder(uid, slug) { await deleteDoc(doc(db, 'learners', uid, 'orders', slug)); },
+  async deleteOrder(uid, id) { await deleteDoc(doc(db, 'learners', uid, 'orders', id)); },
 
   async getProgress(uid, slug) { const s = await getDoc(doc(db, 'learners', uid, 'progress', slug)); return s.exists() ? s.data() : null; },
   async listMyProgress(uid) { return (await getDocs(collection(db, 'learners', uid, 'progress'))).docs.map(d => d.data()); },
@@ -223,7 +236,7 @@ async function pload() {
     if (d) { await psave(d); try { localStorage.removeItem(PKEY); } catch (e) {} }
   }
   d = d || seed();
-  for (const k of ['supervisions', 'cases', 'marks', 'supervisors']) d[k] = d[k] || {};
+  for (const k of ['supervisions', 'cases', 'marks', 'supervisors', 'bundles']) d[k] = d[k] || {};
   return d;
 }
 async function psave(d) {
@@ -247,6 +260,10 @@ const pv = {
 
   async listCourses(includeAll) { return Object.values((await pload()).courses).filter(c => includeAll || ['live', 'coming-soon'].includes(c.status)).map(clone); },
   async getCourse(slug) { return clone((await pload()).courses[slug] || null); },
+  async listBundles(includeAll) { return Object.values((await pload()).bundles).filter(b => includeAll || b.status === 'live').map(clone); },
+  async getBundle(slug) { return clone((await pload()).bundles[slug] || null); },
+  async saveBundle(b) { const d = (await pload()); d.bundles[b.slug] = { ...clone(b), updatedAt: now() }; await psave(d); },
+  async deleteBundle(slug) { const d = (await pload()); delete d.bundles[slug]; await psave(d); },
   async getCourseContent(slug) { return clone((await pload()).content[slug] || null); },
   async saveCourse(meta, content) { const d = (await pload()); d.courses[meta.slug] = { ...deriveMeta(meta, content), updatedAt: now() }; d.content[meta.slug] = content; await psave(d); },
   async deleteCourse(slug) { const d = (await pload()); delete d.courses[slug]; delete d.content[slug]; await psave(d); },
@@ -269,6 +286,7 @@ const pv = {
   async setSupervisionStatus(id, status, by, reason) { const d = (await pload()); Object.assign(d.supervisions[id], { status, reviewedBy: by, reviewedAt: now(), rejectReason: reason || '' }); await psave(d); },
   async signFinalDeclaration(id, declaration) { const d = (await pload()); d.supervisions[id].finalDeclaration = clone(declaration); await psave(d); },
   async deleteSupervision(id) { const d = (await pload()); delete d.supervisions[id]; await psave(d); },
+  async requestDeclaration(id) { const d = (await pload()); d.supervisions[id].declarationRequestedAt = now(); await psave(d); },
   async saveSupervisorProfile(uid, data) { const d = (await pload()); d.supervisors[uid] = { ...(d.supervisors[uid] || {}), ...clone(data), updatedAt: now() }; await psave(d); },
 
   async listCasesForLearner(uid) { return Object.entries((await pload()).cases).filter(([, c]) => c.learnerUid === uid).map(([id, c]) => ({ id, ...clone(c) })); },
@@ -282,10 +300,11 @@ const pv = {
   async listAllMarks() { return Object.values((await pload()).marks).map(clone); },
   async setMark(uid, slug, data) { const d = (await pload()); d.marks[uid + '_' + slug] = { ...clone(data), learnerUid: uid, slug, markedAt: now() }; await psave(d); },
 
-  async createOrder(user, course, extra) { const d = (await pload()); d.orders[user.uid + '/' + course.slug] = { uid: user.uid, name: user.name, email: user.email, gdc: user.gdc, slug: course.slug, title: course.title, price: course.price, status: 'pending', createdAt: now(), ...clone(extra || {}) }; await psave(d); },
+  async createOrder(user, course, extra, id) { id = id || course.slug; const d = (await pload()); d.orders[user.uid + '/' + id] = { id, kind: 'course', uid: user.uid, name: user.name, email: user.email, gdc: user.gdc || '', slug: course.slug, title: course.title, price: course.price, status: 'pending', createdAt: now(), ...clone(extra || {}) }; await psave(d); },
+  async markOrderUnlocked(uid, id, by) { const d = (await pload()); const o = d.orders[uid + '/' + id]; if (o) Object.assign(o, { status: 'unlocked', unlockedAt: now(), unlockedBy: by }); await psave(d); },
   async getOrders(uid) { return Object.values((await pload()).orders).filter(o => o.uid === uid).map(clone); },
   async listAllOrders() { return Object.values((await pload()).orders).map(clone); },
-  async deleteOrder(uid, slug) { const d = (await pload()); delete d.orders[uid + '/' + slug]; await psave(d); },
+  async deleteOrder(uid, id) { const d = (await pload()); delete d.orders[uid + '/' + id]; await psave(d); },
 
   async getProgress(uid, slug) { return clone((await pload()).progress[uid + '/' + slug] || null); },
   async listMyProgress(uid) { return Object.values((await pload()).progress).filter(p => p.uid === uid).map(clone); },
@@ -323,6 +342,7 @@ const api = PREVIEW ? pv : fb;
 export const {
   getSessionUser, login, register, resetPassword, logout, updateProfile,
   listCourses, getCourse, getCourseContent, saveCourse, deleteCourse,
+  listBundles, getBundle, saveBundle, deleteBundle, markOrderUnlocked, requestDeclaration,
   getAccess, grantAccess, revokeAccess, setAccessExpiry,
   inviteSupervisor, getSupervision, listSupervisionsForLearner, listSupervisionsForSupervisor, listAllSupervisions,
   signSupervision, setSupervisionStatus, signFinalDeclaration, deleteSupervision, saveSupervisorProfile,

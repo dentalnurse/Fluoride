@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="../js/gate.js?v=20261029a"></script>
+  <script src="../js/gate.js?v=20261029b"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin - Dental Nurse Training CPD Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../../css/style.css?v=20261029a"/>
-  <link rel="stylesheet" href="../css/cpd.css?v=20261029a"/>
+  <link rel="stylesheet" href="../../css/style.css?v=20261029b"/>
+  <link rel="stylesheet" href="../css/cpd.css?v=20261029b"/>
 </head>
 <body>
   <div id="navHolder"></div>
@@ -39,6 +39,7 @@
         <div class="admin-tab" data-tab="payments">💳 Payments <span id="payBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab" data-tab="learners">👥 Learners</div>
         <div class="admin-tab" data-tab="courses">📚 Courses</div>
+        <div class="admin-tab" data-tab="bundles">🎁 Bundles</div>
         <div class="admin-tab" data-tab="supervisors">🤝 Supervisors <span id="supBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab" data-tab="marking">📝 Marking <span id="markBadge" class="admin-tab-badge" style="display:none"></span></div>
         <div class="admin-tab" data-tab="completions">🏅 Completions</div>
@@ -54,12 +55,12 @@
   <input type="file" id="importFile" accept=".json,application/json" style="display:none"/>
   <div id="footHolder"></div>
 
-  <script src="../js/config.js?v=20261029a"></script>
-  <script src="../js/ui.js?v=20261029a"></script>
-  <script src="../js/render.js?v=20261029a"></script>
-  <script src="../js/demo-course.js?v=20261029a"></script>
+  <script src="../js/config.js?v=20261029b"></script>
+  <script src="../js/ui.js?v=20261029b"></script>
+  <script src="../js/render.js?v=20261029b"></script>
+  <script src="../js/demo-course.js?v=20261029b"></script>
   <script type="module">
-    import * as D from '../js/data.js?v=20261029a';
+    import * as D from '../js/data.js?v=20261029b';
     const me = await D.mountChrome({ prefix: '../' });
     document.getElementById('adminLoginLink').href = D.link('../login.html?next=admin/index.html');
     document.getElementById('viewHub').href = D.link('../index.html');
@@ -78,7 +79,8 @@
         D.listCourses(true), D.listLearners(), D.listAllAccess(), D.listAllProgress(), D.listAllOrders()]);
       const safe = p => p.catch(e => { console.warn(e); return []; });
       const [supervisions, cases, marks] = await Promise.all([safe(D.listAllSupervisions()), safe(D.listAllCases()), safe(D.listAllMarks())]);
-      S = { courses, learners, access, progress, orders, supervisions, cases, marks, bySlug: Object.fromEntries(courses.map(c => [c.slug, c])) };
+      const bundles = await safe(D.listBundles(true));
+      S = { courses, learners, access, progress, orders, supervisions, cases, marks, bundles, bySlug: Object.fromEntries(courses.map(c => [c.slug, c])) };
       S.markOf = (uid, slug) => marks.find(m => m.learnerUid === uid && m.slug === slug) || null;
       S.supPending = supervisions.filter(x => x.status === 'signed');
       // Every piece of marked written work that has been handed in
@@ -91,7 +93,8 @@
       }));
       S.toMark = S.subs.filter(x => !x.cur);
       [['supBadge', S.supPending.length], ['markBadge', S.toMark.length]].forEach(([id, n]) => { const b = document.getElementById(id); b.textContent = n; b.style.display = n ? '' : 'none'; });
-      const pending = orders.filter(o => o.status === 'pending' && !((access[o.uid] || {})[o.slug]));
+      // A course order is done once the course is unlocked; extensions and bundles are approved here
+      const pending = orders.filter(o => o.status === 'pending' && (o.kind === 'extension' || o.kind === 'bundle' || !((access[o.uid] || {})[o.slug])));
       S.pending = pending;
       document.getElementById('statPay').textContent = pending.length;
       document.getElementById('statPayTile').classList.toggle('needs-attention', pending.length > 0);
@@ -112,7 +115,7 @@
       document.querySelectorAll('#tabs .admin-tab').forEach(x => x.classList.toggle('active', x.dataset.tab === t));
       body.innerHTML = '<p style="color:var(--ink-light)">Loading...</p>';
       try { await loadAll(); } catch (e) { console.error(e); body.innerHTML = '<div class="callout callout-warn"><p>Could not load data: ' + esc(e.message) + '</p></div>'; return; }
-      ({ payments: tabPayments, learners: tabLearners, courses: tabCourses, supervisors: tabSupervisors, marking: tabMarking, completions: tabCompletions, feedback: tabFeedback, media: tabMedia, admins: tabAdmins })[t]();
+      ({ payments: tabPayments, learners: tabLearners, courses: tabCourses, bundles: tabBundles, supervisors: tabSupervisors, marking: tabMarking, completions: tabCompletions, feedback: tabFeedback, media: tabMedia, admins: tabAdmins })[t]();
     }
     document.querySelectorAll('#tabs .admin-tab').forEach(x => x.onclick = () => show(x.dataset.tab));
 
@@ -125,6 +128,14 @@
       return { el: document.getElementById('modalBody'), close };
     }
 
+    function mailto(l, subj, msg) { return 'mailto:' + encodeURIComponent(l.email || '') + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(msg); }
+    const signOff = '\n\nIf you have any questions, just reply to this email.\n\nKind regards,\nDental Nurse Training';
+    function extensionEmail(l, slug, iso) {
+      return mailto(l, 'Your course extension - ' + titleOf(slug), 'Hi ' + (l.name || '').split(' ')[0] + ',\n\nThank you for your payment. We have extended your time on "' + titleOf(slug) + '". Your new completion date is ' + fmtDate(iso) + '.\n\nLog in to carry on:\nhttps://fluoride.dentalnurse.training/cpd/login.html' + signOff);
+    }
+    function bundleEmail(l, o) {
+      return mailto(l, 'Your CPD courses are ready - ' + o.title, 'Hi ' + (l.name || '').split(' ')[0] + ',\n\nThank you for your payment. The courses in your bundle "' + o.title + '" are now unlocked and ready for you:\n\n' + (o.courses || []).map(s => '- ' + titleOf(s)).join('\n') + '\n\nLog in to the CPD Hub to get started:\nhttps://fluoride.dentalnurse.training/cpd/login.html' + signOff);
+    }
     function unlockEmail(l, slug) {
       const subj = 'Your CPD course is ready - ' + titleOf(slug);
       const msg = 'Hi ' + (l.name || '').split(' ')[0] + ',\n\nThank you for your payment. Your CPD course "' + titleOf(slug) + '" is now unlocked and ready for you.\n\nLog in to the CPD Hub to get started:\nhttps://fluoride.dentalnurse.training/cpd/login.html\n\nIf you have any questions, just reply to this email.\n\nKind regards,\nDental Nurse Training';
@@ -136,25 +147,99 @@
       const recent = S.orders.filter(o => o.status === 'unlocked').sort((a, b) => (b.unlockedAt || '').localeCompare(a.unlockedAt || '')).slice(0, 15);
       body.innerHTML = '<div class="callout" style="margin-top:0"><div class="callout-label">How this works</div><p>When a learner clicks Buy they appear here. Check the payment has arrived in Stripe (search their email), then click Unlock. Then use "Email learner" to let them know.</p></div>'
         + '<h3 style="margin:1rem 0 0.75rem">Waiting to be checked</h3>'
-        + (S.pending.length ? '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Learner</th><th>GDC</th><th>Course</th><th>Price</th><th>Clicked buy</th><th></th></tr></thead><tbody>'
-          + S.pending.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map((o, i) => '<tr><td><div class="td-name">' + esc(o.name) + '</div><div class="td-email">' + esc(o.email) + '</div></td><td>' + esc(o.gdc) + '</td><td>' + esc(o.title) + '</td><td>' + esc(o.price) + '</td><td>' + fmtDate(o.createdAt) + '</td>'
-            + '<td><div class="admin-actions"><button class="btn btn-success btn-sm" data-unlock="' + i + '">Unlock</button><button class="btn btn-outline btn-sm" data-del="' + i + '">Remove</button></div></td></tr>').join('')
+        + (S.pending.length ? '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Learner</th><th>GDC</th><th>What they bought</th><th>Price</th><th>Clicked buy</th><th></th></tr></thead><tbody>'
+          + S.pending.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map((o, i) => '<tr><td><div class="td-name">' + esc(o.name) + '</div><div class="td-email">' + esc(o.email) + '</div></td><td>' + esc(o.gdc) + '</td><td>' + esc(o.title) + (o.kind === 'extension' ? ' <span class="pill pill-orange">Extension</span>' : o.kind === 'bundle' ? ' <span class="pill pill-teal">Bundle</span><div class="td-email">' + esc((o.courses || []).map(titleOf).join(', ')) + '</div>' : '') + '</td><td>' + esc(o.price) + '</td><td>' + fmtDate(o.createdAt) + '</td>'
+            + '<td><div class="admin-actions"><button class="btn btn-success btn-sm" data-unlock="' + i + '">' + (o.kind === 'extension' ? 'Add 1 month' : 'Unlock') + '</button><button class="btn btn-outline btn-sm" data-del="' + i + '">Remove</button></div></td></tr>').join('')
           + '</tbody></table></div>' : '<p style="color:var(--ink-light)">Nothing waiting. 🎉</p>')
         + '<h3 style="margin:1.75rem 0 0.75rem">Recently unlocked</h3>'
         + (recent.length ? '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Learner</th><th>Course</th><th>Unlocked</th><th></th></tr></thead><tbody>'
-          + recent.map(o => '<tr><td><div class="td-name">' + esc(o.name) + '</div><div class="td-email">' + esc(o.email) + '</div></td><td>' + esc(o.title) + '</td><td>' + fmtDate(o.unlockedAt) + ' by ' + esc(o.unlockedBy || '') + '</td><td><a class="submission-link" href="' + unlockEmail(learnerOf(o.uid), o.slug) + '">Email learner</a></td></tr>').join('')
+          + recent.map(o => '<tr><td><div class="td-name">' + esc(o.name) + '</div><div class="td-email">' + esc(o.email) + '</div></td><td>' + esc(o.title) + '</td><td>' + fmtDate(o.unlockedAt) + ' by ' + esc(o.unlockedBy || '') + '</td><td><a class="submission-link" href="' + (o.kind === 'bundle' ? bundleEmail(learnerOf(o.uid), o) : o.kind === 'extension' ? extensionEmail(learnerOf(o.uid), o.slug, ((S.access[o.uid] || {})[o.slug] || {}).expiresAt) : unlockEmail(learnerOf(o.uid), o.slug)) + '">Email learner</a></td></tr>').join('')
           + '</tbody></table></div>' : '<p style="color:var(--ink-light)">None yet.</p>');
       body.querySelectorAll('[data-unlock]').forEach(b => b.onclick = async () => {
         const o = S.pending[b.dataset.unlock];
         if (!confirm('Have you checked in Stripe that ' + o.name + ' has paid ' + o.price + ' for "' + o.title + '"?')) return;
-        try { await D.grantAccess(o.uid, o.slug, me.email, 'Paid ' + o.price, (S.bySlug[o.slug] || {}).completionMonths); toast('Unlocked. Now email the learner.', 'success'); location.href = unlockEmail(learnerOf(o.uid), o.slug); show('payments'); }
+        try {
+          if (o.kind === 'extension') {
+            const a = (S.access[o.uid] || {})[o.slug];
+            if (!a) { toast('This learner does not have this course unlocked.', 'error'); return; }
+            const base = plusMonths(a.expiresAt && new Date(a.expiresAt) > new Date() ? new Date(a.expiresAt) : new Date(), Number(o.months) || 1);
+            await D.setAccessExpiry(o.uid, o.slug, base.toISOString());
+            await D.markOrderUnlocked(o.uid, o.id, me.email);
+            toast('Extended to ' + fmtDate(base.toISOString()) + '. Now email the learner.', 'success');
+            location.href = extensionEmail(learnerOf(o.uid), o.slug, base.toISOString());
+          } else if (o.kind === 'bundle') {
+            for (const s of o.courses || []) if (!(S.access[o.uid] || {})[s]) await D.grantAccess(o.uid, s, me.email, 'Bundle: ' + o.title + ' (paid ' + o.price + ')', (S.bySlug[s] || {}).completionMonths);
+            await D.markOrderUnlocked(o.uid, o.id, me.email);
+            toast('Bundle unlocked. Now email the learner.', 'success');
+            location.href = bundleEmail(learnerOf(o.uid), o);
+          } else {
+            await D.grantAccess(o.uid, o.slug, me.email, 'Paid ' + o.price, (S.bySlug[o.slug] || {}).completionMonths);
+            toast('Unlocked. Now email the learner.', 'success'); location.href = unlockEmail(learnerOf(o.uid), o.slug);
+          }
+          show('payments');
+        }
         catch (e) { toast('Could not unlock: ' + e.message, 'error'); }
       });
       body.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
         const o = S.pending[b.dataset.del];
         if (!confirm('Remove this order? Only do this if ' + o.name + ' did not actually pay.')) return;
-        await D.deleteOrder(o.uid, o.slug); show('payments');
+        await D.deleteOrder(o.uid, o.id || o.slug); show('payments');
       });
+    }
+
+    // ══ Bundles ══════════════════════════════════════════════════════════
+    // Several courses sold together for one price. Learners buy through a
+    // Stripe link; Payments shows the order and Unlock opens every course.
+    const priceNum = p => parseFloat(String(p || '').replace(/[^0-9.]/g, '')) || 0;
+    const money = n => '£' + (n % 1 ? n.toFixed(2) : String(n));
+    function tabBundles() {
+      const list = S.bundles.slice().sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+      body.innerHTML = '<div class="callout" style="margin-top:0"><div class="callout-label">Course bundles</div><p>Sell several courses together for one price. Make a Stripe Payment Link for the bundle price, add it here, then set the bundle to Live. Bundles show at the top of the course catalogue.</p></div>'
+        + '<button class="btn btn-primary btn-sm" id="bNew" style="margin-bottom:1rem">＋ New bundle</button>'
+        + (list.length ? '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Bundle</th><th>Courses</th><th>Price</th><th>Status</th><th></th></tr></thead><tbody>'
+          + list.map((b, i) => { const full = (b.courses || []).reduce((t, c) => t + priceNum((S.bySlug[c] || {}).price), 0);
+              return '<tr><td class="td-name">' + esc(b.icon || '🎁') + ' ' + esc(b.title) + '</td><td>' + esc((b.courses || []).map(titleOf).join(', ')) + '</td><td>' + esc(b.price) + (full ? '<div class="td-email">instead of ' + money(full) + '</div>' : '') + '</td><td><span class="pill ' + (b.status === 'live' ? 'pill-green' : 'pill-grey') + '">' + (b.status === 'live' ? 'Live' : 'Draft') + '</span></td>'
+                + '<td><div class="admin-actions"><button class="btn btn-primary btn-sm" data-bedit="' + i + '">Edit</button><a class="btn btn-outline btn-sm" target="_blank" href="' + D.link('../bundle.html?b=' + encodeURIComponent(b.slug)) + '">View</a></div></td></tr>'; }).join('')
+          + '</tbody></table></div>' : '<p style="color:var(--ink-light)">No bundles yet.</p>');
+      document.getElementById('bNew').onclick = () => editBundle(null);
+      body.querySelectorAll('[data-bedit]').forEach(b => b.onclick = () => editBundle(list[b.dataset.bedit]));
+    }
+    function editBundle(b) {
+      const isNew = !b;
+      b = b ? JSON.parse(JSON.stringify(b)) : { slug: '', title: '', summary: '', icon: '🎁', courses: [], price: '', stripeLink: '', status: 'draft' };
+      const courses = S.courses.slice().sort((x, y) => x.title.localeCompare(y.title));
+      const m = modal(isNew ? 'New bundle' : 'Edit bundle', '', true);
+      m.el.innerHTML = '<div class="form-group"><label>Title *</label><input type="text" id="bTitle"/></div>'
+        + '<div class="form-group"><label>Web address name</label><input type="text" id="bSlug"' + (isNew ? '' : ' disabled') + '/><div class="ed-help">Made from the title. It cannot be changed later.</div></div>'
+        + '<div class="form-group"><label>Short description</label><textarea id="bSummary" class="short"></textarea></div>'
+        + '<div class="form-group"><label>Icon (an emoji)</label><input type="text" id="bIcon" style="max-width:120px"/></div>'
+        + '<div class="form-group"><label>Courses in this bundle *</label>' + courses.map(c => '<label style="display:flex;gap:0.5rem;align-items:center;font-weight:400;font-size:0.9rem;margin-bottom:0.35rem"><input type="checkbox" class="bCourse" value="' + esc(c.slug) + '" style="width:auto"' + ((b.courses || []).includes(c.slug) ? ' checked' : '') + '/> ' + esc(c.title) + ' <span style="color:var(--ink-light)">(' + esc(c.price || '') + (c.status !== 'live' ? ', ' + esc(c.status) : '') + ')</span></label>').join('') + '<div class="ed-help" id="bTotal"></div></div>'
+        + '<div class="form-group"><label>Bundle price *</label><input type="text" id="bPrice" placeholder="£200" style="max-width:160px"/></div>'
+        + '<div class="form-group"><label>Stripe Payment Link</label><input type="text" id="bStripe" placeholder="https://buy.stripe.com/..."/><div class="ed-help">In Stripe, set this link to redirect after payment to: https://fluoride.dentalnurse.training/cpd/payment-success.html?b=WEB-ADDRESS-NAME</div></div>'
+        + '<div class="form-group"><label>Status</label><select id="bStatus"><option value="draft">Draft (hidden)</option><option value="live">Live</option></select></div>'
+        + '<div id="bErr" class="form-error" style="display:none;margin-bottom:0.75rem"></div>'
+        + '<div class="admin-actions"><button class="btn btn-primary btn-sm" id="bSave">Save bundle</button>' + (isNew ? '' : '<button class="btn btn-outline btn-sm" id="bDel" style="color:var(--warn);border-color:var(--warn)">Delete bundle</button>') + '</div>';
+      const $ = id => document.getElementById(id);
+      $('bTitle').value = b.title; $('bSlug').value = b.slug; $('bSummary').value = b.summary || ''; $('bIcon').value = b.icon || ''; $('bPrice').value = b.price; $('bStripe').value = b.stripeLink || ''; $('bStatus').value = b.status || 'draft';
+      const total = () => { const sel = [...m.el.querySelectorAll('.bCourse:checked')].map(x => x.value); const full = sel.reduce((t, c) => t + priceNum((S.bySlug[c] || {}).price), 0); const bp = priceNum($('bPrice').value);
+        $('bTotal').textContent = sel.length ? 'Bought separately: ' + money(full) + (bp && full > bp ? '. Learners save ' + money(Math.round((full - bp) * 100) / 100) + '.' : '.') : ''; };
+      m.el.querySelectorAll('.bCourse').forEach(x => x.onchange = total); $('bPrice').oninput = total; total();
+      if (isNew) $('bTitle').oninput = () => { if (!$('bSlug').dataset.touched) $('bSlug').value = slugify($('bTitle').value); };
+      $('bSlug').oninput = () => { $('bSlug').dataset.touched = '1'; };
+      $('bSave').onclick = async () => {
+        const data = { ...b, title: $('bTitle').value.trim(), slug: isNew ? slugify($('bSlug').value || $('bTitle').value) : b.slug, summary: $('bSummary').value.trim(), icon: $('bIcon').value.trim(),
+          courses: [...m.el.querySelectorAll('.bCourse:checked')].map(x => x.value), price: $('bPrice').value.trim(), stripeLink: $('bStripe').value.trim(), status: $('bStatus').value };
+        const errs = [];
+        if (!data.title) errs.push('Add a title.');
+        if (data.courses.length < 2) errs.push('Choose at least 2 courses.');
+        if (!data.price) errs.push('Add a price.');
+        if (isNew && S.bundles.some(x => x.slug === data.slug)) errs.push('There is already a bundle with this web address name.');
+        if (data.status === 'live' && !/^https:\/\//.test(data.stripeLink)) errs.push('Add the Stripe Payment Link before making it live.');
+        if (data.status === 'live' && data.courses.some(c => (S.bySlug[c] || {}).status !== 'live')) errs.push('Every course in a live bundle must be live.');
+        if (errs.length) { $('bErr').textContent = errs.join(' '); $('bErr').style.display = 'block'; return; }
+        await D.saveBundle(data); m.close(); toast('Bundle saved', 'success'); show('bundles');
+      };
+      const del = $('bDel'); if (del) del.onclick = async () => { if (!confirm('Delete the bundle "' + b.title + '"? Learners who already bought it keep their courses.')) return; await D.deleteBundle(b.slug); m.close(); show('bundles'); };
     }
 
     // ══ Learners ═════════════════════════════════════════════════════════
@@ -214,7 +299,7 @@
           + (options ? '<h3 style="margin:1.25rem 0 0.6rem">Give access to a course</h3><div class="ed-grid"><div class="form-group"><select id="gCourse">' + options + '</select></div><div class="form-group"><input type="text" id="gNote" placeholder="Reason, e.g. Paid by bank transfer / Free place"/></div></div><button class="btn btn-success btn-sm" id="gBtn">Give access</button>' : '');
         m.el.querySelectorAll('[data-extend]').forEach(b => b.onclick = async () => {
           const s = b.dataset.extend, cur = acc[s].expiresAt ? new Date(acc[s].expiresAt) : new Date();
-          const base = cur < new Date() ? new Date() : cur; base.setMonth(base.getMonth() + 1);
+          const base = plusMonths(cur < new Date() ? new Date() : cur, 1);
           if (!confirm('Extend "' + titleOf(s) + '" to ' + fmtDate(base.toISOString()) + '?')) return;
           await D.setAccessExpiry(uid, s, base.toISOString()); acc[s].expiresAt = base.toISOString(); await loadAll(); draw(); toast('Deadline extended.', 'success');
         });
@@ -277,6 +362,8 @@
             meta.status = existing.status;
             meta.price = existing.price || meta.price;
             meta.stripeLink = existing.stripeLink || meta.stripeLink;
+            meta.extensionStripeLink = existing.extensionStripeLink || meta.extensionStripeLink;
+            if (existing.extensionPrice) meta.extensionPrice = existing.extensionPrice;
             meta.thumbnail = existing.thumbnail || meta.thumbnail;
             meta.category = meta.category || existing.category;
           } else {
@@ -336,6 +423,8 @@
       { key: 'enrolDeclarations', label: 'Enrolment declarations (one per line, optional)', type: 'lines', help: 'Learners must tick every one before they can buy, e.g. "I confirm I have checked my indemnity cover". Saved with their order.' },
       { key: 'requireGdc', label: 'Learners must have a GDC number to enrol', type: 'check' },
       { key: 'completionMonths', label: 'Months to complete (leave blank for no deadline)', type: 'number', min: 1, help: 'The deadline starts when you unlock the course. You can extend it for a learner in Learners.' },
+      { key: 'extensionStripeLink', label: 'Stripe Payment Link for a 1 month extension (optional)', type: 'text', placeholder: 'https://buy.stripe.com/...', help: 'Learners with a deadline see a "Buy 1 extra month" button. Make the Stripe link for 10% of the course price, unless you set a different price below. In Stripe, set it to redirect after payment to: https://fluoride.dentalnurse.training/cpd/payment-success.html?c=LINK-NAME&ext=1' },
+      { key: 'extensionPrice', label: 'Extension price (leave blank for 10% of the course price)', type: 'text', placeholder: 'e.g. £15' },
       { key: 'updated', label: 'Content last reviewed', type: 'date' },
     ];
     const QUIZ_FIELDS = [

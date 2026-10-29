@@ -6,7 +6,7 @@
     // access code, so a valid-looking invite link lets them in.
     (function () { if (/[?&]invite=[0-9a-f]{20,}/.test(location.search)) { try { localStorage.setItem('cpd_gate_unlocked', '1'); } catch (e) {} } })();
   </script>
-  <script src="js/gate.js?v=20261029a"></script>
+  <script src="js/gate.js?v=20261029b"></script>
   <meta name="robots" content="noindex, nofollow"/>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
@@ -21,8 +21,8 @@
   <title>Supervisor - Dental Nurse Training CPD Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../css/style.css?v=20261029a"/>
-  <link rel="stylesheet" href="css/cpd.css?v=20261029a"/>
+  <link rel="stylesheet" href="../css/style.css?v=20261029b"/>
+  <link rel="stylesheet" href="css/cpd.css?v=20261029b"/>
 </head>
 <body>
 <body>
@@ -38,13 +38,13 @@
     <div id="app"><p style="color:var(--ink-light)">Loading...</p></div>
   </div>
   <div id="footHolder"></div>
-  <script src="js/config.js?v=20261029a"></script>
-  <script src="js/ui.js?v=20261029a"></script>
-  <script src="js/demo-course.js?v=20261029a"></script>
+  <script src="js/config.js?v=20261029b"></script>
+  <script src="js/ui.js?v=20261029b"></script>
+  <script src="js/demo-course.js?v=20261029b"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
   <script type="module">
-    import * as D from './js/data.js?v=20261029a';
+    import * as D from './js/data.js?v=20261029b';
     let user = await D.mountChrome();
     const app = document.getElementById('app');
     const invite = qs('invite');
@@ -135,7 +135,8 @@
           const mine = allCases.filter(x => x.supervisionId === sv.id);
           const sat = mine.filter(x => x.status === 'signed' && x.signoff && x.signoff.outcome === 'satisfactory').length;
           const status = { signed: '<span class="pill pill-orange">Waiting for DNT to approve you</span>', approved: '<span class="pill pill-green">Approved</span>', rejected: '<span class="pill pill-red">Not approved</span>' }[sv.status] || '';
-          const needDecl = sv.status === 'approved' && String(P.finalDeclaration || '').trim() && N && sat >= N && !sv.finalDeclaration;
+          // Offered once this supervisor has signed off every entry, or the learner has asked them to sign it
+          const needDecl = sv.status === 'approved' && String(P.finalDeclaration || '').trim() && N && (sat >= N || sv.declarationRequestedAt) && !sv.finalDeclaration;
           return '<div class="ed-block"><div class="ed-block-head"><strong>' + esc(sv.learnerName) + '</strong>' + status + '</div><div class="ed-block-body" style="font-size:0.9rem"><p style="font-size:0.9rem">' + esc(c.title || sv.courseTitle) + (N ? ' · you have signed off ' + sat + ' ' + esc(noun) + (sat === 1 ? '' : 's') + ' as satisfactory (' + N + ' needed in total)' : '') + '</p>'
             + (sv.finalDeclaration ? '<p style="font-size:0.9rem">✓ Final competence declaration signed ' + fmtDate(sv.finalDeclaration.signedAt) + '</p>' : '')
             + (needDecl ? '<button class="btn btn-primary btn-sm" data-decl="' + esc(sv.id) + '">Sign final competence declaration</button>' : '')
