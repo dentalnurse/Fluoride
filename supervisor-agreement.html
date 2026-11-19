@@ -1,17 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-0L9NXXFBFR');
-  </script>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Supervisor Agreement - Dental Nurse Training Fluoride Varnish Application Course</title>
+  <title>Supervisor Agreement - Dental Nurse Training Fluoride Varnish Certificate</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/style.css"/>
@@ -68,7 +60,7 @@
           supName     = d.supName     || '';
           supGdc      = d.supGdc      || '';
         } else {
-          // Fallback for links generated before short-URL update - read from URL params
+          // Fallback for links generated before short-URL update — read from URL params
           learnerUid  = params.get('l') || '';
           supIndex    = parseInt(params.get('s') || '0', 10);
           learnerName = decodeURIComponent(params.get('ln') || 'the learner');
@@ -215,12 +207,11 @@
         if (typeof emailjs !== 'undefined') {
           emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
             to_email: 'emily@dentalnurse.training', to_name: 'Emily',
-            subject: 'Supervisor agreement signed - ready for approval (' + (learnerName || 'Unknown learner') + ')',
             learner_name: learnerName || 'Unknown learner', learner_email: '', learner_gdc: '',
             submission_type: 'Supervisor Agreement Signed',
             file_url: 'Admin panel',
             submitted_at: new Date().toLocaleString('en-GB'),
-            message: 'A supervisor agreement has been signed and is ready for your approval.\n\nLearner: ' + learnerName + '\nSupervisor: ' + name + '\nGDC number confirmed: ' + gdc + '\n\nPlease log in to the admin panel to approve this supervisor:\nhttps://fluoride.dentalnurse.training/admin/index.html\n\nOnce approved, the learner will be notified.',
+            message: 'A supervisor agreement has been signed and is ready for your approval.\n\nLearner: ' + learnerName + '\nSupervisor: ' + name + '\nGDC number confirmed: ' + gdc + '\n\nPlease log in to the admin panel to approve this supervisor:\nhttps://dentalnurse.github.io/Fluoride/admin/index.html\n\nOnce approved, the learner will be notified.',
           });
         }
         el.innerHTML = `
@@ -248,9 +239,8 @@
   <script>if(typeof emailjs!=='undefined')emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });</script>
   <footer style="background:var(--teal-dark);padding:1.25rem 0;margin-top:2rem">
     <div class="container">
-      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center;margin:0">© 2025 Dental Nurse Training Ltd · <a href="privacy-policy.html" style="color:rgba(255,255,255,0.4)">Privacy Policy</a> &middot; <a href="terms.html" style="color:rgba(255,255,255,0.4)">Terms</a></p>
+      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center;margin:0">© 2025 Dental Nurse Training Ltd · <a href="privacy-policy.html" style="color:rgba(255,255,255,0.4)">Privacy Policy</a></p>
     </div>
   </footer>
-  <script src="js/cookies.js"></script>
 </body>
 </html>

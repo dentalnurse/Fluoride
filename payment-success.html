@@ -1,17 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-0L9NXXFBFR');
-  </script>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Payment Confirmed - Dental Nurse Training Fluoride Varnish Application Course</title>
+  <title>Payment Confirmed - Dental Nurse Training Fluoride Varnish Certificate</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/style.css"/>
@@ -126,15 +118,15 @@
         <div class="step-item">
           <div class="step-num">1</div>
           <div class="step-text">
-            <strong>Set up your account</strong>
-            <span>Click the button below to choose a password and access the course immediately.</span>
+            <strong>Check your inbox</strong>
+            <span>A confirmation email has been sent to you. It includes a summary of your enrolment and what to expect.</span>
           </div>
         </div>
         <div class="step-item">
           <div class="step-num">2</div>
           <div class="step-text">
-            <strong>Check your inbox</strong>
-            <span>A confirmation email has been sent to you with a summary of your enrolment.</span>
+            <strong>Your account is set up</strong>
+            <span>Your login details will be emailed to you within <strong>1 working day</strong> once your account has been activated by your assessor.</span>
           </div>
         </div>
         <div class="step-item">
@@ -148,8 +140,8 @@
 
       <hr class="divider"/>
 
-      <a href="create-account.html" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-bottom:0.75rem">
-        Set up my account →
+      <a href="login.html" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-bottom:0.75rem">
+        Go to login
       </a>
 
       <p style="font-size:0.8rem;color:var(--ink-light)">
@@ -163,9 +155,9 @@
   <script>
     if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
     // If enrolData is present, redirect to account creation instead
-    if (localStorage.getItem('enrolData')) { window.location.href = 'create-account.html'; }
+    if (sessionStorage.getItem('enrolData')) { window.location.href = 'create-account.html'; }
 
-    const enrolData = JSON.parse(localStorage.getItem('enrolData') || '{}');
+    const enrolData = JSON.parse(sessionStorage.getItem('enrolData') || '{}');
     const learnerName  = ((enrolData.firstName || '') + ' ' + (enrolData.lastName || '')).trim() || 'Learner';
     const learnerEmail = enrolData.email || '';
     const learnerGDC   = enrolData.gdc || '';
@@ -186,7 +178,6 @@
           emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
             to_email:        learnerEmail,
             to_name:         learnerName,
-            subject:         'Your Dental Nurse Training enrolment is confirmed',
             learner_name:    learnerName,
             learner_email:   learnerEmail,
             learner_gdc:     learnerGDC,
@@ -218,7 +209,6 @@
           emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
             to_email:        'emily@dentalnurse.training',
             to_name:         'Emily',
-            subject:         'New enrolment payment received - ' + learnerName,
             learner_name:    learnerName,
             learner_email:   learnerEmail,
             learner_gdc:     learnerGDC,
@@ -250,14 +240,14 @@
       }
 
       // Clear session data after emails are sent
-      localStorage.removeItem('enrolData');
+      sessionStorage.removeItem('enrolData');
     }
 
     sendEmails();
   </script>
   <footer style="background:var(--teal-dark);padding:1.25rem 0;margin-top:2rem">
     <div class="container">
-      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center;margin:0">© 2025 Dental Nurse Training Ltd · <a href="privacy-policy.html" style="color:rgba(255,255,255,0.4)">Privacy Policy</a> &middot; <a href="terms.html" style="color:rgba(255,255,255,0.4)">Terms</a></p>
+      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center;margin:0">© 2025 Dental Nurse Training Ltd · <a href="privacy-policy.html" style="color:rgba(255,255,255,0.4)">Privacy Policy</a></p>
     </div>
   </footer>
 </body>

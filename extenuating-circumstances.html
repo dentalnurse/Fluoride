@@ -36,7 +36,7 @@
   <div style="background:linear-gradient(135deg,var(--teal-dark),var(--teal));padding:2.5rem 0 2rem">
     <div class="container">
       <h1 style="color:var(--white);margin-bottom:0.4rem">Extenuating Circumstances</h1>
-      <p style="color:rgba(255,255,255,0.75);max-width:500px">If personal circumstances have prevented you from completing your course, you can apply for a free extension. We will review your application and respond within 2 working days.</p>
+      <p style="color:rgba(255,255,255,0.75);max-width:500px">If extenuating circumstances have prevented you from completing your course, you can apply for a free extension. We will review your application and respond within 2 working days.</p>
     </div>
   </div>
 
@@ -189,12 +189,11 @@
           emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
           emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
             to_email: 'emily@dentalnurse.training', to_name: 'Emily',
-            subject: 'New extenuating circumstances application - ' + learner.name,
             learner_name: learner.name, learner_email: learner.email, learner_gdc: learner.gdc || '',
             submission_type: 'Extenuating Circumstances Application',
             file_url: 'N/A',
             submitted_at: new Date().toLocaleString('en-GB'),
-            message: 'A learner has submitted an extenuating circumstances application.\n\nLearner: ' + learner.name + '\nEmail: ' + learner.email + '\nGDC: ' + (learner.gdc||'') + '\n\nType: ' + type + '\nFrom: ' + dateFrom + '\nTo: ' + (dateTo||'Ongoing') + '\nProgress: ' + (progress||'Not specified') + '\nExpected completion: ' + (expected||'Not specified') + '\n\nDescription:\n' + description + '\n\nPlease log in to the admin panel to review and approve or decline:\nhttps://fluoride.dentalnurse.training/admin/'
+            message: 'A learner has submitted an extenuating circumstances application.\n\nLearner: ' + learner.name + '\nEmail: ' + learner.email + '\nGDC: ' + (learner.gdc||'') + '\n\nType: ' + type + '\nFrom: ' + dateFrom + '\nTo: ' + (dateTo||'Ongoing') + '\nProgress: ' + (progress||'Not specified') + '\nExpected completion: ' + (expected||'Not specified') + '\n\nDescription:\n' + description + '\n\nPlease log in to the admin panel to review and approve or decline:\nhttps://dentalnurse.github.io/Fluoride/admin/'
           }).catch(() => {});
         }
 

@@ -2,17 +2,9 @@ html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9NXXFBFR"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-0L9NXXFBFR');
-  </script>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Module Quiz - Dental Nurse Training Fluoride Varnish Application Course</title>
+  <title>Module Quiz - Dental Nurse Training Fluoride Varnish Certificate</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/style.css"/>
@@ -42,7 +34,7 @@ html
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const app  = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
@@ -103,24 +95,7 @@ html
 
     function startQuiz() {
       const quiz = QUIZ_DATA[modNum];
-      // Randomly select 15 questions from the full bank
-      const QUIZ_SIZE = 15;
-      const bank = [...quiz.questions];
-      for (let i = bank.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [bank[i], bank[j]] = [bank[j], bank[i]];
-      }
-      // Shuffle options for each question so correct answer isn't always the same letter
-      const questions = bank.slice(0, Math.min(QUIZ_SIZE, bank.length)).map(q => {
-        const indices = q.options.map((_,i) => i);
-        for (let i = indices.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [indices[i], indices[j]] = [indices[j], indices[i]];
-        }
-        const shuffledOptions = indices.map(i => q.options[i]);
-        const shuffledCorrect = indices.indexOf(q.correct);
-        return { q: q.q, options: shuffledOptions, correct: shuffledCorrect };
-      });
+      const questions = quiz.questions;
       let current = 0, score = 0, answered = false;
 
       function draw() {
@@ -195,10 +170,7 @@ html
           const mp = learner.moduleProgress || {};
           mp[modNum] = 2;
           learner.moduleProgress = mp;
-          await updateDoc(doc(db, 'learners', uid), {
-            ['moduleProgress.' + modNum]: 2,
-            ['quizPassedAt.' + modNum]: serverTimestamp()
-          });
+          await updateDoc(doc(db, 'learners', uid), { ['moduleProgress.' + modNum]: 2 });
         }
       }
 
@@ -215,9 +187,8 @@ html
   <script src="js/quizdata.js"></script>
   <footer style="background:var(--teal-dark);padding:1.25rem 0;margin-top:2rem">
     <div class="container">
-      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center;margin:0">© 2025 Dental Nurse Training Ltd · <a href="privacy-policy.html" style="color:rgba(255,255,255,0.4)">Privacy Policy</a> &middot; <a href="terms.html" style="color:rgba(255,255,255,0.4)">Terms</a></p>
+      <p style="font-size:0.76rem;color:rgba(255,255,255,0.35);text-align:center;margin:0">© 2025 Dental Nurse Training Ltd · <a href="privacy-policy.html" style="color:rgba(255,255,255,0.4)">Privacy Policy</a></p>
     </div>
   </footer>
-  <script src="js/cookies.js"></script>
 </body>
 </html>

@@ -103,24 +103,6 @@ p  { color: var(--ink-mid); line-height: 1.75; }
 .nav-right { display: flex; align-items: center; gap: 1rem; }
 .nav-user  { font-size: 0.85rem; color: var(--ink-light); }
 .nav-user strong { color: var(--teal-dark); }
-.nav-menu-btn {
-  display: none;
-  background: none; border: none; cursor: pointer;
-  padding: 0.4rem; border-radius: var(--radius);
-  color: var(--teal-dark); flex-direction: column; gap: 5px;
-}
-.nav-menu-btn span {
-  display: block; width: 22px; height: 2px;
-  background: currentColor; border-radius: 2px;
-  transition: all 0.2s;
-}
-
-/* ── Sidebar backdrop (mobile) ──────────────────────────────────────────── */
-.sidebar-backdrop {
-  display: none;
-  position: fixed; inset: 0; z-index: 149;
-  background: rgba(0,0,0,0.4);
-}
 
 /* ── Hero (landing) ─────────────────────────────────────────────────────── */
 .hero {
@@ -399,13 +381,10 @@ p  { color: var(--ink-mid); line-height: 1.75; }
 .admin-tabs  { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
 .admin-tab   { padding: 0.5rem 1.1rem; border-radius: 100px; font-size: 0.88rem; font-weight: 600; cursor: pointer; border: 2px solid var(--border); background: var(--white); color: var(--ink-mid); transition: all 0.15s; }
 .admin-tab.active { background: var(--teal); color: var(--white); border-color: var(--teal); }
-.admin-tab-badge { background: #EF4444; color: #fff; border-radius: 100px; padding: 0.1rem 0.45rem; font-size: 0.72rem; font-weight: 700; margin-left: 0.35rem; }
-.admin-stat-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-.admin-stat { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; transition: background 0.15s, border-color 0.15s; }
+.admin-stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.admin-stat { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; }
 .admin-stat .as-n  { font-size: 2rem; font-weight: 800; color: var(--teal); line-height: 1; }
 .admin-stat .as-lbl { font-size: 0.8rem; color: var(--ink-light); margin-top: 0.25rem; }
-.admin-stat.needs-attention { background: #FEF3C7; border-color: #F59E0B; }
-.admin-stat.needs-attention .as-n { color: #92400E; }
 .admin-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .submission-link { color: var(--teal); font-weight: 600; text-decoration: underline; cursor: pointer; font-size: 0.85rem; }
 
@@ -433,21 +412,8 @@ p  { color: var(--ink-mid); line-height: 1.75; }
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (max-width: 960px) {
   .dash-layout { grid-template-columns: 1fr; }
-  .dash-sidebar {
-    display: none;
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-  }
-  .dash-sidebar.mobile-open {
-    display: block;
-    position: fixed; left: 0; top: var(--nav-h); bottom: 0;
-    width: 280px; z-index: 150;
-    transform: translateX(0);
-    overflow-y: auto;
-    box-shadow: 4px 0 24px rgba(0,0,0,0.25);
-  }
-  .sidebar-backdrop.visible { display: block; }
-  .nav-menu-btn { display: flex; }
+  .dash-sidebar { display: none; }
+  .dash-sidebar.mobile-open { display: block; position: fixed; left: 0; top: var(--nav-h); bottom: 0; width: 260px; z-index: 150; }
   .hero-inner { grid-template-columns: 1fr; }
   .hero-card  { display: none; }
   .module-row { grid-template-columns: repeat(3, 1fr); }
@@ -458,48 +424,9 @@ p  { color: var(--ink-mid); line-height: 1.75; }
   .dash-main { padding: 1.25rem; }
 }
 @media (max-width: 600px) {
-  .nav-logo img { height: 42px; }
-  .nav-user { display: none; }
   .module-row   { grid-template-columns: repeat(2, 1fr); }
   .logbook-grid { grid-template-columns: repeat(3, 1fr); }
   .admin-stat-row { grid-template-columns: 1fr 1fr; }
-  .dash-main { padding: 1rem; }
-  .content-card { padding: 1.25rem; }
-  .dash-header h1 { font-size: 1.3rem; }
-  .quiz-option { padding: 0.85rem 1rem; }
-}
-
-/* ── Logbook entry form (modal) ──────────────────────────────────────────── */
-.lb-form-wrap {
-  background: #fff;
-  border-radius: var(--radius-lg);
-  padding: 2rem;
-  max-width: 600px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-.lb-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-}
-.lb-grid-2 .span-2 { grid-column: 1 / -1; }
-@media (max-width: 500px) {
-  .lb-form-wrap { padding: 1.25rem 1rem; }
-  .lb-grid-2 { grid-template-columns: 1fr; }
-  .lb-grid-2 .span-2 { grid-column: 1; }
-  .lb-checkbox label,
-  .lb-form-wrap label[style*="display:flex"],
-  .lb-form-wrap label[style*="display:inline-flex"] {
-    font-size: 0.9rem;
-  }
-  .lb-form-wrap input[type="checkbox"],
-  .lb-form-wrap input[type="radio"] {
-    width: 20px !important;
-    height: 20px !important;
-  }
 }
 
 /* ── Stripe button ────────────────────────────────────────────────────────── */
