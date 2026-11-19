@@ -308,7 +308,7 @@
               <td><span class="pill pill-teal">${label}</span></td>
               <td style="font-size:0.82rem;color:var(--ink-light)">${at?.toDate ? at.toDate().toLocaleDateString('en-GB') : '-'}</td>
               <td>${url ? url.split(', ').map(u=>`<a href="${u}" target="_blank" class="submission-link" style="display:block;margin-bottom:2px">📥 Download</a>`).join('') : '<span style="color:var(--ink-light);font-size:0.82rem">Text only</span>'}</td>
-              <td style="font-size:0.82rem">${passed ? '<span class="pill pill-green">Passed</span>' : feedback ? '<span style="color:var(--teal-dark)">Feedback given</span>' : '<span style="color:var(--ink-light)">Awaiting review</span>'}</td>
+              <td style="font-size:0.82rem">${passed ? '<span class="pill pill-green">Passed</span>' : l[`${type}AmendmentsRequested`] ? '<span style="color:#D97706">Awaiting amendments</span>' : feedback ? '<span style="color:var(--teal-dark)">Feedback given</span>' : '<span style="color:var(--ink-light)">Awaiting review</span>'}</td>
               <td>
                 <div class="admin-actions">
                   <button class="btn btn-primary btn-sm" onclick="openFeedbackModal('${l.id}','${type}','${l.name}')">${feedback ? 'Edit feedback' : 'Add feedback'}</button>
@@ -599,6 +599,7 @@
     window.openFeedbackModal = (id, type, name) => {
       const l = learners.find(x => x.id === id);
       const existing = l?.[`${type}Feedback`] || '';
+      const amendmentsRequested = l?.[`${type}AmendmentsRequested`] || false;
       document.getElementById('learnerModalContent').innerHTML = `
         <div class="modal-header">
           <h3>Feedback - ${name}</h3>
@@ -609,6 +610,12 @@
           <label>Your feedback</label>
           <textarea id="feedbackText" style="min-height:160px">${existing}</textarea>
         </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-weight:400">
+            <input type="checkbox" id="amendmentsCheckbox" ${amendmentsRequested ? 'checked' : ''} />
+            <span>Request amendments (learner must resubmit)</span>
+          </label>
+        </div>
         <div class="modal-footer">
           <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
           <button class="btn btn-primary" onclick="saveFeedback('${id}','${type}')">Save feedback</button>
@@ -618,13 +625,26 @@
 
     window.saveFeedback = async (id, type) => {
       const text = document.getElementById('feedbackText').value;
-      await updateDoc(doc(db, 'learners', id), { [`${type}Feedback`]: text });
+      const amendmentsRequested = document.getElementById('amendmentsCheckbox').checked;
+      const updateData = { [`${type}Feedback`]: text };
+      if (amendmentsRequested) {
+        updateData[`${type}AmendmentsRequested`] = true;
+        updateData[`${type}Passed`] = false;
+      }
+      await updateDoc(doc(db, 'learners', id), updateData);
       const l = learners.find(x => x.id === id);
-      if (l) l[`${type}Feedback`] = text;
+      if (l) {
+        l[`${type}Feedback`] = text;
+        l[`${type}AmendmentsRequested`] = amendmentsRequested;
+        if (amendmentsRequested) l[`${type}Passed`] = false;
+      }
       closeModal();
-      showToast('Feedback saved and visible to learner ✅', 'success');
+      showToast(amendmentsRequested ? 'Amendments requested ✏️' : 'Feedback saved ✅', 'success');
       if (l) {
         const typeLabels = { written: 'Written Tasks', practical: 'Practical Portfolio', reflection: 'Final Reflection' };
+        const message = amendmentsRequested
+          ? 'I have reviewed your ' + typeLabels[type] + ' and require amendments. Please see the feedback in your course dashboard and resubmit.\n\nPlease log in to view it:\nhttps://dentalnurse.github.io/Fluoride/login.html'
+          : 'I have reviewed your ' + typeLabels[type] + ' and feedback is now available in your course dashboard.\n\nPlease log in to view it:\nhttps://dentalnurse.github.io/Fluoride/login.html';
         promptEmail(
           l.email,
           'Feedback available: ' + typeLabels[type] + ' - Dental Nurse Training Fluoride Varnish Certificate',
