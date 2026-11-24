@@ -41,6 +41,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:1rem">
         <span style="font-size:0.85rem;color:rgba(255,255,255,0.6)">emily@dentalnurse.training</span>
+        <button class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.8)" onclick="exportTrainingRegister(this)">📄 Export Training Register</button>
         <button class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.8)" onclick="adminLogout()">Log out</button>
       </div>
     </div>
@@ -605,6 +606,153 @@
       } catch(e) {
         console.error(e);
         showToast('Could not grant extension.', 'error');
+      }
+    };
+
+    // ── DOCX export ──────────────────────────────────────────────────────────
+    function loadDocxLib() {
+      if (window.docx) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/docx@9.8.1/dist/index.iife.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Could not load the Word export library - check your internet connection and try again.'));
+        document.head.appendChild(s);
+      });
+    }
+
+    function loadJSZipLib() {
+      if (window.JSZip) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.2/dist/jszip.min.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Could not load the zip library - check your internet connection and try again.'));
+        document.head.appendChild(s);
+      });
+    }
+
+    function safeFilename(s) {
+      return String(s || 'learner').replace(/[\\/:*?"<>|]/g, '').trim().slice(0, 80) || 'learner';
+    }
+
+    function learnerCourseStatus(l) {
+      return l.certNumber ? 'Certificate issued'
+        : l.reflectionPassed ? 'All work passed - awaiting certificate'
+        : l.reflectionSubmitted ? 'All work submitted - under review'
+        : l.practicalPassed && l.writtenPassed ? 'Awaiting reflection'
+        : (l.practicalSubmitted || l.writtenSubmitted) ? 'Assessments in progress'
+        : Object.values(l.moduleProgress || {}).some(v => v === 2 || v === '2') ? 'Modules complete - assessments not started'
+        : 'In progress';
+    }
+
+    window.exportTrainingRegister = async (btn) => {
+      const originalLabel = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = 'Preparing...'; }
+      try {
+        await Promise.all([loadDocxLib(), loadJSZipLib()]);
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, BorderStyle } = window.docx;
+
+        const fmtDate = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        const blankLine = () => new Paragraph({
+          spacing: { before: 300 },
+          border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'AAAAAA' } },
+          children: [new TextRun(' ')]
+        });
+
+        const detailRow = (label, value) => new TableRow({
+          children: [
+            new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: label, bold: true })] })] }),
+            new TableCell({ width: { size: 70, type: WidthType.PERCENTAGE }, children: [new Paragraph(String(value || '-'))] }),
+          ]
+        });
+
+        const correspondenceTable = () => {
+          const headerCell = (text) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text, bold: true })] })] });
+          const blankCell = () => new TableCell({ children: [new Paragraph(' ')] });
+          return new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            columnWidths: [20, 35, 45],
+            rows: [
+              new TableRow({ tableHeader: true, children: [headerCell('Date'), headerCell('Contact (email/phone)'), headerCell('Notes')] }),
+              ...Array.from({ length: 5 }, () => new TableRow({ children: [blankCell(), blankCell(), blankCell()] })),
+            ]
+          });
+        };
+
+        const zip = new window.JSZip();
+        const usedNames = new Set();
+
+        for (const l of learners) {
+          const enrolledAt = l.enrolledAt?.toDate ? l.enrolledAt.toDate() : null;
+          const extensionMonths = l.extensionMonths || 0;
+          let expectedCompletion = 'Not yet enrolled';
+          if (enrolledAt) {
+            const d = new Date(enrolledAt);
+            d.setMonth(d.getMonth() + 4 + extensionMonths);
+            expectedCompletion = fmtDate(d);
+          }
+
+          const children = [
+            new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun(l.name || l.email || 'Unnamed learner')] }),
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: [
+                detailRow('Email', l.email),
+                detailRow('GDC number', l.gdc),
+                detailRow('Phone', l.phone),
+                detailRow('Workplace', l.workplace),
+                detailRow('Address', l.invoiceAddress),
+                detailRow('Date enrolled', enrolledAt ? fmtDate(enrolledAt) : 'Not yet enrolled'),
+                detailRow('Expected completion date', expectedCompletion),
+                detailRow('Course status', learnerCourseStatus(l)),
+                detailRow('Certificate number', l.certNumber),
+              ]
+            }),
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400 }, children: [new TextRun('Extensions')] }),
+            new Paragraph({ children: [new TextRun(
+              extensionMonths > 0
+                ? extensionMonths + ' month' + (extensionMonths > 1 ? 's' : '') + ' granted' + (l.extensionReason ? ' - ' + l.extensionReason : '') + (l.extensionUpdatedAt?.toDate ? ' (' + fmtDate(l.extensionUpdatedAt.toDate()) + ')' : '')
+                : 'No extensions granted yet.'
+            )] }),
+            blankLine(), blankLine(), blankLine(),
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400 }, children: [new TextRun('Assessor Correspondence')] }),
+            new Paragraph({ spacing: { after: 150 }, children: [new TextRun('Record of emails, calls, or other contact with this learner\'s assessor or supervisors.')] }),
+            correspondenceTable(),
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400 }, children: [new TextRun('Witnesses')] }),
+            ...((l.supervisors && l.supervisors.length)
+              ? l.supervisors.map(s => new Paragraph({ children: [new TextRun((s.name || 'Unnamed') + ' - GDC ' + (s.gdc || '-') + (s.approved ? ' (approved)' : ''))] }))
+              : [new Paragraph({ children: [new TextRun('No supervisors recorded yet.')] })]),
+            blankLine(), blankLine(), blankLine(),
+          ];
+
+          const learnerDoc = new Document({ sections: [{ children }] });
+          const blob = await Packer.toBlob(learnerDoc);
+
+          let base = safeFilename(l.name || l.email);
+          let filename = base + '.docx';
+          let n = 2;
+          while (usedNames.has(filename)) { filename = base + ' (' + n + ').docx'; n++; }
+          usedNames.add(filename);
+          zip.file(filename, blob);
+        }
+
+        if (!learners.length) {
+          alert('No learners to export.');
+          return;
+        }
+
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(zipBlob);
+        a.download = 'DNT_Training_Register_' + new Date().toISOString().slice(0,10) + '.zip';
+        a.click();
+      } catch (e) {
+        console.error(e);
+        alert(e.message || 'Could not export the training register.');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
       }
     };
 
