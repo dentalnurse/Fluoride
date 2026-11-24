@@ -288,10 +288,10 @@
         el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No submissions yet.</div>';
         return;
       }
-      const filtered = subFilter === 'pending' ? allRows.filter(r => !r.passed)
+      const filtered = subFilter === 'pending' ? allRows.filter(r => !r.passed && !r.feedback)
                      : subFilter === 'passed'  ? allRows.filter(r =>  r.passed)
                      : allRows;
-      const counts = { all: allRows.length, pending: allRows.filter(r=>!r.passed).length, passed: allRows.filter(r=>r.passed).length };
+      const counts = { all: allRows.length, pending: allRows.filter(r=>!r.passed && !r.feedback).length, passed: allRows.filter(r=>r.passed).length };
       el.innerHTML = `
         <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
           ${[['all','All'],['pending','Awaiting review'],['passed','Passed']].map(([v,lbl]) =>
