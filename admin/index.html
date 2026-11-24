@@ -103,7 +103,7 @@
     import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp }
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp, increment }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const app  = initializeApp(FIREBASE_CONFIG);
@@ -514,6 +514,7 @@
           ${!l.unlocked ? `<button class="btn btn-success" onclick="approveLearner('${l.id}','${l.name}');closeModal()">✓ Approve learner</button>` : ''}
           <button class="btn btn-outline" onclick="sendWelcomeEmail('${l.id}')">📧 Send welcome email</button>
           ${(() => { const d = daysUntilExpiry(l); return d !== null && d <= 14 ? `<button class="btn btn-outline" style="color:#92400E;border-color:#F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>` : `<button class="btn btn-outline" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>`; })()}
+          <button class="btn btn-outline" onclick="grantFreeExtension('${l.id}','${l.name}','${l.email}')">🎁 Grant free extension</button>
           <button class="btn btn-outline" onclick="saveNotes('${l.id}')">Save notes</button>
           <button class="btn btn-primary" onclick="closeModal()">Close</button>
         </div>`;
@@ -585,6 +586,26 @@
         'Your Dental Nurse Training course access is expiring soon',
         'Dear ' + l.name + ',\n\nThis is a reminder that your access to the Dental Nurse Training Fluoride Varnish Application Course will expire in approximately ' + daysStr + '.\n\nIf you would like to continue, you can purchase a 1-month extension for £12 using the link below:\n\n' + extLink + '\n\nIf you have already completed the course or do not wish to continue, no action is needed.\n\nIf you have any questions, please reply to this email.\n\nKind regards,\nEmily Bremner\nDental Nurse Training\nemily@dentalnurse.training'
       );
+    };
+
+    window.grantFreeExtension = async (id, name, email) => {
+      const input = prompt('Grant ' + name + ' a free extension for how many months?', '1');
+      if (input === null) return;
+      const months = parseInt(input, 10);
+      if (!Number.isInteger(months) || months <= 0) { alert('Enter a whole number > 0.'); return; }
+      if (!confirm('Grant ' + name + ' a free ' + months + '-month extension?')) return;
+      try {
+        await updateDoc(doc(db, 'learners', id), {
+          extensionMonths: increment(months),
+          extensionUpdatedAt: serverTimestamp(),
+          extensionReason: 'Free extension granted by assessor'
+        });
+        showToast(months + '-month extension granted ✅', 'success');
+        await reloadAndOpenModal(id);
+      } catch(e) {
+        console.error(e);
+        showToast('Could not grant extension.', 'error');
+      }
     };
 
     window.saveNotes = async (id) => {
