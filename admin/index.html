@@ -562,6 +562,7 @@
           ${(() => { const d = daysUntilExpiry(l); return d !== null && d <= 14 ? `<button class="btn btn-outline" style="color:#92400E;border-color:#F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>` : `<button class="btn btn-outline" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>`; })()}
           <button class="btn btn-outline" onclick="grantFreeExtension('${l.id}','${l.name}','${l.email}')">🎁 Grant free extension</button>
           <button class="btn btn-outline" onclick="saveNotes('${l.id}')">Save notes</button>
+          <a href="portfolio-export.html?uid=${l.id}" target="_blank" class="btn btn-outline">📄 Download Portfolio</a>
           ${!l.archived ? `<button class="btn btn-outline" style="color:var(--ink-mid)" onclick="archiveLearner('${l.id}','${l.name}')">🗄 Archive</button>` : `<button class="btn btn-outline" onclick="unarchiveLearner('${l.id}','${l.name}')">↩ Unarchive</button>`}
           <button class="btn btn-primary" onclick="closeModal()">Close</button>
         </div>`;
