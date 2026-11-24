@@ -60,6 +60,7 @@
         <div class="admin-tab active" onclick="switchAdminTab('pending')">⏳ Awaiting Approval</div>
         <div class="admin-tab" onclick="switchAdminTab('all')">👥 All Learners</div>
         <div class="admin-tab" onclick="switchAdminTab('submissions')">📬 Submissions</div>
+        <div class="admin-tab" onclick="switchAdminTab('archived')">🗄 Archived</div>
         <div class="admin-tab" onclick="switchAdminTab('content')">✏️ Course Content</div>
       </div>
 
@@ -159,14 +160,14 @@
     }
 
     function updateStats() {
-      const pending     = learners.filter(l => !l.unlocked).length;
-      const active      = learners.filter(l => l.unlocked).length;
+      const active      = learners.filter(l => l.unlocked && !l.archived);
+      const pending     = learners.filter(l => !l.unlocked && !l.archived);
       const submissions = learners.filter(l =>
-        l.writtenSubmitted || l.practicalSubmitted || l.reflectionSubmitted
+        !l.archived && (l.writtenSubmitted || l.practicalSubmitted || l.reflectionSubmitted)
       ).length;
-      document.getElementById('statTotal').textContent       = learners.length;
-      document.getElementById('statPending').textContent     = pending;
-      document.getElementById('statActive').textContent      = active;
+      document.getElementById('statTotal').textContent       = learners.filter(l => !l.archived).length;
+      document.getElementById('statPending').textContent     = pending.length;
+      document.getElementById('statActive').textContent      = active.length;
       document.getElementById('statSubmissions').textContent = submissions;
     }
 
@@ -174,7 +175,7 @@
     window.switchAdminTab = (tab) => {
       currentTab = tab;
       document.querySelectorAll('.admin-tab').forEach((t, i) => {
-        t.classList.toggle('active', ['pending','all','submissions','content'][i] === tab);
+        t.classList.toggle('active', ['pending','all','submissions','archived','content'][i] === tab);
       });
       renderTab(tab);
     };
@@ -184,12 +185,13 @@
       if (tab === 'pending')     { renderPendingTab(el); return; }
       if (tab === 'all')         { renderAllTab(el); return; }
       if (tab === 'submissions') { renderSubmissionsTab(el); return; }
+      if (tab === 'archived')    { renderArchivedTab(el); return; }
       if (tab === 'content')     { renderContentTab(el); return; }
     }
 
     // ── Pending tab ────────────────────────────────────────────────────────
     function renderPendingTab(el) {
-      const pending = learners.filter(l => !l.unlocked);
+      const pending = learners.filter(l => !l.unlocked && !l.archived);
       if (!pending.length) {
         el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">✅ No accounts awaiting approval</div>';
         return;
@@ -219,8 +221,9 @@
 
     // ── All learners tab ──────────────────────────────────────────────────
     function renderAllTab(el) {
-      if (!learners.length) {
-        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No learners yet.</div>';
+      const active = learners.filter(l => !l.archived);
+      if (!active.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No active learners.</div>';
         return;
       }
       el.innerHTML = `
@@ -232,7 +235,7 @@
             <th>Name</th><th>Email / GDC</th><th>Status</th><th>Theory</th><th>Written</th><th>Practical</th><th>Reflection</th><th>Actions</th>
           </tr></thead>
           <tbody id="allLearnersBody">
-            ${renderAllRows(learners)}
+            ${renderAllRows(active)}
           </tbody>
         </table>`;
     }
@@ -269,12 +272,51 @@
 
     window.filterLearners = (q) => {
       const filtered = learners.filter(l =>
-        l.name?.toLowerCase().includes(q.toLowerCase()) ||
-        l.email?.toLowerCase().includes(q.toLowerCase())
+        !l.archived && (
+          l.name?.toLowerCase().includes(q.toLowerCase()) ||
+          l.email?.toLowerCase().includes(q.toLowerCase())
+        )
       );
       const body = document.getElementById('allLearnersBody');
       if (body) body.innerHTML = renderAllRows(filtered);
     };
+
+    // ── Archived tab ──────────────────────────────────────────────────────
+    function renderArchivedTab(el) {
+      const archived = learners.filter(l => l.archived);
+      if (!archived.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink-light)">No archived learners.</div>';
+        return;
+      }
+      el.innerHTML = `
+        <p style="margin-bottom:1rem;color:var(--ink-light);font-size:0.9rem">${archived.length} archived learner${archived.length>1?'s':''}. These can be unarchived or permanently deleted.</p>
+        <table class="admin-table">
+          <thead><tr>
+            <th>Name</th><th>Email / GDC</th><th>Status</th><th>Archived</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${archived.map(l => {
+              const days = daysUntilExpiry(l);
+              const expBadge = expiryBadge(days);
+              return `<tr>
+                <td><div class="td-name">${l.name}</div></td>
+                <td><div style="font-size:0.82rem">${l.email||'—'}</div><div class="td-email">GDC: ${l.gdc||'—'}</div></td>
+                <td style="display:flex;flex-wrap:wrap;gap:0.3rem;align-items:center;padding-top:0.6rem">
+                  ${l.archivedReason ? `<span class="pill pill-grey">${l.archivedReason}</span>` : '<span class="pill pill-grey">Archived</span>'}
+                  ${expBadge}
+                </td>
+                <td style="font-size:0.82rem;color:var(--ink-light)">${l.archivedAt?.toDate ? l.archivedAt.toDate().toLocaleDateString('en-GB') : '-'}</td>
+                <td>
+                  <div class="admin-actions">
+                    <button class="btn btn-outline btn-sm" onclick="unarchiveLearner('${l.id}','${l.name}')">↩ Unarchive</button>
+                    <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:1px solid #FECACA" onclick="deleteLearnerPermanently('${l.id}','${l.name}')">🗑 Delete</button>
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`;
+    }
 
     // ── Submissions tab ──────────────────────────────────────────────────
     let subFilter = 'all';
