@@ -208,6 +208,7 @@
               <td>
                 <div class="admin-actions">
                   <button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${l.name}')">✓ Approve</button>
+                  <button class="btn btn-outline btn-sm" style="color:var(--warn)" onclick="rejectLearner('${l.id}','${l.name}')">✕ Reject</button>
                   <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">View</button>
                 </div>
               </td>
@@ -258,6 +259,7 @@
             <div class="admin-actions">
               <button class="btn btn-outline btn-sm" onclick="openLearnerModal('${l.id}')">Manage</button>
               ${!l.unlocked ? `<button class="btn btn-success btn-sm" onclick="approveLearner('${l.id}','${l.name}')">Approve</button>` : ''}
+              ${!l.unlocked ? `<button class="btn btn-outline btn-sm" style="color:var(--warn)" onclick="rejectLearner('${l.id}','${l.name}')">Reject</button>` : ''}
               ${days !== null && days <= 14 ? `<button class="btn btn-sm" style="background:#FFF3CD;color:#92400E;border:1px solid #F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Remind</button>` : ''}
             </div>
           </td>
@@ -513,10 +515,12 @@
         </div>
         <div class="modal-footer">
           ${!l.unlocked ? `<button class="btn btn-success" onclick="approveLearner('${l.id}','${l.name}');closeModal()">✓ Approve learner</button>` : ''}
+          ${!l.unlocked ? `<button class="btn btn-outline" style="color:var(--warn)" onclick="rejectLearner('${l.id}','${l.name}')">✕ Reject application</button>` : ''}
           <button class="btn btn-outline" onclick="sendWelcomeEmail('${l.id}')">📧 Send welcome email</button>
           ${(() => { const d = daysUntilExpiry(l); return d !== null && d <= 14 ? `<button class="btn btn-outline" style="color:#92400E;border-color:#F59E0B" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>` : `<button class="btn btn-outline" onclick="sendExpiryReminder('${l.id}')">⏰ Send expiry reminder</button>`; })()}
           <button class="btn btn-outline" onclick="grantFreeExtension('${l.id}','${l.name}','${l.email}')">🎁 Grant free extension</button>
           <button class="btn btn-outline" onclick="saveNotes('${l.id}')">Save notes</button>
+          ${!l.archived ? `<button class="btn btn-outline" style="color:var(--ink-mid)" onclick="archiveLearner('${l.id}','${l.name}')">🗄 Archive</button>` : `<button class="btn btn-outline" onclick="unarchiveLearner('${l.id}','${l.name}')">↩ Unarchive</button>`}
           <button class="btn btn-primary" onclick="closeModal()">Close</button>
         </div>`;
       document.getElementById('learnerModal').classList.remove('hidden');
@@ -762,6 +766,35 @@
       const l = learners.find(x => x.id === id);
       if (l) l.notes = notes;
       showToast('Notes saved ✓');
+    };
+
+    window.rejectLearner = async (id, name) => {
+      if (!confirm('Reject ' + name + '\'s application? They will not be able to access the course.')) return;
+      await updateDoc(doc(db, 'learners', id), { archived: true, archivedReason: 'Application rejected', archivedAt: serverTimestamp() });
+      showToast(name + ' application rejected', 'success');
+      closeModal();
+      await loadLearners();
+    };
+
+    window.archiveLearner = async (id, name) => {
+      if (!confirm('Archive ' + name + '\'s account? This hides it from stats - you can unarchive it later.')) return;
+      await updateDoc(doc(db, 'learners', id), { archived: true, archivedAt: serverTimestamp() });
+      showToast(name + ' archived', 'success');
+      closeModal();
+      await loadLearners();
+    };
+
+    window.unarchiveLearner = async (id, name) => {
+      await updateDoc(doc(db, 'learners', id), { archived: false });
+      showToast(name + ' unarchived ✅', 'success');
+      await loadLearners();
+    };
+
+    window.deleteLearnerPermanently = async (id, name) => {
+      if (!confirm('Permanently delete ' + name + '\'s course record? This cannot be undone.')) return;
+      await deleteDoc(doc(db, 'learners', id));
+      showToast(name + ' deleted', 'success');
+      await loadLearners();
     };
 
     // ── Feedback modal ────────────────────────────────────────────────────
