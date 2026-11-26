@@ -232,3 +232,27 @@
 .callout ul, .callout ol { margin: 0.3rem 0 0; padding-left: 1.2rem; font-size: 0.9rem; color: var(--ink-mid); }
 .callout ul { list-style: disc; } .callout ol { list-style: decimal; }
 .callout li { margin-bottom: 0.25rem; }
+
+/* ── Layout rules the hub needs, kept here so changes to the shared
+      ../css/style.css (used by the other courses) cannot break the hub ── */
+.sidebar-backdrop { display: none; position: fixed; inset: 0; z-index: 149; background: rgba(0,0,0,0.4); }
+.admin-tab-badge { background: #EF4444; color: #fff; border-radius: 100px; padding: 0.1rem 0.45rem; font-size: 0.72rem; font-weight: 700; margin-left: 0.35rem; }
+.admin-stat-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.admin-stat { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; transition: background 0.15s, border-color 0.15s; }
+.admin-stat .as-n { font-size: 2rem; font-weight: 800; color: var(--teal); line-height: 1; }
+.admin-stat .as-lbl { font-size: 0.8rem; color: var(--ink-light); margin-top: 0.25rem; }
+.admin-stat.needs-attention { background: #FEF3C7; border-color: #F59E0B; }
+.admin-stat.needs-attention .as-n { color: #92400E; }
+.admin-stat-row.four { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 960px) {
+  .dash-layout { grid-template-columns: 1fr; }
+  .dash-sidebar { display: none; }
+  .dash-sidebar.mobile-open { display: block; position: fixed; left: 0; top: var(--nav-h); bottom: 0; width: 280px; z-index: 150; overflow-y: auto; box-shadow: 4px 0 24px rgba(0,0,0,0.25); }
+  .sidebar-backdrop.visible { display: block; }
+  .admin-stat-row, .admin-stat-row.four { grid-template-columns: repeat(2, 1fr); }
+  .dash-main { padding: 1.25rem; }
+}
+@media (max-width: 600px) {
+  .admin-stat-row, .admin-stat-row.four { grid-template-columns: 1fr 1fr; }
+  .dash-main { padding: 1rem; }
+}
